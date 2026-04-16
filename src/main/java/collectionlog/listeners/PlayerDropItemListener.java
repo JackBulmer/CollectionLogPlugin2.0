@@ -17,6 +17,8 @@ import org.bukkit.scheduler.BukkitRunnable;
  * Prevents other players from getting collection credit when picking them up.
  */
 public class PlayerDropItemListener implements Listener {
+    private static final double DEATH_DROP_SEARCH_RADIUS = 2.5;
+
     private final CollectionLogPlugin plugin;
     private final ItemTrackingManager itemTrackingManager;
 
@@ -39,7 +41,7 @@ public class PlayerDropItemListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
         if (event.getDrops().isEmpty()) {
             return;
@@ -55,7 +57,9 @@ public class PlayerDropItemListener implements Listener {
                 try {
                     deathLocation.getWorld().getNearbyEntities(
                             deathLocation,
-                            2.5, 2.5, 2.5
+                            DEATH_DROP_SEARCH_RADIUS,
+                            DEATH_DROP_SEARCH_RADIUS,
+                            DEATH_DROP_SEARCH_RADIUS
                     ).forEach(entity -> {
                         if (entity instanceof Item itemEntity && !itemEntity.isDead()) {
                             itemTrackingManager.trackItem(itemEntity, player.getUniqueId());

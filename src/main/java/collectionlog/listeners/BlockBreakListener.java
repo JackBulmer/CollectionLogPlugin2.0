@@ -16,6 +16,9 @@ import org.bukkit.scheduler.BukkitRunnable;
  * Handles block break events for ownership checking and item tracking.
  */
 public class BlockBreakListener implements Listener {
+    private static final double BLOCK_CENTER_OFFSET = 0.5;
+    private static final double ITEM_SEARCH_RADIUS = 1.5;
+
     private final CollectionLogPlugin plugin;
     private final BlockOwnershipDAO dao;
     private final AsyncTaskManager asyncTaskManager;
@@ -49,11 +52,17 @@ public class BlockBreakListener implements Listener {
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        Location searchLocation = location.clone().add(0.5, 0.5, 0.5);
+                                        Location searchLocation = location.clone().add(
+                                                BLOCK_CENTER_OFFSET,
+                                                BLOCK_CENTER_OFFSET,
+                                                BLOCK_CENTER_OFFSET
+                                        );
 
                                         searchLocation.getWorld().getNearbyEntities(
                                                 searchLocation,
-                                                1.5, 1.5, 1.5
+                                                ITEM_SEARCH_RADIUS,
+                                                ITEM_SEARCH_RADIUS,
+                                                ITEM_SEARCH_RADIUS
                                         ).forEach(entity -> {
                                             if (entity instanceof Item item) {
                                                 plugin.getItemTrackingManager().trackItem(item, owner);
