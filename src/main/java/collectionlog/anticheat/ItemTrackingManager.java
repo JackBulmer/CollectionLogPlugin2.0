@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Tracks items dropped by players without using PDC.
  * This prevents the item stacking bug caused by PDC tags.
  *
- * Items are tracked by entity UUID and automatically cleaned up after 5 seconds.
+ * Items are tracked by entity UUID and automatically cleaned up after 5 minutes.
  */
 public class ItemTrackingManager {
     private final Plugin plugin;
@@ -38,14 +38,14 @@ public class ItemTrackingManager {
             previousTask.cancel();
         }
 
-        // Auto-cleanup after 5 seconds
+        // Fallback cleanup after 5 minutes
         BukkitTask cleanupTask = new BukkitRunnable() {
             @Override
             public void run() {
                 droppedItems.remove(itemUUID);
                 cleanupTasks.remove(itemUUID);
             }
-        }.runTaskLater(plugin, 100L); // 5 seconds (100 ticks)
+        }.runTaskLater(plugin, 6000L); // 5 minutes (6000 ticks)
         cleanupTasks.put(itemUUID, cleanupTask);
     }
 
