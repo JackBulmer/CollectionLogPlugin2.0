@@ -74,8 +74,7 @@ public class DatabaseManager {
      * Initialize database schema from schema.sql
      */
     private void initializeSchema() {
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection()) {
 
             // Read schema.sql from resources
             InputStream schemaStream = plugin.getResource("schema.sql");
@@ -89,11 +88,23 @@ public class DatabaseManager {
                 schema = reader.lines().collect(Collectors.joining("\n"));
             }
 
-            // Execute each statement
-            for (String statement : schema.split(";")) {
+            // Remove SQL comment lines before splitting into statements
+            String schemaWithoutComments = schema.lines()
+                    .filter(line -> !line.trim().startsWith("--"))
+                    .collect(Collectors.joining("\n"));
+
+            // Execute each statement in isolation
+            for (String statement : schemaWithoutComments.split(";")) {
                 String trimmed = statement.trim();
-                if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+
+                try (Statement stmt = conn.createStatement()) {
                     stmt.execute(trimmed);
+                    plugin.getLogger().fine("Executed: " + trimmed.substring(0, Math.min(50, trimmed.length())) + "...");
+                } catch (SQLException e) {
+                    plugin.getLogger().warning("Schema statement failed (might be OK if table exists): " + e.getMessage());
                 }
             }
 
