@@ -172,15 +172,64 @@ public class BlockOwnershipDAO {
      * @return true if block was moved, false if it wasn't tracked
      */
     public boolean moveBlock(BlockLocation from, BlockLocation to) {
-        UUID owner = getOwner(from);
-        if (owner == null) {
-            return false;
+        if (from.equals(to)) {
+            return getOwner(from) != null;
         }
 
-        removeBlock(from);
-        trackBlock(to, owner);
+        String selectSql = "SELECT owner_uuid FROM block_ownership WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        String insertSql = "INSERT OR REPLACE INTO block_ownership (world, x, y, z, owner_uuid, placed_at) VALUES (?, ?, ?, ?, ?, ?)";
+        String deleteSql = "DELETE FROM block_ownership WHERE world = ? AND x = ? AND y = ? AND z = ?";
 
-        return true;
+        try (Connection conn = databaseManager.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                UUID owner;
+                try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                    selectStmt.setString(1, from.getWorldName());
+                    selectStmt.setInt(2, from.getX());
+                    selectStmt.setInt(3, from.getY());
+                    selectStmt.setInt(4, from.getZ());
+
+                    try (ResultSet rs = selectStmt.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                        owner = UUID.fromString(rs.getString("owner_uuid"));
+                    }
+                }
+
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                    insertStmt.setString(1, to.getWorldName());
+                    insertStmt.setInt(2, to.getX());
+                    insertStmt.setInt(3, to.getY());
+                    insertStmt.setInt(4, to.getZ());
+                    insertStmt.setString(5, owner.toString());
+                    insertStmt.setLong(6, System.currentTimeMillis());
+                    insertStmt.executeUpdate();
+                }
+
+                try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                    deleteStmt.setString(1, from.getWorldName());
+                    deleteStmt.setInt(2, from.getX());
+                    deleteStmt.setInt(3, from.getY());
+                    deleteStmt.setInt(4, from.getZ());
+                    deleteStmt.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException | IllegalArgumentException e) {
+                conn.rollback();
+                plugin.getLogger().log(Level.SEVERE, "Failed to move block ownership from " + from + " to " + to, e);
+                return false;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to move block ownership from " + from + " to " + to, e);
+            return false;
+        }
     }
 
     /**

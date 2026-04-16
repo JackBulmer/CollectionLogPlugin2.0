@@ -23,7 +23,12 @@ public class BlockLocation {
     }
 
     public BlockLocation(Location location) {
-        this.worldName = location.getWorld().getName();
+        Objects.requireNonNull(location, "location cannot be null");
+        World world = location.getWorld();
+        if (world == null) {
+            throw new IllegalArgumentException("Location world cannot be null");
+        }
+        this.worldName = world.getName();
         this.x = location.getBlockX();
         this.y = location.getBlockY();
         this.z = location.getBlockZ();
@@ -85,11 +90,15 @@ public class BlockLocation {
         if (parts.length != 4) {
             throw new IllegalArgumentException("Invalid BlockLocation string: " + str);
         }
-        return new BlockLocation(
-                parts[0],
-                Integer.parseInt(parts[1]),
-                Integer.parseInt(parts[2]),
-                Integer.parseInt(parts[3])
-        );
+        try {
+            return new BlockLocation(
+                    parts[0],
+                    Integer.parseInt(parts[1]),
+                    Integer.parseInt(parts[2]),
+                    Integer.parseInt(parts[3])
+            );
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid coordinate in BlockLocation string: " + str, e);
+        }
     }
 }
