@@ -3,6 +3,7 @@ package collectionlog.anticheat;
 import org.bukkit.entity.Item;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ItemTrackingManager {
     private final Plugin plugin;
     private final Map<UUID, UUID> droppedItems = new ConcurrentHashMap<>();
+    private final Map<UUID, BukkitTask> cleanupTasks = new ConcurrentHashMap<>();
 
     public ItemTrackingManager(Plugin plugin) {
         this.plugin = plugin;
@@ -31,14 +33,20 @@ public class ItemTrackingManager {
     public void trackItem(Item itemEntity, UUID playerUUID) {
         UUID itemUUID = itemEntity.getUniqueId();
         droppedItems.put(itemUUID, playerUUID);
+        BukkitTask previousTask = cleanupTasks.remove(itemUUID);
+        if (previousTask != null) {
+            previousTask.cancel();
+        }
 
         // Auto-cleanup after 5 seconds
-        new BukkitRunnable() {
+        BukkitTask cleanupTask = new BukkitRunnable() {
             @Override
             public void run() {
                 droppedItems.remove(itemUUID);
+                cleanupTasks.remove(itemUUID);
             }
         }.runTaskLater(plugin, 100L); // 5 seconds (100 ticks)
+        cleanupTasks.put(itemUUID, cleanupTask);
     }
 
     /**
@@ -67,7 +75,12 @@ public class ItemTrackingManager {
      * @param itemEntity The item entity
      */
     public void untrack(Item itemEntity) {
-        droppedItems.remove(itemEntity.getUniqueId());
+        UUID itemUUID = itemEntity.getUniqueId();
+        droppedItems.remove(itemUUID);
+        BukkitTask cleanupTask = cleanupTasks.remove(itemUUID);
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
+        }
     }
 
     /**
@@ -83,6 +96,10 @@ public class ItemTrackingManager {
      * Clear all tracked items (for plugin disable)
      */
     public void clearAll() {
+        for (BukkitTask task : cleanupTasks.values()) {
+            task.cancel();
+        }
+        cleanupTasks.clear();
         droppedItems.clear();
     }
 }

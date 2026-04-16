@@ -33,27 +33,22 @@ public class BlockBreakListener implements Listener {
         UUID playerUUID = player.getUniqueId();
         String playerName = player.getName();
 
-        // Check ownership asynchronously
-        asyncTaskManager.runAsync(() -> dao.getOwner(location))
-                .thenAccept(owner -> {
-                    if (owner != null) {
-                        // Block was placed by a player
-                        if (!owner.equals(playerUUID) && plugin.getConfig().getBoolean("plugin.debug", false)) {
-                            plugin.getLogger().info("Player " + playerName + " broke block placed by " + owner);
-                            // TODO: In future, deny collection credit here
-                        }
+        // Check ownership and cleanup asynchronously
+        asyncTaskManager.runAsync(() -> {
+            UUID owner = dao.getOwner(location);
+            if (owner != null) {
+                // Block was placed by a player
+                if (!owner.equals(playerUUID) && plugin.getConfig().getBoolean("plugin.debug", false)) {
+                    plugin.getLogger().info("Player " + playerName + " broke block placed by " + owner);
+                    // TODO: In future, deny collection credit here
+                }
 
-                        // Remove from tracking (async)
-                        asyncTaskManager.runAsync(() -> dao.removeBlock(location))
-                                .exceptionally(throwable -> {
-                                    plugin.getLogger().severe("Failed to remove tracked block: " + throwable.getMessage());
-                                    return null;
-                                });
-                    }
-                })
-                .exceptionally(throwable -> {
-                    plugin.getLogger().severe("Failed to check block ownership: " + throwable.getMessage());
-                    return null;
-                });
+                dao.removeBlock(location);
+            }
+        })
+            .exceptionally(throwable -> {
+                plugin.getLogger().severe("Failed to process block break ownership tracking: " + throwable.getMessage());
+                return null;
+            });
     }
 }
