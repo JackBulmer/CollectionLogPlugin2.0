@@ -1,0 +1,24 @@
+name: CollectionLogPlugin
+version: 2.0.0
+main: collectionlog.CollectionLogPlugin
+api-version: '1.21'
+author: JackBulmer
+description: Advanced collection tracking system with database backend
+
+commands:
+  logs:
+    description: Open collection log GUI
+    usage: /logs
+
+  cldb:
+    description: Database management commands
+    usage: /cldb <info|migrate|backup>
+    permission: collectionlog.admin
+
+permissions:
+  collectionlog.use:
+    description: Use collection log features
+    default: true
+  collectionlog.admin:
+    description: Administrative commands
+    default: op

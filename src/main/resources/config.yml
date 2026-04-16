@@ -1,0 +1,22 @@
+# CollectionLogPlugin V2.0 Configuration
+
+# Database Settings
+database:
+  # Type: sqlite or mysql
+  type: sqlite
+
+  # MySQL Settings (only used if type is mysql)
+  host: localhost
+  port: 3306
+  database: collectionlog
+  username: root
+  password: changeme
+
+# Plugin Settings
+plugin:
+  # Enable debug logging
+  debug: false
+
+  # Auto-save interval (in minutes, 0 = disabled)
+  # Note: With database, saves are instant, this is for backup only
+  backup-interval: 30
