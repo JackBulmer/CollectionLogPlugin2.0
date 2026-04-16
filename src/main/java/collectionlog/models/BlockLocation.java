@@ -16,7 +16,7 @@ public class BlockLocation {
     private final int z;
 
     public BlockLocation(String worldName, int x, int y, int z) {
-        this.worldName = worldName;
+        this.worldName = Objects.requireNonNull(worldName, "worldName cannot be null");
         this.x = x;
         this.y = y;
         this.z = z;

@@ -93,7 +93,12 @@ public class BlockOwnershipDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String uuidStr = rs.getString("owner_uuid");
-                    return UUID.fromString(uuidStr);
+                    try {
+                        return UUID.fromString(uuidStr);
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().log(Level.SEVERE, "Invalid owner UUID for block at " + location + ": " + uuidStr, e);
+                        return null;
+                    }
                 }
             }
 
@@ -195,7 +200,18 @@ public class BlockOwnershipDAO {
                             conn.rollback();
                             return false;
                         }
-                        owner = UUID.fromString(rs.getString("owner_uuid"));
+                        String uuidStr = rs.getString("owner_uuid");
+                        try {
+                            owner = UUID.fromString(uuidStr);
+                        } catch (IllegalArgumentException e) {
+                            conn.rollback();
+                            plugin.getLogger().log(
+                                    Level.SEVERE,
+                                    "Invalid owner UUID while moving block from " + from + ": " + uuidStr,
+                                    e
+                            );
+                            return false;
+                        }
                     }
                 }
 
