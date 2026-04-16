@@ -8,7 +8,9 @@ import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.ExplosionListener;
+import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
+import collectionlog.listeners.PlayerDropItemListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -65,6 +67,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new BlockBreakListener(this), this);
             getServer().getPluginManager().registerEvents(new PistonListener(this), this);
             getServer().getPluginManager().registerEvents(new ExplosionListener(this), this);
+            getServer().getPluginManager().registerEvents(new PlayerDropItemListener(this), this);
+            getServer().getPluginManager().registerEvents(new ItemPickupListener(this), this);
             getLogger().info("✅ Listeners registered");
 
         } catch (SQLException e) {
