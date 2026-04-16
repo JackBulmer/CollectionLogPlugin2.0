@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class DatabaseManager {
+    private static final int LOG_SQL_PREVIEW_LENGTH = 50;
     private final Plugin plugin;
     private HikariDataSource dataSource;
     private DatabaseType databaseType;
@@ -88,8 +89,10 @@ public class DatabaseManager {
                 schema = reader.lines().collect(Collectors.joining("\n"));
             }
 
-            // Remove SQL comment lines before splitting into statements
-            String schemaWithoutComments = schema.lines()
+            // Remove SQL comments before splitting into statements
+            String schemaWithoutComments = schema
+                    .replaceAll("(?s)/\\*.*?\\*/", "")
+                    .lines()
                     .filter(line -> !line.trim().startsWith("--"))
                     .collect(Collectors.joining("\n"));
 
@@ -102,9 +105,11 @@ public class DatabaseManager {
 
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute(trimmed);
-                    plugin.getLogger().fine("Executed: " + trimmed.substring(0, Math.min(50, trimmed.length())) + "...");
+                    String suffix = trimmed.length() > LOG_SQL_PREVIEW_LENGTH ? "..." : "";
+                    plugin.getLogger().fine("Executed: "
+                            + trimmed.substring(0, Math.min(LOG_SQL_PREVIEW_LENGTH, trimmed.length())) + suffix);
                 } catch (SQLException e) {
-                    plugin.getLogger().warning("Schema statement failed (might be OK if table exists): " + e.getMessage());
+                    plugin.getLogger().warning("Schema statement failed: " + e.getMessage());
                 }
             }
 
