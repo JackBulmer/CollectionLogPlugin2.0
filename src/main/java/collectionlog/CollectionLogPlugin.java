@@ -3,6 +3,7 @@ package collectionlog;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
+import collectionlog.database.dao.BlockOwnershipDAO;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -12,6 +13,7 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     private DatabaseManager databaseManager;
     private AsyncTaskManager asyncTaskManager;
+    private BlockOwnershipDAO blockOwnershipDAO;
 
     @Override
     public void onEnable() {
@@ -48,6 +50,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             }
 
             getLogger().info("✅ Database connected successfully");
+            blockOwnershipDAO = new BlockOwnershipDAO(this, databaseManager);
+            getLogger().info("✅ DAOs initialized");
 
         } catch (SQLException e) {
             getLogger().severe("❌ Failed to initialize database: " + e.getMessage());
@@ -85,5 +89,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public AsyncTaskManager getAsyncTaskManager() {
         return asyncTaskManager;
+    }
+
+    public BlockOwnershipDAO getBlockOwnershipDAO() {
+        return blockOwnershipDAO;
     }
 }
