@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class DatabaseManager {
+    private static final int LOG_SQL_PREVIEW_LENGTH = 50;
     private final Plugin plugin;
     private HikariDataSource dataSource;
     private DatabaseType databaseType;
@@ -74,8 +75,7 @@ public class DatabaseManager {
      * Initialize database schema from schema.sql
      */
     private void initializeSchema() {
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection()) {
 
             // Read schema.sql from resources
             InputStream schemaStream = plugin.getResource("schema.sql");
@@ -89,11 +89,27 @@ public class DatabaseManager {
                 schema = reader.lines().collect(Collectors.joining("\n"));
             }
 
-            // Execute each statement
-            for (String statement : schema.split(";")) {
+            // Remove SQL comments before splitting into statements
+            String schemaWithoutComments = schema
+                    .replaceAll("(?s)/\\*.*?\\*/", "")
+                    .lines()
+                    .filter(line -> !line.trim().startsWith("--"))
+                    .collect(Collectors.joining("\n"));
+
+            // Execute each statement in isolation
+            for (String statement : schemaWithoutComments.split(";")) {
                 String trimmed = statement.trim();
-                if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+
+                try (Statement stmt = conn.createStatement()) {
                     stmt.execute(trimmed);
+                    String suffix = trimmed.length() > LOG_SQL_PREVIEW_LENGTH ? "..." : "";
+                    plugin.getLogger().fine("Executed: "
+                            + trimmed.substring(0, Math.min(LOG_SQL_PREVIEW_LENGTH, trimmed.length())) + suffix);
+                } catch (SQLException e) {
+                    plugin.getLogger().warning("Schema statement failed: " + e.getMessage());
                 }
             }
 
