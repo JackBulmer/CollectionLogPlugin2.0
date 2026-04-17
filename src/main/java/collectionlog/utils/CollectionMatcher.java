@@ -21,6 +21,7 @@ public class CollectionMatcher {
     private final ItemSignatureHelper itemSignatureHelper;
     private final Map<String, List<CollectionDefinition>> collectionsBySignature;
     private final CollectionDefinition mobHeadsCollection;
+    private final Map<String, String> mobHeadSignaturesByEntity;
 
     public CollectionMatcher(CollectionLoader collectionLoader, SpecialCollectionLoader specialCollectionLoader) {
         this.itemSignatureHelper = new ItemSignatureHelper();
@@ -36,6 +37,8 @@ public class CollectionMatcher {
         this.mobHeadsCollection = specialCollectionLoader != null
                 ? specialCollectionLoader.getSpecialCollection("mob_heads")
                 : null;
+        this.mobHeadSignaturesByEntity = new LinkedHashMap<>();
+        indexMobHeadsCollection();
     }
 
     /**
@@ -87,17 +90,12 @@ public class CollectionMatcher {
         }
 
         String entityName = sourceEntityType.name();
-        for (String configuredHeadSignature : mobHeadsCollection.getItems()) {
-            if (!configuredHeadSignature.equals(entityName)
-                    && !configuredHeadSignature.startsWith(entityName + ":")) {
-                continue;
-            }
-
+        String configuredHeadSignature = mobHeadSignaturesByEntity.get(entityName);
+        if (configuredHeadSignature != null) {
             String key = mobHeadsCollection.getId() + "|" + configuredHeadSignature;
             if (seen.add(key)) {
                 matches.add(new CollectionMatch(mobHeadsCollection, configuredHeadSignature));
             }
-            break;
         }
     }
 
@@ -110,6 +108,19 @@ public class CollectionMatcher {
             collectionsBySignature
                     .computeIfAbsent(item, k -> new ArrayList<>())
                     .add(collection);
+        }
+    }
+
+    private void indexMobHeadsCollection() {
+        if (mobHeadsCollection == null) {
+            return;
+        }
+
+        for (String signature : mobHeadsCollection.getItems()) {
+            String entityName = signature.contains(":")
+                    ? signature.substring(0, signature.indexOf(':'))
+                    : signature;
+            mobHeadSignaturesByEntity.putIfAbsent(entityName, signature);
         }
     }
 

@@ -16,6 +16,9 @@ import org.bukkit.inventory.ItemStack;
  * Tracks machine output interactions (furnace, brewing, smithing).
  */
 public class InventoryClickListener implements Listener {
+    private static final int BREWING_FIRST_BOTTLE_SLOT = 0;
+    private static final int BREWING_LAST_BOTTLE_SLOT = 2;
+
     private final CollectionLogPlugin plugin;
     private final CollectionMatcher collectionMatcher;
     private final ProgressTrackingManager progressTrackingManager;
@@ -63,7 +66,9 @@ public class InventoryClickListener implements Listener {
         return switch (inventoryType) {
             case FURNACE, BLAST_FURNACE, SMOKER ->
                     event.getSlotType() == InventoryType.SlotType.RESULT || event.getSlot() == 2;
-            case BREWING -> event.getSlot() >= 0 && event.getSlot() <= 2;
+            // Brewing stand bottle output slots are 0-2.
+            case BREWING -> event.getSlot() >= BREWING_FIRST_BOTTLE_SLOT
+                    && event.getSlot() <= BREWING_LAST_BOTTLE_SLOT;
             case SMITHING -> event.getSlotType() == InventoryType.SlotType.RESULT;
             default -> false;
         };

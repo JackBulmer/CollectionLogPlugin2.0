@@ -45,7 +45,7 @@ public class ItemSignatureHelper {
 
         addEnchantmentSignatures(meta, signatures);
         addPotionSignatures(type, meta, signatures);
-        addArmourTrimSignatures(meta, signatures);
+        addArmorTrimSignatures(meta, signatures);
         addGoatHornSignatures(type, meta, signatures);
         addMobHeadSignatures(type, sourceEntityType, signatures);
         addCustomModelDataSignatures(meta, signatures);
@@ -82,7 +82,7 @@ public class ItemSignatureHelper {
         signatures.add(potionName + ":" + format);
     }
 
-    private void addArmourTrimSignatures(ItemMeta meta, Set<String> signatures) {
+    private void addArmorTrimSignatures(ItemMeta meta, Set<String> signatures) {
         if (!(meta instanceof ArmorMeta armorMeta)) {
             return;
         }
@@ -130,6 +130,9 @@ public class ItemSignatureHelper {
         int customModelData = meta.getCustomModelData();
         if (meta.hasDisplayName()) {
             String displayName = ChatColor.stripColor(meta.getDisplayName());
+            if (displayName != null) {
+                displayName = displayName.trim().replaceAll("\\s+", " ");
+            }
             if (displayName != null && !displayName.isBlank()) {
                 signatures.add(displayName + ":" + customModelData);
             }
