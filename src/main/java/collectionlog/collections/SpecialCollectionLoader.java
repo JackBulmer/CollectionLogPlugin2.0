@@ -41,26 +41,29 @@ public class SpecialCollectionLoader {
     private void loadSpecialCollection(SpecialCollectionType type) {
         try {
             String fileName = "special_collections/" + type.getJsonFile() + ".json";
-            InputStream stream = plugin.getResource(fileName);
+            InputStream rawStream = plugin.getResource(fileName);
 
-            if (stream == null) {
+            if (rawStream == null) {
                 plugin.getLogger().warning("Special collection file not found: " + fileName);
                 return;
             }
 
             List<String> items;
-
-            // Handle different JSON formats
-            if (type == SpecialCollectionType.MOB_HEADS) {
-                // Special handling for mob_heads.json (has vanilla/custom structure)
-                items = loadMobHeads(stream);
-            } else if (type == SpecialCollectionType.JB_FISHING_PLUS || type == SpecialCollectionType.TCG) {
-                // Custom model data items (has name, rarity, customModelData)
-                items = loadCustomModelDataItems(stream);
-            } else {
-                // Simple string arrays
-                Type listType = new TypeToken<List<String>>() { }.getType();
-                items = gson.fromJson(new InputStreamReader(stream), listType);
+            try (InputStream stream = rawStream) {
+                // Handle different JSON formats
+                if (type == SpecialCollectionType.MOB_HEADS) {
+                    // Special handling for mob_heads.json (has vanilla/custom structure)
+                    items = loadMobHeads(stream);
+                } else if (type == SpecialCollectionType.JB_FISHING_PLUS || type == SpecialCollectionType.TCG) {
+                    // Custom model data items (has name, rarity, customModelData)
+                    items = loadCustomModelDataItems(stream);
+                } else {
+                    // Simple string arrays
+                    Type listType = new TypeToken<List<String>>() { }.getType();
+                    try (InputStreamReader reader = new InputStreamReader(stream)) {
+                        items = gson.fromJson(reader, listType);
+                    }
+                }
             }
 
             CollectionDefinition collection = new CollectionDefinition(
@@ -82,7 +85,10 @@ public class SpecialCollectionLoader {
     private List<String> loadMobHeads(InputStream stream) {
         try {
             Type type = new TypeToken<Map<String, Object>>() { }.getType();
-            Map<String, Object> data = gson.fromJson(new InputStreamReader(stream), type);
+            Map<String, Object> data;
+            try (InputStreamReader reader = new InputStreamReader(stream)) {
+                data = gson.fromJson(reader, type);
+            }
             List<String> items = new ArrayList<>();
 
             // Add vanilla heads
@@ -113,7 +119,10 @@ public class SpecialCollectionLoader {
     private List<String> loadCustomModelDataItems(InputStream stream) {
         try {
             Type listType = new TypeToken<List<Map<String, Object>>>() { }.getType();
-            List<Map<String, Object>> data = gson.fromJson(new InputStreamReader(stream), listType);
+            List<Map<String, Object>> data;
+            try (InputStreamReader reader = new InputStreamReader(stream)) {
+                data = gson.fromJson(reader, listType);
+            }
 
             List<String> items = new ArrayList<>();
             for (Map<String, Object> entry : data) {

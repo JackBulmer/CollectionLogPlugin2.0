@@ -39,7 +39,11 @@ public class CollectionLoader {
                 return;
             }
 
-            JsonObject root = gson.fromJson(new InputStreamReader(stream), JsonObject.class);
+            JsonObject root;
+            try (InputStream resourceStream = stream;
+                 InputStreamReader reader = new InputStreamReader(resourceStream)) {
+                root = gson.fromJson(reader, JsonObject.class);
+            }
 
             // Parse nested structure: { "wood": { "oak": [...], "spruce": [...] }, ... }
             for (Map.Entry<String, JsonElement> categoryEntry : root.entrySet()) {
