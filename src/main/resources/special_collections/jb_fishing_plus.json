@@ -1,1 +1,216 @@
-[]
+[
+  {
+    "name": "Pond Minnow",
+    "rarity": "COMMON",
+    "customModelData": 1001
+  },
+
+  {
+    "name": "Lobster",
+    "rarity": "COMMON",
+    "customModelData": 1006
+  },
+
+  {
+    "name": "Starfish",
+    "rarity": "COMMON",
+    "customModelData": 1007
+  },
+
+  {
+    "name": "Tadpole",
+    "rarity": "COMMON",
+    "customModelData":1008
+  },
+
+  {
+    "name": "Violet Barrango",
+    "rarity": "COMMON",
+    "customModelData":1009
+  },
+
+  {
+    "name": "Lilyfin",
+    "rarity": "COMMON",
+    "customModelData": 1034
+  },
+
+  {
+    "name": "Bloodscale",
+    "rarity": "COMMON",
+    "customModelData": 1027
+  },
+
+  {
+    "name": "Stream Snapper",
+    "rarity": "UNCOMMON",
+    "customModelData": 1002
+  },
+
+  {
+    "name": "Shrimp",
+    "rarity": "UNCOMMON",
+    "customModelData": 1010
+  },
+
+  {
+    "name": "Manta Ray",
+    "rarity": "UNCOMMON",
+    "customModelData": 1011
+  },
+
+  {
+    "name": "Blue Goby",
+    "rarity": "UNCOMMON",
+    "customModelData": 1012
+  },
+
+  {
+    "name": "Blue Tang",
+    "rarity": "UNCOMMON",
+    "customModelData": 1013
+  },
+
+  {
+    "name": "Eel",
+    "rarity": "UNCOMMON",
+    "customModelData": 1029
+  },
+
+  {
+    "name": "Dusky Pike",
+    "rarity": "RARE",
+    "customModelData": 1003
+  },
+
+  {
+    "name": "Blue Marlin",
+    "rarity": "RARE",
+    "customModelData": 1014
+  },
+
+  {
+    "name": "Scarlet Koi",
+    "rarity": "RARE",
+    "customModelData": 1015
+  },
+
+  {
+    "name": "Dead Fish",
+    "rarity": "RARE",
+    "customModelData": 1016
+  },
+
+  {
+    "name": "Magenta Dottyback",
+    "rarity": "RARE",
+    "customModelData": 1017
+  },
+
+  {
+    "name": "Dark Hunter",
+    "rarity": "RARE",
+    "customModelData": 1028
+  },
+
+  {
+    "name": "Red Fang",
+    "rarity": "RARE",
+    "customModelData": 1025
+  },
+
+  {
+    "name": "Black Wraith",
+    "rarity": "RARE",
+    "customModelData": 1033
+  },
+
+  {
+    "name": "Money Fish",
+    "rarity": "RARE",
+    "customModelData": 1023
+  },
+
+  {
+    "name": "Twilight Salmon",
+    "rarity": "LEGENDARY",
+    "customModelData": 1004
+  },
+
+  {
+    "name": "Golden Squid",
+    "rarity": "LEGENDARY",
+    "customModelData": 1018
+  },
+
+  {
+    "name": "Aerial Fish",
+    "rarity": "LEGENDARY",
+    "customModelData": 1019
+  },
+
+  {
+    "name": "Robo Fish",
+    "rarity": "LEGENDARY",
+    "customModelData": 1020
+  },
+
+  {
+    "name": "Golden Eel",
+    "rarity": "LEGENDARY",
+    "customModelData": 1032
+  },
+
+  {
+    "name": "Magikarp",
+    "rarity": "LEGENDARY",
+    "customModelData": 1030
+  },
+
+  {
+    "name": "Diamond Octopus",
+    "rarity": "LEGENDARY",
+    "customModelData": 1024
+  },
+
+  {
+    "name": "Rainbow Diver",
+    "rarity": "LEGENDARY",
+    "customModelData": 1031
+  },
+
+  {
+    "name": "Elderfin Leviathan",
+    "rarity": "MYTHICAL",
+    "customModelData": 1005
+  },
+
+  {
+    "name": "Blue Lobster",
+    "rarity": "MYTHICAL",
+    "customModelData": 1021
+  },
+
+  {
+    "name": "Humbolt Squid",
+    "rarity": "MYTHICAL",
+    "customModelData": 1022
+  },
+
+  {
+    "name": "Sus Fish",
+    "rarity": "MYTHICAL",
+    "customModelData": 1035
+  },
+
+  {
+    "name": "Spectral Fish",
+    "rarity": "MYTHICAL",
+    "customModelData": 1026
+  },
+  {
+    "name": "Totem Fish",
+    "rarity": "MYTHICAL",
+    "customModelData": 1036
+  }
+]

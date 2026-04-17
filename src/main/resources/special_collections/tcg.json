@@ -1,1 +1,412 @@
-[]
+[
+  {
+    "name": "Alex Card",
+    "rarity": "COMMON",
+    "customModelData": 635001
+  },
+  {
+    "name": "Moobloom Card",
+    "rarity": "COMMON",
+    "customModelData": 635002
+  },
+  {
+    "name": "Steve Card",
+    "rarity": "COMMON",
+    "customModelData": 635003
+  },
+  {
+    "name": "Zombie Horse Card",
+    "rarity": "COMMON",
+    "customModelData": 635004
+  },
+  {
+    "name": "Snow Golem Card",
+    "rarity": "COMMON",
+    "customModelData": 635005
+  },
+  {
+    "name": "Tadpole Card",
+    "rarity": "COMMON",
+    "customModelData": 635006
+  },
+  {
+    "name": "Armadillo Card",
+    "rarity": "COMMON",
+    "customModelData": 635007
+  },
+  {
+    "name": "Bat Card",
+    "rarity": "COMMON",
+    "customModelData": 635008
+  },
+  {
+    "name": "Bee Card",
+    "rarity": "COMMON",
+    "customModelData": 635009
+  },
+  {
+    "name": "Cat Card",
+    "rarity": "COMMON",
+    "customModelData": 635010
+  },
+  {
+    "name": "Chicken Card",
+    "rarity": "COMMON",
+    "customModelData": 635011
+  },
+  {
+    "name": "Cod Card",
+    "rarity": "COMMON",
+    "customModelData": 635012
+  },
+  {
+    "name": "Cow Card",
+    "rarity": "COMMON",
+    "customModelData": 635013
+  },
+  {
+    "name": "Creeper Card",
+    "rarity": "COMMON",
+    "customModelData": 635014
+  },
+  {
+    "name": "Donkey Card",
+    "rarity": "COMMON",
+    "customModelData": 635015
+  },
+  {
+    "name": "Drowned Card",
+    "rarity": "COMMON",
+    "customModelData": 635016
+  },
+  {
+    "name": "Fox Card",
+    "rarity": "COMMON",
+    "customModelData": 635017
+  },
+  {
+    "name": "Frog Card",
+    "rarity": "COMMON",
+    "customModelData": 635018
+  },
+  {
+    "name": "Hoglin Card",
+    "rarity": "COMMON",
+    "customModelData": 635019
+  },
+  {
+    "name": "Horse Card",
+    "rarity": "COMMON",
+    "customModelData": 635020
+  },
+  {
+    "name": "Llama Card",
+    "rarity": "COMMON",
+    "customModelData": 635021
+  },
+  {
+    "name": "Magma Cube Card",
+    "rarity": "COMMON",
+    "customModelData": 635022
+  },
+  {
+    "name": "Mule Card",
+    "rarity": "COMMON",
+    "customModelData": 635023
+  },
+  {
+    "name": "Ocelot Card",
+    "rarity": "COMMON",
+    "customModelData": 635024
+  },
+  {
+    "name": "Panda Card",
+    "rarity": "COMMON",
+    "customModelData": 635025
+  },
+  {
+    "name": "Parrot Card",
+    "rarity": "COMMON",
+    "customModelData": 635026
+  },
+  {
+    "name": "Phantom Card",
+    "rarity": "COMMON",
+    "customModelData": 635027
+  },
+  {
+    "name": "Pig Card",
+    "rarity": "COMMON",
+    "customModelData": 635028
+  },
+  {
+    "name": "Piglin Card",
+    "rarity": "COMMON",
+    "customModelData": 635029
+  },
+  {
+    "name": "Pillager Card",
+    "rarity": "COMMON",
+    "customModelData": 635030
+  },
+  {
+    "name": "Pufferfish Card",
+    "rarity": "COMMON",
+    "customModelData": 635031
+  },
+  {
+    "name": "Rabbit Card",
+    "rarity": "COMMON",
+    "customModelData": 635032
+  },
+  {
+    "name": "Salmon Card",
+    "rarity": "COMMON",
+    "customModelData": 635033
+  },
+  {
+    "name": "Sheep Card",
+    "rarity": "COMMON",
+    "customModelData": 635034
+  },
+  {
+    "name": "Shulker Card",
+    "rarity": "COMMON",
+    "customModelData": 635035
+  },
+  {
+    "name": "Silverfish Card",
+    "rarity": "COMMON",
+    "customModelData": 635036
+  },
+  {
+    "name": "Skeleton Card",
+    "rarity": "COMMON",
+    "customModelData": 635037
+  },
+  {
+    "name": "Spider Card",
+    "rarity": "COMMON",
+    "customModelData": 635038
+  },
+  {
+    "name": "Squid Card",
+    "rarity": "COMMON",
+    "customModelData": 635039
+  },
+  {
+    "name": "Strider Card",
+    "rarity": "COMMON",
+    "customModelData": 635040
+  },
+  {
+    "name": "Villager Card",
+    "rarity": "COMMON",
+    "customModelData": 635041
+  },
+  {
+    "name": "Zoglin Card",
+    "rarity": "COMMON",
+    "customModelData": 635042
+  },
+  {
+    "name": "Zombie Card",
+    "rarity": "COMMON",
+    "customModelData": 635043
+  },
+  {
+    "name": "Zombified Piglin Card",
+    "rarity": "COMMON",
+    "customModelData": 635044
+  },
+  {
+    "name": "Allay Card",
+    "rarity": "RARE",
+    "customModelData": 635104
+  },
+  {
+    "name": "Axolotl Card",
+    "rarity": "RARE",
+    "customModelData": 635105
+  },
+  {
+    "name": "Blaze Card",
+    "rarity": "RARE",
+    "customModelData": 635106
+  },
+  {
+    "name": "Bogged Card",
+    "rarity": "RARE",
+    "customModelData": 635107
+  },
+  {
+    "name": "Camel Card",
+    "rarity": "RARE",
+    "customModelData": 635108
+  },
+  {
+    "name": "Dolphin Card",
+    "rarity": "RARE",
+    "customModelData": 635109
+  },
+  {
+    "name": "Enderman Card",
+    "rarity": "RARE",
+    "customModelData": 635110
+  },
+  {
+    "name": "Endermite Card",
+    "rarity": "RARE",
+    "customModelData": 635111
+  },
+  {
+    "name": "Evoker Card",
+    "rarity": "RARE",
+    "customModelData": 635112
+  },
+  {
+    "name": "Ghast Card",
+    "rarity": "RARE",
+    "customModelData": 635113
+  },
+  {
+    "name": "Glow Squid Card",
+    "rarity": "RARE",
+    "customModelData": 635114
+  },
+  {
+    "name": "Goat Card",
+    "rarity": "RARE",
+    "customModelData": 635115
+  },
+  {
+    "name": "Guardian Card",
+    "rarity": "RARE",
+    "customModelData": 635116
+  },
+  {
+    "name": "Husk Card",
+    "rarity": "RARE",
+    "customModelData": 635117
+  },
+  {
+    "name": "Mooshroom Card",
+    "rarity": "RARE",
+    "customModelData": 635118
+  },
+  {
+    "name": "Piglin Brute Card",
+    "rarity": "RARE",
+    "customModelData": 635119
+  },
+  {
+    "name": "Polar Bear Card",
+    "rarity": "RARE",
+    "customModelData": 635120
+  },
+  {
+    "name": "Ravager Card",
+    "rarity": "RARE",
+    "customModelData": 635121
+  },
+  {
+    "name": "Skeleton Horse Card",
+    "rarity": "RARE",
+    "customModelData": 635122
+  },
+  {
+    "name": "Slime Card",
+    "rarity": "RARE",
+    "customModelData": 635123
+  },
+  {
+    "name": "Sniffer Card",
+    "rarity": "RARE",
+    "customModelData": 635124
+  },
+  {
+    "name": "Stray Card",
+    "rarity": "RARE",
+    "customModelData": 635125
+  },
+  {
+    "name": "Trader Llama Card",
+    "rarity": "RARE",
+    "customModelData": 635126
+  },
+  {
+    "name": "Tropical Fish Card",
+    "rarity": "RARE",
+    "customModelData": 635127
+  },
+  {
+    "name": "Turtle Card",
+    "rarity": "RARE",
+    "customModelData": 635128
+  },
+  {
+    "name": "Vex Card",
+    "rarity": "RARE",
+    "customModelData": 635129
+  },
+  {
+    "name": "Vindicator Card",
+    "rarity": "RARE",
+    "customModelData": 635130
+  },
+  {
+    "name": "Wandering Trader Card",
+    "rarity": "RARE",
+    "customModelData": 635131
+  },
+  {
+    "name": "Witch Card",
+    "rarity": "RARE",
+    "customModelData": 635132
+  },
+  {
+    "name": "Wither Skeleton Card",
+    "rarity": "RARE",
+    "customModelData": 635133
+  },
+  {
+    "name": "Wolf Card",
+    "rarity": "RARE",
+    "customModelData": 635134
+  },
+  {
+    "name": "Zombie Villager Card",
+    "rarity": "RARE",
+    "customModelData": 635135
+  },
+  {
+    "name": "Cave Spider Card",
+    "rarity": "RARE",
+    "customModelData": 635136
+  },
+  {
+    "name": "Iron Golem Card",
+    "rarity": "ULTRA_RARE",
+    "customModelData": 635202
+  },
+  {
+    "name": "Sheep Card",
+    "rarity": "ULTRA_RARE",
+    "customModelData": 635203
+  },
+  {
+    "name": "Warden Card",
+    "rarity": "ULTRA_RARE",
+    "customModelData": 635204
+  },
+  {
+    "name": "Wither Card",
+    "rarity": "ULTRA_RARE",
+    "customModelData": 635205
+  },
+  {
+    "name": "The Creaking Card",
+    "rarity": "ULTRA_RARE",
+    "customModelData": 635201
+  }
+]
