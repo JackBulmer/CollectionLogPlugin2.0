@@ -2,11 +2,14 @@ package collectionlog;
 
 import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
+import collectionlog.collections.CollectionLoader;
+import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
 import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
+import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.ContainerListener;
@@ -14,6 +17,7 @@ import collectionlog.listeners.ExplosionListener;
 import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
 import collectionlog.listeners.PlayerDropItemListener;
+import collectionlog.managers.ProgressTrackingManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -27,6 +31,10 @@ public class CollectionLogPlugin extends JavaPlugin {
     private ContainerItemDAO containerItemDAO;
     private ItemTrackingManager itemTrackingManager;
     private ContainerTrackingManager containerTrackingManager;
+    private CollectionLoader collectionLoader;
+    private SpecialCollectionLoader specialCollectionLoader;
+    private PlayerCollectionDAO playerCollectionDAO;
+    private ProgressTrackingManager progressTrackingManager;
 
     @Override
     public void onEnable() {
@@ -67,6 +75,21 @@ public class CollectionLogPlugin extends JavaPlugin {
             blockOwnershipDAO = new BlockOwnershipDAO(this, databaseManager);
             containerItemDAO = new ContainerItemDAO(this, databaseManager);
             getLogger().info("✅ DAOs initialized");
+
+            // Initialize collection loaders
+            collectionLoader = new CollectionLoader(this);
+            collectionLoader.loadCollections();
+
+            specialCollectionLoader = new SpecialCollectionLoader(this);
+            specialCollectionLoader.loadSpecialCollections();
+            getLogger().info("✅ Collection loaders initialized");
+
+            // Initialize PlayerCollectionDAO
+            playerCollectionDAO = new PlayerCollectionDAO(this, databaseManager, asyncTaskManager);
+
+            // Initialize ProgressTrackingManager
+            progressTrackingManager = new ProgressTrackingManager(this, playerCollectionDAO, asyncTaskManager);
+            getLogger().info("✅ Progress tracking initialized");
 
             // Initialize managers
             itemTrackingManager = new ItemTrackingManager(this);
@@ -143,5 +166,21 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public ContainerTrackingManager getContainerTrackingManager() {
         return containerTrackingManager;
+    }
+
+    public CollectionLoader getCollectionLoader() {
+        return collectionLoader;
+    }
+
+    public SpecialCollectionLoader getSpecialCollectionLoader() {
+        return specialCollectionLoader;
+    }
+
+    public PlayerCollectionDAO getPlayerCollectionDAO() {
+        return playerCollectionDAO;
+    }
+
+    public ProgressTrackingManager getProgressTrackingManager() {
+        return progressTrackingManager;
     }
 }
