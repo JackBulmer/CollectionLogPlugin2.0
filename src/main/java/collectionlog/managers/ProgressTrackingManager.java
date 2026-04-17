@@ -107,7 +107,7 @@ public class ProgressTrackingManager {
         return completionStateFuture.thenCombine(subCollectionCompletedFuture, (state, completedSubCollection) ->
                         new ProgressResult(
                                 true,
-                                state.completedCollection(),
+                                state.collectionJustCompleted(),
                                 completedSubCollection,
                                 collection,
                                 completedSubCollection ? subCollection : null,
@@ -134,6 +134,6 @@ public class ProgressTrackingManager {
                 });
     }
 
-    private record CompletionState(PlayerCollectionProgress progress, boolean completedCollection) {
+    private record CompletionState(PlayerCollectionProgress progress, boolean collectionJustCompleted) {
     }
 }

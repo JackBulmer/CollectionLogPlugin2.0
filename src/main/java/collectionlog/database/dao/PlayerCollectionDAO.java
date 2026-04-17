@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 
 /**
@@ -23,6 +25,7 @@ public class PlayerCollectionDAO {
     private final Plugin plugin;
     private final DatabaseManager databaseManager;
     private final AsyncTaskManager asyncTaskManager;
+    private final ConcurrentMap<UUID, Object> completionLocks = new ConcurrentHashMap<>();
 
     public PlayerCollectionDAO(Plugin plugin, DatabaseManager databaseManager, AsyncTaskManager asyncTaskManager) {
         this.plugin = plugin;
@@ -194,40 +197,44 @@ public class PlayerCollectionDAO {
                     + "SET completion_date = ? "
                     + "WHERE player_uuid = ? AND collection_id = ?";
 
-            try (Connection conn = databaseManager.getConnection()) {
-                conn.setAutoCommit(false);
-                try {
-                    long completionTime = System.currentTimeMillis();
-                    try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
-                        stmt.setLong(1, completionTime);
-                        stmt.setString(2, playerUUID.toString());
-                        stmt.setString(3, collectionId);
-                        stmt.executeUpdate();
+            Object lock = completionLocks.computeIfAbsent(playerUUID, ignored -> new Object());
+            synchronized (lock) {
+                try (Connection conn = databaseManager.getConnection()) {
+                    conn.setAutoCommit(false);
+                    try {
+                        long completionTime = System.currentTimeMillis();
+                        try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                            stmt.setLong(1, completionTime);
+                            stmt.setString(2, playerUUID.toString());
+                            stmt.setString(3, collectionId);
+                            stmt.executeUpdate();
+                        }
+
+                        int completionOrder = getNextCompletionOrder(conn, playerUUID);
+                        String insertSql = insertIgnore(
+                                "collection_completions",
+                                "(player_uuid, collection_id, completed_at, completion_order) VALUES (?, ?, ?, ?)"
+                        );
+
+                        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                            insertStmt.setString(1, playerUUID.toString());
+                            insertStmt.setString(2, collectionId);
+                            insertStmt.setLong(3, completionTime);
+                            insertStmt.setInt(4, completionOrder);
+                            insertStmt.executeUpdate();
+                        }
+
+                        conn.commit();
+                    } catch (SQLException e) {
+                        conn.rollback();
+                        throw e;
+                    } finally {
+                        conn.setAutoCommit(true);
                     }
 
-                    String insertSql = insertIgnore(
-                            "collection_completions",
-                            "(player_uuid, collection_id, completed_at, completion_order) VALUES (?, ?, ?, (SELECT COALESCE(MAX(completion_order), 0) + 1 FROM collection_completions WHERE player_uuid = ?))"
-                    );
-
-                    try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-                        insertStmt.setString(1, playerUUID.toString());
-                        insertStmt.setString(2, collectionId);
-                        insertStmt.setLong(3, completionTime);
-                        insertStmt.setString(4, playerUUID.toString());
-                        insertStmt.executeUpdate();
-                    }
-
-                    conn.commit();
                 } catch (SQLException e) {
-                    conn.rollback();
-                    throw e;
-                } finally {
-                    conn.setAutoCommit(true);
+                    plugin.getLogger().log(Level.SEVERE, "Failed to mark collection complete", e);
                 }
-
-            } catch (SQLException e) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to mark collection complete", e);
             }
 
             return null;
@@ -241,7 +248,7 @@ public class PlayerCollectionDAO {
         return asyncTaskManager.runAsync(() -> {
             List<String> completed = new ArrayList<>();
             String sql = "SELECT collection_id FROM player_collections "
-                    + "WHERE player_uuid = ? AND completion_date IS NOT NULL";
+                    + "WHERE player_uuid = ? AND (completion_date IS NOT NULL OR collected_items >= total_items)";
 
             try (Connection conn = databaseManager.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -319,5 +326,20 @@ public class PlayerCollectionDAO {
             return "INSERT IGNORE INTO " + table + " " + columnsAndValues;
         }
         return "INSERT OR IGNORE INTO " + table + " " + columnsAndValues;
+    }
+
+    private int getNextCompletionOrder(Connection conn, UUID playerUUID) throws SQLException {
+        String sql = "SELECT COALESCE(MAX(completion_order), 0) + 1 AS next_order "
+                + "FROM collection_completions WHERE player_uuid = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, playerUUID.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("next_order");
+                }
+            }
+        }
+        return 1;
     }
 }

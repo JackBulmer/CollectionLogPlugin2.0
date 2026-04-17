@@ -17,7 +17,7 @@ public final class ProgressMessageHelper {
     }
 
     /**
-     * THE one global method to send progress messages.
+     * Central global method for sending progress messages.
      */
     public static void sendProgressMessage(Plugin plugin, Player player, ProgressResult result) {
         if (player == null || result == null || !result.hasProgress()) {

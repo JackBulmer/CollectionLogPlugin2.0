@@ -55,6 +55,9 @@ public class PlayerCollectionProgress {
         if (totalItems == 0) {
             return 0;
         }
+        if (collectedItems >= totalItems) {
+            return 100;
+        }
         return (int) ((collectedItems * 100.0) / totalItems);
     }
 
