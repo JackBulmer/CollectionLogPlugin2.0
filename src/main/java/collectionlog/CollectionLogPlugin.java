@@ -21,6 +21,7 @@ import collectionlog.managers.ProgressTrackingManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 public class CollectionLogPlugin extends JavaPlugin {
     private static CollectionLogPlugin instance;
@@ -77,11 +78,18 @@ public class CollectionLogPlugin extends JavaPlugin {
             getLogger().info("✅ DAOs initialized");
 
             // Initialize collection loaders
-            collectionLoader = new CollectionLoader(this);
-            collectionLoader.loadCollections();
+            try {
+                collectionLoader = new CollectionLoader(this);
+                collectionLoader.loadCollections();
 
-            specialCollectionLoader = new SpecialCollectionLoader(this);
-            specialCollectionLoader.loadSpecialCollections();
+                specialCollectionLoader = new SpecialCollectionLoader(this);
+                specialCollectionLoader.loadSpecialCollections();
+            } catch (RuntimeException e) {
+                // Loaders throw runtime exceptions for malformed JSON and file IO issues.
+                getLogger().log(Level.SEVERE, "❌ Failed to load collection definitions", e);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
             getLogger().info("✅ Collection loaders initialized");
 
             // Initialize PlayerCollectionDAO
