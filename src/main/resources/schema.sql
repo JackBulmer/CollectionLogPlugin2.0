@@ -13,6 +13,24 @@ CREATE INDEX IF NOT EXISTS idx_location ON block_ownership(world, x, y, z);
 CREATE INDEX IF NOT EXISTS idx_owner ON block_ownership(owner_uuid);
 CREATE INDEX IF NOT EXISTS idx_placed_time ON block_ownership(placed_at);
 
+-- Container Item Tracking (for naturally generated containers)
+CREATE TABLE IF NOT EXISTS container_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    world VARCHAR(64) NOT NULL,
+    x INT NOT NULL,
+    y INT NOT NULL,
+    z INT NOT NULL,
+    slot INT NOT NULL,
+    item_type VARCHAR(64) NOT NULL,
+    item_amount INT NOT NULL,
+    placer_uuid CHAR(36) NOT NULL,
+    placed_at BIGINT NOT NULL,
+    UNIQUE(world, x, y, z, slot)
+);
+
+CREATE INDEX IF NOT EXISTS idx_container_location ON container_items(world, x, y, z);
+CREATE INDEX IF NOT EXISTS idx_container_placer ON container_items(placer_uuid);
+
 -- Player Data
 CREATE TABLE IF NOT EXISTS player_data (
     player_uuid CHAR(36) PRIMARY KEY,
