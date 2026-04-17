@@ -20,3 +20,22 @@ plugin:
   # Auto-save interval (in minutes, 0 = disabled)
   # Note: With database, saves are instant, this is for backup only
   backup-interval: 30
+
+messages:
+  collection-complete:
+    title: "§6§l✦ Collection Complete! ✦"
+    rewards-header: "§aUnlocked Rewards:"
+    reward-tag: "§7• §aTag: §e{tag}"
+    reward-xp: "§7• §aXP: §e+{xp}"
+    reward-item: "§7• §aItems: §e{items}"
+    reward-perk: "§7• §aPerk: §e{perk}"
+
+  sub-collection-complete:
+    title: "§e§l✦ Sub-Collection Complete! ✦"
+    subtitle: "§7{name}"
+
+  progress:
+    format: "§a[Collection Log] §7{collection}: §e{current}/{total} §7({percent}%)"
+
+  server-announcement:
+    format: "§6{player}§r completed §e{collection} Collection§r!"

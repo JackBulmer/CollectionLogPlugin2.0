@@ -70,3 +70,46 @@ CREATE TABLE IF NOT EXISTS player_stats (
 
 CREATE INDEX IF NOT EXISTS idx_total_collected ON player_stats(total_collected DESC);
 CREATE INDEX IF NOT EXISTS idx_stats_username ON player_stats(username);
+
+-- Player collection progress tracking
+CREATE TABLE IF NOT EXISTS player_collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid CHAR(36) NOT NULL,
+    collection_id VARCHAR(128) NOT NULL,
+    total_items INT NOT NULL,
+    collected_items INT NOT NULL,
+    completion_date BIGINT,
+    last_updated BIGINT NOT NULL,
+    UNIQUE(player_uuid, collection_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_collections_uuid ON player_collections(player_uuid);
+CREATE INDEX IF NOT EXISTS idx_player_collections_id ON player_collections(collection_id);
+CREATE INDEX IF NOT EXISTS idx_player_collections_completed ON player_collections(player_uuid, completion_date);
+
+-- Individual collected items (for tracking which specific items player has)
+CREATE TABLE IF NOT EXISTS collected_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid CHAR(36) NOT NULL,
+    collection_id VARCHAR(128) NOT NULL,
+    item_signature VARCHAR(256) NOT NULL,
+    first_collected BIGINT NOT NULL,
+    UNIQUE(player_uuid, collection_id, item_signature)
+);
+
+CREATE INDEX IF NOT EXISTS idx_collected_items_player ON collected_items(player_uuid);
+CREATE INDEX IF NOT EXISTS idx_collected_items_collection ON collected_items(player_uuid, collection_id);
+
+-- Collection completion tracking (for announcements, stats, leaderboards)
+CREATE TABLE IF NOT EXISTS collection_completions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_uuid CHAR(36) NOT NULL,
+    collection_id VARCHAR(128) NOT NULL,
+    completed_at BIGINT NOT NULL,
+    completion_order INT NOT NULL,
+    UNIQUE(player_uuid, collection_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_completions_player ON collection_completions(player_uuid);
+CREATE INDEX IF NOT EXISTS idx_completions_time ON collection_completions(completed_at);
+CREATE INDEX IF NOT EXISTS idx_completions_order ON collection_completions(completion_order);
