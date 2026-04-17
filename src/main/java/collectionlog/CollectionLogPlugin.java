@@ -13,11 +13,16 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.ContainerListener;
+import collectionlog.listeners.CraftItemListener;
+import collectionlog.listeners.EntityDeathListener;
 import collectionlog.listeners.ExplosionListener;
+import collectionlog.listeners.InventoryClickListener;
 import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
+import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.PlayerDropItemListener;
 import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.utils.CollectionMatcher;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -36,6 +41,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private SpecialCollectionLoader specialCollectionLoader;
     private PlayerCollectionDAO playerCollectionDAO;
     private ProgressTrackingManager progressTrackingManager;
+    private CollectionMatcher collectionMatcher;
 
     @Override
     public void onEnable() {
@@ -99,6 +105,10 @@ public class CollectionLogPlugin extends JavaPlugin {
             progressTrackingManager = new ProgressTrackingManager(this, playerCollectionDAO, asyncTaskManager);
             getLogger().info("✅ Progress tracking initialized");
 
+            // Initialize collection matcher
+            collectionMatcher = new CollectionMatcher(collectionLoader, specialCollectionLoader);
+            getLogger().info("✅ Collection matcher initialized");
+
             // Initialize managers
             itemTrackingManager = new ItemTrackingManager(this);
             containerTrackingManager = new ContainerTrackingManager(this, containerItemDAO, asyncTaskManager);
@@ -112,6 +122,10 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new PlayerDropItemListener(this), this);
             getServer().getPluginManager().registerEvents(new ItemPickupListener(this), this);
             getServer().getPluginManager().registerEvents(new ContainerListener(this), this);
+            getServer().getPluginManager().registerEvents(new EntityDeathListener(this), this);
+            getServer().getPluginManager().registerEvents(new PlayerFishListener(this), this);
+            getServer().getPluginManager().registerEvents(new CraftItemListener(this), this);
+            getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);
             getLogger().info("✅ Listeners registered");
 
         } catch (SQLException e) {
@@ -190,5 +204,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public ProgressTrackingManager getProgressTrackingManager() {
         return progressTrackingManager;
+    }
+
+    public CollectionMatcher getCollectionMatcher() {
+        return collectionMatcher;
     }
 }

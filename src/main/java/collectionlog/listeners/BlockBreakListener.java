@@ -3,13 +3,17 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.dao.BlockOwnershipDAO;
+import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.utils.CollectionMatcher;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
@@ -22,16 +26,21 @@ public class BlockBreakListener implements Listener {
     private final CollectionLogPlugin plugin;
     private final BlockOwnershipDAO dao;
     private final AsyncTaskManager asyncTaskManager;
+    private final CollectionMatcher collectionMatcher;
+    private final ProgressTrackingManager progressTrackingManager;
 
     public BlockBreakListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
         this.dao = plugin.getBlockOwnershipDAO();
         this.asyncTaskManager = plugin.getAsyncTaskManager();
+        this.collectionMatcher = plugin.getCollectionMatcher();
+        this.progressTrackingManager = plugin.getProgressTrackingManager();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Location location = event.getBlock().getLocation();
+        Material brokenType = event.getBlock().getType();
         Player player = event.getPlayer();
         String playerName = player.getName();
 
@@ -86,14 +95,31 @@ public class BlockBreakListener implements Listener {
                                     plugin.getLogger().severe("Failed to remove broken placed block from tracking: " + throwable.getMessage());
                                     return null;
                                 });
-                    } else if (plugin.getConfig().getBoolean("plugin.debug", false)) {
-                        // Natural block - no tracking needed
-                        plugin.getLogger().info("Player " + playerName + " broke natural block (items will give credit)");
+                    } else {
+                        if (plugin.getConfig().getBoolean("plugin.debug", false)) {
+                            plugin.getLogger().info("Player " + playerName + " broke natural block (items will give credit)");
+                        }
+                        asyncTaskManager.runSync(() ->
+                                trackCollectionProgress(player, new ItemStack(brokenType)));
                     }
                 })
                 .exceptionally(throwable -> {
                     plugin.getLogger().severe("Failed to process block break ownership tracking: " + throwable.getMessage());
                     return null;
                 });
+    }
+
+    private void trackCollectionProgress(Player player, ItemStack item) {
+        if (collectionMatcher == null || progressTrackingManager == null) {
+            return;
+        }
+
+        for (CollectionMatcher.CollectionMatch match : collectionMatcher.findMatches(item)) {
+            progressTrackingManager.trackItemCollection(player, match.collection(), match.signature())
+                    .exceptionally(throwable -> {
+                        plugin.getLogger().severe("Failed to track mined item progress: " + throwable.getMessage());
+                        return null;
+                    });
+        }
     }
 }
