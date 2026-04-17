@@ -1,12 +1,15 @@
 package collectionlog;
 
+import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
 import collectionlog.database.dao.BlockOwnershipDAO;
+import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
+import collectionlog.listeners.ContainerListener;
 import collectionlog.listeners.ExplosionListener;
 import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
@@ -21,7 +24,9 @@ public class CollectionLogPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private AsyncTaskManager asyncTaskManager;
     private BlockOwnershipDAO blockOwnershipDAO;
+    private ContainerItemDAO containerItemDAO;
     private ItemTrackingManager itemTrackingManager;
+    private ContainerTrackingManager containerTrackingManager;
 
     @Override
     public void onEnable() {
@@ -58,17 +63,24 @@ public class CollectionLogPlugin extends JavaPlugin {
             }
 
             getLogger().info("✅ Database connected successfully");
+            // Initialize DAOs
             blockOwnershipDAO = new BlockOwnershipDAO(this, databaseManager);
+            containerItemDAO = new ContainerItemDAO(this, databaseManager);
             getLogger().info("✅ DAOs initialized");
+
+            // Initialize managers
             itemTrackingManager = new ItemTrackingManager(this);
+            containerTrackingManager = new ContainerTrackingManager(this, containerItemDAO, asyncTaskManager);
             getLogger().info("✅ Managers initialized");
 
+            // Register listeners
             getServer().getPluginManager().registerEvents(new BlockPlaceListener(this), this);
             getServer().getPluginManager().registerEvents(new BlockBreakListener(this), this);
             getServer().getPluginManager().registerEvents(new PistonListener(this), this);
             getServer().getPluginManager().registerEvents(new ExplosionListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerDropItemListener(this), this);
             getServer().getPluginManager().registerEvents(new ItemPickupListener(this), this);
+            getServer().getPluginManager().registerEvents(new ContainerListener(this), this);
             getLogger().info("✅ Listeners registered");
 
         } catch (SQLException e) {
@@ -87,6 +99,9 @@ public class CollectionLogPlugin extends JavaPlugin {
         // Clear item tracking
         if (itemTrackingManager != null) {
             itemTrackingManager.clearAll();
+        }
+        if (containerTrackingManager != null) {
+            containerTrackingManager.clearCache();
         }
 
         // Shutdown async tasks
@@ -120,5 +135,13 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public ItemTrackingManager getItemTrackingManager() {
         return itemTrackingManager;
+    }
+
+    public ContainerItemDAO getContainerItemDAO() {
+        return containerItemDAO;
+    }
+
+    public ContainerTrackingManager getContainerTrackingManager() {
+        return containerTrackingManager;
     }
 }
