@@ -181,7 +181,7 @@ public final class GUIHelper {
         Material templateMaterial = Material.getMaterial(materialName);
 
         if (templateMaterial == null) {
-            Bukkit.getLogger().warning("Could not find material for trim: " + materialName + " (signature: " + signature + ")");
+            Bukkit.getLogger().warning("Could not find material for trim: " + materialName);
             templateMaterial = Material.PAPER;
         }
 

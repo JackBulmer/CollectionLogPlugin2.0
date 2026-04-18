@@ -599,7 +599,7 @@ public class CollectionGUI implements Listener {
     private static final class CollectionGuiHolder implements InventoryHolder {
         @Override
         public Inventory getInventory() {
-            return null;
+            throw new UnsupportedOperationException("Collection GUI holder does not expose a root inventory");
         }
     }
 }
