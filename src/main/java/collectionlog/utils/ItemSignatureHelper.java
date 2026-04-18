@@ -37,19 +37,23 @@ public class ItemSignatureHelper {
         }
 
         Material type = item.getType();
-        signatures.add(type.name());
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
+            signatures.add(type.name());
             return signatures;
         }
 
+        if (meta.hasCustomModelData()) {
+            addCustomModelDataSignatures(meta, signatures);
+            return signatures;
+        }
+
+        signatures.add(type.name());
         addEnchantmentSignatures(meta, signatures);
         addPotionSignatures(type, meta, signatures);
         addArmorTrimSignatures(meta, signatures);
         addGoatHornSignatures(type, meta, signatures);
         addMobHeadSignatures(type, sourceEntityType, signatures);
-        addCustomModelDataSignatures(meta, signatures);
 
         return signatures;
     }

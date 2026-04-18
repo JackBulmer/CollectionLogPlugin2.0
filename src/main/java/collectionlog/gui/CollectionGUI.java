@@ -48,6 +48,11 @@ public class CollectionGUI implements Listener {
     private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
     private static final int SLOT_INFO = 49;
+    private static final int BACK_ICON_CUSTOM_MODEL_DATA = 24001;
+    private static final int STATS_ICON_CUSTOM_MODEL_DATA = 24111;
+    private static final int SUB_COLLECTION_ROW_SIZE = 9;
+    private static final int SUB_COLLECTION_ROW3_START = 18;
+    private static final int SUB_COLLECTION_ROW4_START = 27;
 
     private final CollectionLogPlugin plugin;
     private final PlayerCollectionDAO playerCollectionDAO;
@@ -106,7 +111,7 @@ public class CollectionGUI implements Listener {
 
         int total = collection.getItems().size();
         int collectedCount = total - countMissing(collection.getItems(), collected);
-        inventory.setItem(SLOT_INFO, GUIHelper.createCollectionIcon(collection.getId(), collection, collectedCount, total));
+        inventory.setItem(SLOT_INFO, createOverviewItem(collection.getName(), collectedCount, total));
 
         int[] itemSlots = buildSlotRange(0, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
@@ -140,30 +145,36 @@ public class CollectionGUI implements Listener {
 
         Set<String> collected = getCollectedSet(player, collectionId);
         List<SubCollectionDefinition> subCollections = new ArrayList<>(collection.getSubCollections());
-        if (showUncollectedOnly) {
-            subCollections.removeIf(subCollection -> countCollected(subCollection.getItems(), collected) >= subCollection.getTotalItems());
-        }
 
         PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, SUB_COLLECTION_LIST_PAGE_SIZE);
-        int totalPages = Math.max(1, (subCollections.size() + SUB_COLLECTION_LIST_PAGE_SIZE - 1) / SUB_COLLECTION_LIST_PAGE_SIZE);
 
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
         Map<Integer, SlotAction> slotActions = new HashMap<>();
 
-        for (int i = 0; i < pageSlice.pageItems().size() && i < SUB_COLLECTION_LIST_PAGE_SIZE; i++) {
+        int visibleSubCollections = Math.min(pageSlice.pageItems().size(), SUB_COLLECTION_LIST_PAGE_SIZE);
+        int firstRowCount = Math.min(SUB_COLLECTION_ROW_SIZE, visibleSubCollections);
+        int firstRowStart = SUB_COLLECTION_ROW3_START + ((SUB_COLLECTION_ROW_SIZE - firstRowCount) / 2);
+
+        int currentSlot = firstRowStart;
+        int secondRowSlot = SUB_COLLECTION_ROW4_START;
+        for (int i = 0; i < visibleSubCollections; i++) {
             SubCollectionDefinition subCollection = pageSlice.pageItems().get(i);
             int subCollected = countCollected(subCollection.getItems(), collected);
             ItemStack subIcon = createSubCollectionIcon(collectionId, subCollection, subCollected);
-            int slot = 18 + i;
+            int slot;
+            if (i < firstRowCount) {
+                slot = currentSlot++;
+            } else {
+                slot = secondRowSlot++;
+            }
             inventory.setItem(slot, subIcon);
             slotActions.put(slot, SlotAction.openSubCollection(collectionId, subCollection.getId()));
         }
 
         int total = collection.getItems().size();
         int collectedCount = total - countMissing(collection.getItems(), collected);
-        inventory.setItem(SLOT_INFO, GUIHelper.createCollectionIcon(collection.getId(), collection, collectedCount, total));
-
-        addNavigationButtons(inventory, pageSlice.page(), totalPages, showUncollectedOnly);
+        inventory.setItem(SLOT_INFO, createOverviewItem(collection.getName(), collectedCount, total));
+        inventory.setItem(SLOT_BACK, createSubCollectionListBackButton());
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
@@ -172,8 +183,8 @@ public class CollectionGUI implements Listener {
                 null,
                 pageSlice.page(),
                 showUncollectedOnly,
-                pageSlice.hasPrevious(),
-                pageSlice.hasNext(),
+                false,
+                false,
                 slotActions
         ));
     }
@@ -205,8 +216,7 @@ public class CollectionGUI implements Listener {
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
 
         int subCollected = countCollected(subCollection.getItems(), collected);
-        ItemStack info = createSubCollectionIcon(collectionId, subCollection, subCollected);
-        inventory.setItem(SLOT_INFO, info);
+        inventory.setItem(SLOT_INFO, createOverviewItem(subCollection.getName(), subCollected, subCollection.getTotalItems()));
 
         int[] itemSlots = buildSlotRange(0, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
@@ -257,17 +267,25 @@ public class CollectionGUI implements Listener {
             return;
         }
 
-        if (slot == SLOT_FILTER && state.viewType() != ViewType.MAIN) {
+        if (slot == SLOT_FILTER
+                && state.viewType() != ViewType.MAIN
+                && state.viewType() != ViewType.SUB_COLLECTION_LIST) {
             handleFilterToggle(player, state);
             return;
         }
 
-        if (slot == SLOT_PREV && state.viewType() != ViewType.MAIN && state.hasPrevious()) {
+        if (slot == SLOT_PREV
+                && state.viewType() != ViewType.MAIN
+                && state.viewType() != ViewType.SUB_COLLECTION_LIST
+                && state.hasPrevious()) {
             navigate(player, state, state.page() - 1);
             return;
         }
 
-        if (slot == SLOT_NEXT && state.viewType() != ViewType.MAIN && state.hasNext()) {
+        if (slot == SLOT_NEXT
+                && state.viewType() != ViewType.MAIN
+                && state.viewType() != ViewType.SUB_COLLECTION_LIST
+                && state.hasNext()) {
             navigate(player, state, state.page() + 1);
             return;
         }
@@ -323,7 +341,7 @@ public class CollectionGUI implements Listener {
             slotActions.put(i, SlotAction.openCollection(entry.collectionId()));
         }
 
-        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", 24001));
+        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", BACK_ICON_CUSTOM_MODEL_DATA));
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
@@ -557,7 +575,7 @@ public class CollectionGUI implements Listener {
         ItemStack backButton = new ItemStack(Material.PAPER);
         ItemMeta backMeta = backButton.getItemMeta();
         if (backMeta != null) {
-            backMeta.setCustomModelData(24001);
+            backMeta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
             backMeta.setDisplayName("§cBack");
             backButton.setItemMeta(backMeta);
         }
@@ -611,6 +629,37 @@ public class CollectionGUI implements Listener {
             GUIHelper.applyGlow(icon);
         }
         return icon;
+    }
+
+    private ItemStack createOverviewItem(String displayName, int collected, int total) {
+        ItemStack overview = new ItemStack(Material.PAPER);
+        ItemMeta meta = overview.getItemMeta();
+        if (meta == null) {
+            return overview;
+        }
+
+        double percentage = total == 0 ? 0 : (double) collected / total * 100;
+        meta.setCustomModelData(STATS_ICON_CUSTOM_MODEL_DATA);
+        meta.setDisplayName("§b" + displayName);
+        meta.setLore(List.of(
+                "§7Progress: " + collected + "/" + total,
+                String.format(Locale.ROOT, "§d%.2f%% Complete", percentage)
+        ));
+        overview.setItemMeta(meta);
+        return overview;
+    }
+
+    private ItemStack createSubCollectionListBackButton() {
+        ItemStack backButton = new ItemStack(Material.PAPER);
+        ItemMeta backMeta = backButton.getItemMeta();
+        if (backMeta == null) {
+            return backButton;
+        }
+
+        backMeta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
+        backMeta.setDisplayName("§cBack to Collections");
+        backButton.setItemMeta(backMeta);
+        return backButton;
     }
 
     private String normalize(String value) {
