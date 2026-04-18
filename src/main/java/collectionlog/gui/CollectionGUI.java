@@ -39,7 +39,7 @@ public class CollectionGUI implements Listener {
     private static final int INVENTORY_SIZE = 54;
     private static final int MAIN_PAGE_SIZE = 45;
     private static final int COLLECTION_PAGE_SIZE = 45;
-    private static final int SUB_LIST_PAGE_SIZE = 27;
+    private static final int SUB_COLLECTION_LIST_PAGE_SIZE = 27;
     private static final int SUB_PAGE_SIZE = 45;
 
     private static final int SLOT_PREV = 45;
@@ -144,13 +144,13 @@ public class CollectionGUI implements Listener {
             subCollections.removeIf(subCollection -> countCollected(subCollection.getItems(), collected) >= subCollection.getTotalItems());
         }
 
-        PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, SUB_LIST_PAGE_SIZE);
-        int totalPages = Math.max(1, (subCollections.size() + SUB_LIST_PAGE_SIZE - 1) / SUB_LIST_PAGE_SIZE);
+        PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, SUB_COLLECTION_LIST_PAGE_SIZE);
+        int totalPages = Math.max(1, (subCollections.size() + SUB_COLLECTION_LIST_PAGE_SIZE - 1) / SUB_COLLECTION_LIST_PAGE_SIZE);
 
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
         Map<Integer, SlotAction> slotActions = new HashMap<>();
 
-        for (int i = 0; i < pageSlice.pageItems().size() && i < SUB_LIST_PAGE_SIZE; i++) {
+        for (int i = 0; i < pageSlice.pageItems().size() && i < SUB_COLLECTION_LIST_PAGE_SIZE; i++) {
             SubCollectionDefinition subCollection = pageSlice.pageItems().get(i);
             int subCollected = countCollected(subCollection.getItems(), collected);
             ItemStack subIcon = createSubCollectionIcon(collectionId, subCollection, subCollected);
