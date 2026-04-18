@@ -38,15 +38,16 @@ public class CollectionGUI implements Listener {
 
     private static final int INVENTORY_SIZE = 54;
     private static final int MAIN_PAGE_SIZE = 45;
-    private static final int COLLECTION_PAGE_SIZE = 27;
-    private static final int SUB_PAGE_SIZE = 36;
+    private static final int COLLECTION_PAGE_SIZE = 45;
+    private static final int SUB_COLLECTION_LIST_PAGE_SIZE = 27;
+    private static final int SUB_PAGE_SIZE = 45;
 
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 48;
     private static final int SLOT_MAIN_CLOSE = 49;
     private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
-    private static final int SLOT_INFO = 4;
+    private static final int SLOT_INFO = 49;
 
     private final CollectionLogPlugin plugin;
     private final PlayerCollectionDAO playerCollectionDAO;
@@ -107,7 +108,7 @@ public class CollectionGUI implements Listener {
         int collectedCount = total - countMissing(collection.getItems(), collected);
         inventory.setItem(SLOT_INFO, GUIHelper.createCollectionIcon(collection.getId(), collection, collectedCount, total));
 
-        int[] itemSlots = buildSlotRange(18, 44);
+        int[] itemSlots = buildSlotRange(0, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
             String signature = pageSlice.pageItems().get(i);
             boolean isCollected = isCollectedForDisplay(collectionId, signature, collected);
@@ -143,19 +144,24 @@ public class CollectionGUI implements Listener {
             subCollections.removeIf(subCollection -> countCollected(subCollection.getItems(), collected) >= subCollection.getTotalItems());
         }
 
-        PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, MAIN_PAGE_SIZE);
-        int totalPages = Math.max(1, (subCollections.size() + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE);
+        PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, SUB_COLLECTION_LIST_PAGE_SIZE);
+        int totalPages = Math.max(1, (subCollections.size() + SUB_COLLECTION_LIST_PAGE_SIZE - 1) / SUB_COLLECTION_LIST_PAGE_SIZE);
 
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
         Map<Integer, SlotAction> slotActions = new HashMap<>();
 
-        for (int i = 0; i < pageSlice.pageItems().size() && i < MAIN_PAGE_SIZE; i++) {
+        for (int i = 0; i < pageSlice.pageItems().size() && i < SUB_COLLECTION_LIST_PAGE_SIZE; i++) {
             SubCollectionDefinition subCollection = pageSlice.pageItems().get(i);
             int subCollected = countCollected(subCollection.getItems(), collected);
             ItemStack subIcon = createSubCollectionIcon(collectionId, subCollection, subCollected);
-            inventory.setItem(i, subIcon);
-            slotActions.put(i, SlotAction.openSubCollection(collectionId, subCollection.getId()));
+            int slot = 18 + i;
+            inventory.setItem(slot, subIcon);
+            slotActions.put(slot, SlotAction.openSubCollection(collectionId, subCollection.getId()));
         }
+
+        int total = collection.getItems().size();
+        int collectedCount = total - countMissing(collection.getItems(), collected);
+        inventory.setItem(SLOT_INFO, GUIHelper.createCollectionIcon(collection.getId(), collection, collectedCount, total));
 
         addNavigationButtons(inventory, pageSlice.page(), totalPages, showUncollectedOnly);
 
@@ -202,7 +208,7 @@ public class CollectionGUI implements Listener {
         ItemStack info = createSubCollectionIcon(collectionId, subCollection, subCollected);
         inventory.setItem(SLOT_INFO, info);
 
-        int[] itemSlots = buildSlotRange(9, 44);
+        int[] itemSlots = buildSlotRange(0, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
             String signature = pageSlice.pageItems().get(i);
             boolean isCollected = isCollectedForDisplay(collectionId, signature, collected);
@@ -483,15 +489,31 @@ public class CollectionGUI implements Listener {
 
         List<String> expanded = new ArrayList<>();
         for (String signature : sourceItems) {
-            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(signature.toLowerCase(Locale.ROOT)));
+            String enchantmentKey = signature;
+            String explicitLevel = null;
+            if (signature.contains(":")) {
+                String[] parts = signature.split(":", 2);
+                enchantmentKey = parts[0].trim();
+                String level = parts[1].trim();
+                if (level.chars().allMatch(Character::isDigit)) {
+                    explicitLevel = level;
+                }
+            }
+
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentKey.toLowerCase(Locale.ROOT)));
             if (enchantment == null) {
                 expanded.add(signature);
                 continue;
             }
 
+            if (explicitLevel != null) {
+                expanded.add(enchantmentKey + ":" + explicitLevel);
+                continue;
+            }
+
             int maxLevel = Math.max(1, enchantment.getMaxLevel());
             for (int level = 1; level <= maxLevel; level++) {
-                expanded.add(signature + ":" + level);
+                expanded.add(enchantmentKey + ":" + level);
             }
         }
         return expanded;
@@ -739,7 +761,7 @@ public class CollectionGUI implements Listener {
             case "beds" -> Material.RED_BED;
             case "music discs" -> Material.MUSIC_DISC_CHIRP;
             case "buckets" -> Material.WATER_BUCKET;
-            case "fishing", "jb fishing plus" -> Material.COOKED_COD;
+            case "fishing", "jb fishing +", "jb fishing plus", "custom fish" -> Material.FISHING_ROD;
             case "potions" -> Material.POTION;
             case "armour trims", "armor trims" -> Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE;
             case "horns" -> Material.GOAT_HORN;
