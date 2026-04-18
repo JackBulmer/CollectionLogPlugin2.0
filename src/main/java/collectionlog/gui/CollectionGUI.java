@@ -458,13 +458,7 @@ public class CollectionGUI implements Listener {
     }
 
     private int countMissing(List<String> sourceItems, Set<String> collectedSet) {
-        int count = 0;
-        for (String item : sourceItems) {
-            if (!collectedSet.contains(item)) {
-                count++;
-            }
-        }
-        return count;
+        return sourceItems.size() - countCollected(sourceItems, collectedSet);
     }
 
     private ItemStack createSubCollectionIcon(SubCollectionDefinition subCollection, int collected) {
