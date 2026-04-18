@@ -30,9 +30,15 @@ public final class ProgressMessageHelper {
             return;
         }
 
-        player.sendMessage(ChatColor.DARK_AQUA + "[CollectionLog] " + ChatColor.GREEN + "New item collected for "
-                + ChatColor.AQUA + collection.getName() + ChatColor.GREEN + "! ("
-                + progress.getCollectedItems() + "/" + progress.getTotalItems() + ")");
+        double percentage = progress.getPercentage();
+        String message = String.format(
+                "§8✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                collection.getName(),
+                percentage,
+                progress.getCollectedItems(),
+                progress.getTotalItems()
+        );
+        player.sendMessage(message);
 
         if (result.completedSubCollection()) {
             SubCollectionDefinition sub = result.getSubCollection();
