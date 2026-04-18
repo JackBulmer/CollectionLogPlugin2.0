@@ -7,8 +7,9 @@ description: Advanced collection tracking system with database backend
 
 commands:
   logs:
-    description: Open collection log GUI
-    usage: /logs
+    description: Open the collection log GUI
+    usage: /logs [collection]
+    aliases: [cl, collections]
 
   cldb:
     description: Database management commands

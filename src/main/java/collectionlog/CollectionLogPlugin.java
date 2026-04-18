@@ -4,12 +4,14 @@ import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
+import collectionlog.commands.LogsCommand;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
 import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.database.dao.PlayerCollectionDAO;
+import collectionlog.gui.CollectionGUI;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.ContainerListener;
@@ -23,6 +25,7 @@ import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.PlayerDropItemListener;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -42,6 +45,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private PlayerCollectionDAO playerCollectionDAO;
     private ProgressTrackingManager progressTrackingManager;
     private CollectionMatcher collectionMatcher;
+    private CollectionGUI collectionGUI;
 
     @Override
     public void onEnable() {
@@ -105,6 +109,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             progressTrackingManager = new ProgressTrackingManager(this, playerCollectionDAO, asyncTaskManager);
             getLogger().info("✅ Progress tracking initialized");
 
+            collectionGUI = new CollectionGUI(this);
+
             // Initialize collection matcher
             collectionMatcher = new CollectionMatcher(collectionLoader, specialCollectionLoader);
             getLogger().info("✅ Collection matcher initialized");
@@ -126,7 +132,16 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new PlayerFishListener(this), this);
             getServer().getPluginManager().registerEvents(new CraftItemListener(this), this);
             getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);
+            getServer().getPluginManager().registerEvents(collectionGUI, this);
             getLogger().info("✅ Listeners registered");
+
+            PluginCommand logsCommand = getCommand("logs");
+            if (logsCommand != null) {
+                LogsCommand executor = new LogsCommand(this);
+                logsCommand.setExecutor(executor);
+                logsCommand.setTabCompleter(executor);
+            }
+            getLogger().info("✅ GUI and commands registered");
 
         } catch (SQLException e) {
             getLogger().severe("❌ Failed to initialize database: " + e.getMessage());
@@ -208,5 +223,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CollectionMatcher getCollectionMatcher() {
         return collectionMatcher;
+    }
+
+    public CollectionGUI getCollectionGUI() {
+        return collectionGUI;
     }
 }
