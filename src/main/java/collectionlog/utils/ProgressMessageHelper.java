@@ -39,7 +39,7 @@ public final class ProgressMessageHelper {
         // Main collection progress message
         double percentage = progress.getPercentage();
         String message = String.format(
-                "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
+                "§6✦ §aItem Collection Updated: §b%s §dProgress: %.2f%% (%d/%d)",
                 collection.getName(),
                 percentage,
                 progress.getCollectedItems(),
@@ -56,7 +56,7 @@ public final class ProgressMessageHelper {
             double subPercentage = subTotalCount <= 0 ? 0.0 : (subCollectedCount * 100.0) / subTotalCount;
 
             String subMessage = String.format(
-                    "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
+                    "§6✦ §aItem Collection Updated: §b%s §dProgress: %.2f%% (%d/%d)",
                     subCollection.getName(),
                     subPercentage,
                     subCollectedCount,
