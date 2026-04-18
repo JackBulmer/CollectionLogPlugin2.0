@@ -9,6 +9,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MusicInstrumentMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.MusicInstrument;
 import org.bukkit.potion.PotionType;
 
 import java.util.LinkedHashSet;
@@ -97,8 +98,9 @@ public class ItemSignatureHelper {
             return;
         }
 
-        if (instrumentMeta.hasInstrument()) {
-            signatures.add(instrumentMeta.getInstrument().getKey().getKey().toLowerCase(Locale.ROOT));
+        MusicInstrument instrument = instrumentMeta.getInstrument();
+        if (instrument != null) {
+            signatures.add(instrument.getKey().getKey().toLowerCase(Locale.ROOT));
         }
     }
 
