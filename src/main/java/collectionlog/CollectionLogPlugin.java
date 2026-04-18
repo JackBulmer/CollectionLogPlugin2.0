@@ -23,6 +23,7 @@ import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
 import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.PlayerDropItemListener;
+import collectionlog.milestones.MilestoneManager;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
 import org.bukkit.command.PluginCommand;
@@ -44,6 +45,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private SpecialCollectionLoader specialCollectionLoader;
     private PlayerCollectionDAO playerCollectionDAO;
     private ProgressTrackingManager progressTrackingManager;
+    private MilestoneManager milestoneManager;
     private CollectionMatcher collectionMatcher;
     private CollectionGUI collectionGUI;
 
@@ -108,6 +110,10 @@ public class CollectionLogPlugin extends JavaPlugin {
             // Initialize ProgressTrackingManager
             progressTrackingManager = new ProgressTrackingManager(this, playerCollectionDAO, asyncTaskManager);
             getLogger().info("✅ Progress tracking initialized");
+
+            // Initialize milestone manager
+            milestoneManager = new MilestoneManager(this);
+            getLogger().info("✅ Milestone system initialized");
 
             collectionGUI = new CollectionGUI(this);
 
@@ -223,6 +229,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CollectionMatcher getCollectionMatcher() {
         return collectionMatcher;
+    }
+
+    public MilestoneManager getMilestoneManager() {
+        return milestoneManager;
     }
 
     public CollectionGUI getCollectionGUI() {
