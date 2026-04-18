@@ -50,6 +50,9 @@ public class CollectionGUI implements Listener {
     private static final int SLOT_INFO = 49;
     private static final int BACK_ICON_CUSTOM_MODEL_DATA = 24001;
     private static final int STATS_ICON_CUSTOM_MODEL_DATA = 24111;
+    private static final int SUB_COLLECTION_ROW_SIZE = 9;
+    private static final int SUB_COLLECTION_ROW3_START = 18;
+    private static final int SUB_COLLECTION_ROW4_START = 27;
 
     private final CollectionLogPlugin plugin;
     private final PlayerCollectionDAO playerCollectionDAO;
@@ -149,11 +152,11 @@ public class CollectionGUI implements Listener {
         Map<Integer, SlotAction> slotActions = new HashMap<>();
 
         int visibleSubCollections = Math.min(pageSlice.pageItems().size(), SUB_COLLECTION_LIST_PAGE_SIZE);
-        int firstRowCount = Math.min(9, visibleSubCollections);
-        int firstRowStart = 18 + ((9 - firstRowCount) / 2);
+        int firstRowCount = Math.min(SUB_COLLECTION_ROW_SIZE, visibleSubCollections);
+        int firstRowStart = SUB_COLLECTION_ROW3_START + ((SUB_COLLECTION_ROW_SIZE - firstRowCount) / 2);
 
         int currentSlot = firstRowStart;
-        int secondRowSlot = 27;
+        int secondRowSlot = SUB_COLLECTION_ROW4_START;
         for (int i = 0; i < visibleSubCollections; i++) {
             SubCollectionDefinition subCollection = pageSlice.pageItems().get(i);
             int subCollected = countCollected(subCollection.getItems(), collected);
