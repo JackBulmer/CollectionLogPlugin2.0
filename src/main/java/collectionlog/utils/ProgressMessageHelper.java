@@ -32,7 +32,7 @@ public final class ProgressMessageHelper {
 
         double percentage = progress.getPercentage();
         String message = String.format(
-                "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
                 collection.getName(),
                 percentage,
                 progress.getCollectedItems(),
