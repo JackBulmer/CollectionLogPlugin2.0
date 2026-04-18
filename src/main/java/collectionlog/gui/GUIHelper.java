@@ -3,6 +3,7 @@ package collectionlog.gui;
 import collectionlog.collections.CollectionDefinition;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -175,7 +176,7 @@ public final class GUIHelper {
         }
 
         String normalized = head.toUpperCase(Locale.ROOT);
-        if (normalized.contains("CURSE") || normalized.contains("PROTECTION") || normalized.contains("SHARPNESS")) {
+        if (Enchantment.getByKey(NamespacedKey.minecraft(head.toLowerCase(Locale.ROOT))) != null) {
             return Material.ENCHANTED_BOOK;
         }
         if (normalized.contains("HORN")) {
