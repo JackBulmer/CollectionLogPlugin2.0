@@ -1,13 +1,19 @@
 package collectionlog.utils;
 
+import collectionlog.CollectionLogPlugin;
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.SubCollectionDefinition;
+import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.models.PlayerCollectionProgress;
 import collectionlog.models.ProgressResult;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Global helper for progress-related chat messaging.
@@ -33,7 +39,7 @@ public final class ProgressMessageHelper {
         // Main collection progress message
         double percentage = progress.getPercentage();
         String message = String.format(
-                "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
                 collection.getName(),
                 percentage,
                 progress.getCollectedItems(),
@@ -47,10 +53,10 @@ public final class ProgressMessageHelper {
             // Calculate sub-collection progress
             int subCollectedCount = getSubCollectionProgress(plugin, player, collection, subCollection);
             int subTotalCount = subCollection.getTotalItems();
-            double subPercentage = (subCollectedCount * 100.0) / subTotalCount;
+            double subPercentage = subTotalCount <= 0 ? 0.0 : (subCollectedCount * 100.0) / subTotalCount;
 
             String subMessage = String.format(
-                    "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                    "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
                     subCollection.getName(),
                     subPercentage,
                     subCollectedCount,
@@ -83,21 +89,21 @@ public final class ProgressMessageHelper {
      * Count how many items from a sub-collection the player has collected
      */
     private static int getSubCollectionProgress(Plugin plugin, Player player, CollectionDefinition collection, SubCollectionDefinition subCollection) {
-        // Access the PlayerCollectionDAO through the plugin
+        if (!(plugin instanceof CollectionLogPlugin collectionLogPlugin)) {
+            return 0;
+        }
+
+        PlayerCollectionDAO playerCollectionDAO = collectionLogPlugin.getPlayerCollectionDAO();
+        if (playerCollectionDAO == null) {
+            return 0;
+        }
+
         try {
-            java.lang.reflect.Method method = plugin.getClass().getMethod("getPlayerCollectionDAO");
-            Object dao = method.invoke(plugin);
+            List<String> collectedItems = playerCollectionDAO
+                    .getCollectedItems(player.getUniqueId(), collection.getId())
+                    .join();
+            Set<String> collectedSet = new HashSet<>(collectedItems);
 
-            // Get collected items
-            method = dao.getClass().getMethod("getCollectedItems", java.util.UUID.class, String.class);
-            @SuppressWarnings("unchecked")
-            java.util.concurrent.CompletableFuture<java.util.List<String>> future =
-                    (java.util.concurrent.CompletableFuture<java.util.List<String>>) method.invoke(dao, player.getUniqueId(), collection.getId());
-
-            java.util.List<String> collectedItems = future.join();
-            java.util.Set<String> collectedSet = new java.util.HashSet<>(collectedItems);
-
-            // Count how many sub-collection items are collected
             int count = 0;
             for (String item : subCollection.getItems()) {
                 if (collectedSet.contains(item)) {
@@ -105,8 +111,7 @@ public final class ProgressMessageHelper {
                 }
             }
             return count;
-
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             plugin.getLogger().warning("Failed to get sub-collection progress: " + e.getMessage());
             return 0;
         }

@@ -110,7 +110,7 @@ public class ProgressTrackingManager {
                                 state.collectionJustCompleted(),
                                 completedSubCollection,
                                 collection,
-                                completedSubCollection ? subCollection : null,
+                                subCollection,
                                 state.progress()
                         )
                 );
