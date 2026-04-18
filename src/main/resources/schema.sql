@@ -113,3 +113,33 @@ CREATE TABLE IF NOT EXISTS collection_completions (
 CREATE INDEX IF NOT EXISTS idx_completions_player ON collection_completions(player_uuid);
 CREATE INDEX IF NOT EXISTS idx_completions_time ON collection_completions(completed_at);
 CREATE INDEX IF NOT EXISTS idx_completions_order ON collection_completions(completion_order);
+
+-- Milestone perks unlocked by players
+CREATE TABLE IF NOT EXISTS player_perks (
+    player_uuid CHAR(36) NOT NULL,
+    perk_id VARCHAR(64) NOT NULL,
+    unlocked_at BIGINT NOT NULL,
+    PRIMARY KEY (player_uuid, perk_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_perks_uuid ON player_perks(player_uuid);
+
+-- Milestones that have been completed by players
+CREATE TABLE IF NOT EXISTS completed_milestones (
+    player_uuid CHAR(36) NOT NULL,
+    milestone_name VARCHAR(160) NOT NULL,
+    completed_at BIGINT NOT NULL,
+    PRIMARY KEY (player_uuid, milestone_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_completed_milestones_uuid ON completed_milestones(player_uuid);
+
+-- Unlocked player tags/suffixes
+CREATE TABLE IF NOT EXISTS player_tags (
+    player_uuid CHAR(36) NOT NULL,
+    tag_id VARCHAR(64) NOT NULL,
+    unlocked_at BIGINT NOT NULL,
+    PRIMARY KEY (player_uuid, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_tags_uuid ON player_tags(player_uuid);

@@ -1,5 +1,6 @@
 package collectionlog.managers;
 
+import collectionlog.CollectionLogPlugin;
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.SubCollectionDefinition;
 import collectionlog.database.AsyncTaskManager;
@@ -71,7 +72,10 @@ public class ProgressTrackingManager {
         return trackItemCollection(player.getUniqueId(), collection, itemSignature)
                 .thenApply(result -> {
                     if (result.hasProgress()) {
-                        asyncTaskManager.runSync(() -> ProgressMessageHelper.sendProgressMessage(plugin, player, result));
+                        asyncTaskManager.runSync(() -> {
+                            ProgressMessageHelper.sendProgressMessage(plugin, player, result);
+                            triggerMilestoneChecks(player, result);
+                        });
                     }
                     return result;
                 });
@@ -132,6 +136,27 @@ public class ProgressTrackingManager {
                     List<String> required = subCollection.getItems();
                     return !required.isEmpty() && collected.containsAll(required);
                 });
+    }
+
+    private void triggerMilestoneChecks(Player player, ProgressResult result) {
+        if (!(plugin instanceof CollectionLogPlugin collectionLogPlugin) || collectionLogPlugin.getMilestoneManager() == null) {
+            return;
+        }
+
+        if (result.completedCollection() && result.getCollection() != null) {
+            collectionLogPlugin.getMilestoneManager().checkCollectionCompletion(
+                    player.getUniqueId(),
+                    result.getCollection().getId()
+            );
+        }
+
+        if (result.completedSubCollection() && result.getCollection() != null && result.getSubCollection() != null) {
+            collectionLogPlugin.getMilestoneManager().checkSubCollectionCompletion(
+                    player.getUniqueId(),
+                    result.getCollection().getId(),
+                    result.getSubCollection().getName()
+            );
+        }
     }
 
     private record CompletionState(PlayerCollectionProgress progress, boolean collectionJustCompleted) {

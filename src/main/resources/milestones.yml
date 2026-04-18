@@ -1,0 +1,83 @@
+# Collection milestones
+collections:
+  wood:
+    perks:
+      - tree_capitator
+    tags:
+      - woodcutter
+    toast_message: "Wood Collection Complete!"
+    announcement_message: "{player} has mastered the Wood collection!"
+
+  ores:
+    perks:
+      - vein_miner
+    tags:
+      - master_miner
+    toast_message: "Ores Collection Complete!"
+    announcement_message: "{player} has collected all ores!"
+
+  end:
+    perks:
+      - double_ender_chest
+    tags:
+      - end_master
+    toast_message: "End Collection Complete!"
+    announcement_message: "{player} has conquered the End!"
+
+  shulker:
+    perks:
+      - shulker_access
+    tags:
+      - shulker_hunter
+    toast_message: "Shulker Collection Complete!"
+    announcement_message: "{player} has collected all shulker items!"
+
+  sniffer:
+    perks:
+      - sniffer_flowers
+    tags:
+      - sniffer_friend
+    toast_message: "Sniffer Collection Complete!"
+    announcement_message: "{player} has completed the Sniffer collection!"
+
+  dyes:
+    perks:
+      - dye_swap
+    tags:
+      - colorful
+    toast_message: "Dyes Collection Complete!"
+    announcement_message: "{player} has collected all dyes!"
+
+# Sub-collection milestones
+sub_collections:
+  wood:
+    oak:
+      xp: 100
+      items:
+        - "DIAMOND:1"
+      toast_message: "Oak Collection Complete!"
+
+    spruce:
+      xp: 100
+      items:
+        - "DIAMOND:1"
+      toast_message: "Spruce Collection Complete!"
+
+    birch:
+      xp: 100
+      items:
+        - "DIAMOND:1"
+      toast_message: "Birch Collection Complete!"
+
+  ores:
+    ore blocks:
+      xp: 150
+      items:
+        - "DIAMOND:2"
+      toast_message: "Ore Blocks Complete!"
+
+    ore materials:
+      xp: 150
+      items:
+        - "DIAMOND:2"
+      toast_message: "Ore Materials Complete!"
