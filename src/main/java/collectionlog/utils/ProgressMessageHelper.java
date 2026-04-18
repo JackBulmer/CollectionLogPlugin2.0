@@ -32,7 +32,7 @@ public final class ProgressMessageHelper {
 
         double percentage = progress.getPercentage();
         String message = String.format(
-                "§8✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
                 collection.getName(),
                 percentage,
                 progress.getCollectedItems(),
@@ -49,10 +49,10 @@ public final class ProgressMessageHelper {
         }
 
         if (result.completedCollection()) {
-            String message = ChatColor.GOLD + "[CollectionLog] " + ChatColor.YELLOW + player.getName()
+            String completionMessage = ChatColor.GOLD + "[CollectionLog] " + ChatColor.YELLOW + player.getName()
                     + ChatColor.GOLD + " completed the " + ChatColor.AQUA + collection.getName()
                     + ChatColor.GOLD + " collection!";
-            Bukkit.getServer().broadcastMessage(message);
+            Bukkit.getServer().broadcastMessage(completionMessage);
 
             if (plugin.getConfig().getBoolean("plugin.debug", false)) {
                 plugin.getLogger().info("Broadcasted collection completion for "
