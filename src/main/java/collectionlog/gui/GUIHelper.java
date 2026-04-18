@@ -1,7 +1,6 @@
 package collectionlog.gui;
 
 import collectionlog.collections.CollectionDefinition;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -181,8 +180,7 @@ public final class GUIHelper {
         Material templateMaterial = Material.getMaterial(materialName);
 
         if (templateMaterial == null) {
-            Bukkit.getLogger().warning("Could not find material for trim: " + materialName);
-            templateMaterial = Material.PAPER;
+            templateMaterial = Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE;
         }
 
         return new ItemStack(templateMaterial);

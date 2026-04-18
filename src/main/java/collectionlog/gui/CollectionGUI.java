@@ -504,29 +504,134 @@ public class CollectionGUI implements Listener {
                     default -> Material.OAK_LOG;
                 };
             }
+
+            if ("ores".equals(parent)) {
+                return switch (sub) {
+                    case "ore blocks" -> Material.DIAMOND_ORE;
+                    case "ore materials" -> Material.DIAMOND;
+                    default -> Material.IRON_ORE;
+                };
+            }
+
+            if ("stones".equals(parent)) {
+                return switch (sub) {
+                    case "stone" -> Material.STONE;
+                    case "cobblestone" -> Material.COBBLESTONE;
+                    case "stone bricks" -> Material.STONE_BRICKS;
+                    case "granite" -> Material.GRANITE;
+                    case "diorite" -> Material.DIORITE;
+                    case "andesite" -> Material.ANDESITE;
+                    case "deepslate" -> Material.DEEPSLATE;
+                    case "tuff" -> Material.TUFF;
+                    case "sandstone" -> Material.SANDSTONE;
+                    case "red sandstone" -> Material.RED_SANDSTONE;
+                    case "bricks" -> Material.BRICKS;
+                    case "resin" -> Material.RESIN_BLOCK;
+                    default -> Material.STONE;
+                };
+            }
+
+            if ("weapons and tools".equals(parent)) {
+                return switch (sub) {
+                    case "spears" -> resolveMaterial("IRON_SPEAR", Material.TRIDENT);
+                    case "swords" -> Material.IRON_SWORD;
+                    case "pickaxes" -> Material.IRON_PICKAXE;
+                    case "axes" -> Material.IRON_AXE;
+                    case "shovels" -> Material.IRON_SHOVEL;
+                    case "hoes" -> Material.IRON_HOE;
+                    case "other tools" -> Material.TRIDENT;
+                    default -> Material.IRON_SWORD;
+                };
+            }
+
+            if ("armour".equals(parent)) {
+                return switch (sub) {
+                    case "leather armour" -> Material.LEATHER_CHESTPLATE;
+                    case "chainmail armour" -> Material.CHAINMAIL_CHESTPLATE;
+                    case "copper armour" -> resolveMaterial("COPPER_CHESTPLATE", Material.IRON_CHESTPLATE);
+                    case "iron armour" -> Material.IRON_CHESTPLATE;
+                    case "golden armour" -> Material.GOLDEN_CHESTPLATE;
+                    case "diamond armour" -> Material.DIAMOND_CHESTPLATE;
+                    case "netherite armour" -> Material.NETHERITE_CHESTPLATE;
+                    case "special armour" -> Material.TURTLE_HELMET;
+                    default -> Material.IRON_CHESTPLATE;
+                };
+            }
+
+            if ("nether".equals(parent)) {
+                return switch (sub) {
+                    case "nether stones" -> Material.NETHERRACK;
+                    case "nether brick" -> Material.NETHER_BRICKS;
+                    case "quartz" -> Material.QUARTZ;
+                    case "crimson" -> Material.CRIMSON_STEM;
+                    case "warped" -> Material.WARPED_STEM;
+                    case "miscellaneous nether" -> Material.SOUL_SAND;
+                    default -> Material.NETHERRACK;
+                };
+            }
+
+            if ("nature".equals(parent)) {
+                return switch (sub) {
+                    case "mud and dirt" -> Material.DIRT;
+                    case "flowers" -> Material.POPPY;
+                    case "foliage" -> Material.OAK_LEAVES;
+                    case "mushrooms" -> Material.RED_MUSHROOM;
+                    case "ground materials" -> Material.GRAVEL;
+                    case "ice and snow" -> Material.ICE;
+                    case "bees" -> Material.HONEYCOMB_BLOCK;
+                    case "pumpkins" -> Material.PUMPKIN;
+                    case "miscellaneous nature" -> Material.HAY_BLOCK;
+                    default -> Material.GRASS_BLOCK;
+                };
+            }
         }
 
         return switch (normalized) {
             case "wood" -> Material.OAK_LOG;
             case "ores" -> Material.IRON_ORE;
             case "stones" -> Material.STONE;
+            case "weapons and tools" -> Material.IRON_SWORD;
             case "nature" -> Material.GRASS_BLOCK;
-            case "food" -> Material.COOKED_BEEF;
-            case "combat", "weapons and tools" -> Material.DIAMOND_SWORD;
-            case "armour" -> Material.DIAMOND_CHESTPLATE;
+            case "sniffer" -> Material.SNIFFER_EGG;
             case "nether" -> Material.NETHERRACK;
+            case "potion ingredients" -> Material.GHAST_TEAR;
+            case "utilities" -> Material.CRAFTING_TABLE;
+            case "enchantment books", "enchantments", "enchants" -> Material.ENCHANTED_BOOK;
+            case "ancient cities" -> Material.SCULK;
             case "end" -> Material.END_STONE;
-            case "ocean" -> Material.HEART_OF_THE_SEA;
+            case "shulker" -> Material.SHULKER_BOX;
+            case "food" -> Material.COOKED_BEEF;
+            case "redstone" -> Material.REDSTONE;
+            case "ocean" -> Material.TUBE_CORAL;
+            case "candles" -> Material.CANDLE;
+            case "mob drops" -> Material.ROTTEN_FLESH;
+            case "sherds" -> Material.ANGLER_POTTERY_SHERD;
+            case "copper" -> Material.COPPER_BLOCK;
+            case "heads", "mob heads" -> Material.ZOMBIE_HEAD;
+            case "trial chambers" -> Material.TRIAL_KEY;
+            case "concrete" -> Material.GRAY_CONCRETE;
+            case "wool" -> Material.WHITE_WOOL;
+            case "glass" -> Material.GLASS;
+            case "terracotta" -> Material.TERRACOTTA;
+            case "armour" -> Material.IRON_CHESTPLATE;
             case "dyes" -> Material.RED_DYE;
+            case "banners" -> Material.YELLOW_BANNER;
+            case "beds" -> Material.RED_BED;
+            case "music discs" -> Material.MUSIC_DISC_CHIRP;
+            case "buckets" -> Material.WATER_BUCKET;
             case "fishing", "jb fishing plus" -> Material.COOKED_COD;
-            case "enchantments" -> Material.ENCHANTED_BOOK;
             case "potions" -> Material.POTION;
-            case "mob heads" -> Material.PLAYER_HEAD;
             case "armour trims", "armor trims" -> Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE;
+            case "horns" -> Material.GOAT_HORN;
             case "tcg" -> Material.PAPER;
             case "spawn eggs" -> Material.ZOMBIE_SPAWN_EGG;
             default -> Material.PAPER;
         };
+    }
+
+    private Material resolveMaterial(String materialName, Material fallback) {
+        Material resolved = Material.matchMaterial(materialName);
+        return resolved != null ? resolved : fallback;
     }
 
     private int[] buildSlotRange(int start, int endInclusive) {
