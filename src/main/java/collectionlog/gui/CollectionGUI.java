@@ -48,6 +48,7 @@ public class CollectionGUI implements Listener {
     private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
     private static final int SLOT_INFO = 49;
+    private static final int BACK_ICON_CUSTOM_MODEL_DATA = 24001;
     private static final int STATS_ICON_CUSTOM_MODEL_DATA = 24111;
 
     private final CollectionLogPlugin plugin;
@@ -337,7 +338,7 @@ public class CollectionGUI implements Listener {
             slotActions.put(i, SlotAction.openCollection(entry.collectionId()));
         }
 
-        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", 24001));
+        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", BACK_ICON_CUSTOM_MODEL_DATA));
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
@@ -571,7 +572,7 @@ public class CollectionGUI implements Listener {
         ItemStack backButton = new ItemStack(Material.PAPER);
         ItemMeta backMeta = backButton.getItemMeta();
         if (backMeta != null) {
-            backMeta.setCustomModelData(24001);
+            backMeta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
             backMeta.setDisplayName("§cBack");
             backButton.setItemMeta(backMeta);
         }
@@ -652,7 +653,7 @@ public class CollectionGUI implements Listener {
             return backButton;
         }
 
-        backMeta.setCustomModelData(24001);
+        backMeta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
         backMeta.setDisplayName("§cBack to Collections");
         backButton.setItemMeta(backMeta);
         return backButton;
