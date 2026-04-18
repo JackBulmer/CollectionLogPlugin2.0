@@ -51,14 +51,14 @@ public class PlayerCollectionProgress {
         return lastUpdated;
     }
 
-    public int getPercentage() {
+    public double getPercentage() {
         if (totalItems == 0) {
-            return 0;
+            return 0.0;
         }
         if (collectedItems >= totalItems) {
-            return 100;
+            return 100.0;
         }
-        return (int) ((collectedItems * 100.0) / totalItems);
+        return (collectedItems * 100.0) / totalItems;
     }
 
     @Override
