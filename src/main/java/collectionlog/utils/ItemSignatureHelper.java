@@ -59,8 +59,15 @@ public class ItemSignatureHelper {
             return;
         }
 
-        enchantmentMeta.getStoredEnchants().forEach((enchantment, level) ->
-                signatures.add(enchantment.getKey().getKey().toLowerCase(Locale.ROOT)));
+        enchantmentMeta.getStoredEnchants().forEach((enchantment, level) -> {
+            String enchantmentKey = enchantment.getKey().getKey().toLowerCase(Locale.ROOT);
+            signatures.add(enchantmentKey);
+            signatures.add(enchantmentKey + ":" + Math.max(1, level));
+
+            // Backward-compatible variant for older stored progress styles.
+            signatures.add(enchantmentKey + "_lvl_" + Math.max(1, level));
+            signatures.add((enchantmentKey + "_lvl_" + Math.max(1, level)).toUpperCase(Locale.ROOT));
+        });
     }
 
     private void addPotionSignatures(Material type, ItemMeta meta, Set<String> signatures) {

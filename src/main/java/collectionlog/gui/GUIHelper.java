@@ -65,7 +65,9 @@ public final class GUIHelper {
             return item;
         }
 
-        String displayName = formatSignatureName(itemSignature);
+        String displayName = "enchantments".equals(normalizeKey(collectionId))
+                ? formatEnchantmentSignatureName(itemSignature)
+                : formatSignatureName(itemSignature);
         meta.setDisplayName((collected ? ChatColor.GREEN : ChatColor.RED) + displayName);
 
         List<String> lore = new ArrayList<>();
@@ -228,9 +230,20 @@ public final class GUIHelper {
             return enchantedBook;
         }
 
-        Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(signature.toLowerCase(Locale.ROOT)));
+        String enchantmentKey = signature;
+        int level = 1;
+        if (signature.contains(":")) {
+            String[] parts = signature.split(":", 2);
+            enchantmentKey = parts[0].trim();
+            if (parts[1].trim().chars().allMatch(Character::isDigit)) {
+                level = Math.max(1, Integer.parseInt(parts[1].trim()));
+            }
+        }
+
+        Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentKey.toLowerCase(Locale.ROOT)));
         if (enchantment != null) {
-            meta.addStoredEnchant(enchantment, 1, true);
+            int clampedLevel = Math.min(level, Math.max(1, enchantment.getMaxLevel()));
+            meta.addStoredEnchant(enchantment, clampedLevel, true);
         }
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
         enchantedBook.setItemMeta(meta);
@@ -363,6 +376,40 @@ public final class GUIHelper {
         }
 
         return formatWords(signature);
+    }
+
+    private static String formatEnchantmentSignatureName(String signature) {
+        if (signature == null || signature.isBlank()) {
+            return "Unknown";
+        }
+
+        String enchantmentKey = signature;
+        int level = 1;
+        if (signature.contains(":")) {
+            String[] parts = signature.split(":", 2);
+            enchantmentKey = parts[0].trim();
+            if (parts[1].trim().chars().allMatch(Character::isDigit)) {
+                level = Math.max(1, Integer.parseInt(parts[1].trim()));
+            }
+        }
+
+        return formatWords(enchantmentKey) + " " + toRoman(level);
+    }
+
+    private static String toRoman(int num) {
+        return switch (num) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            case 6 -> "VI";
+            case 7 -> "VII";
+            case 8 -> "VIII";
+            case 9 -> "IX";
+            case 10 -> "X";
+            default -> String.valueOf(num);
+        };
     }
 
     private static String formatWords(String input) {

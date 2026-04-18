@@ -2,6 +2,8 @@ package collectionlog.collections;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.Plugin;
 
 import java.io.InputStream;
@@ -10,6 +12,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -62,6 +65,10 @@ public class SpecialCollectionLoader {
                     Type listType = new TypeToken<List<String>>() { }.getType();
                     try (InputStreamReader reader = new InputStreamReader(stream)) {
                         items = gson.fromJson(reader, listType);
+                    }
+
+                    if (type == SpecialCollectionType.ENCHANTMENTS) {
+                        items = expandEnchantmentLevels(items);
                     }
                 }
             }
@@ -139,6 +146,31 @@ public class SpecialCollectionLoader {
             plugin.getLogger().log(Level.SEVERE, "Failed to parse custom model data items", e);
             return new ArrayList<>();
         }
+    }
+
+    private List<String> expandEnchantmentLevels(List<String> enchantments) {
+        if (enchantments == null || enchantments.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<String> expanded = new ArrayList<>();
+        for (String enchantmentKey : enchantments) {
+            if (enchantmentKey == null || enchantmentKey.isBlank()) {
+                continue;
+            }
+
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentKey.toLowerCase(Locale.ROOT)));
+            if (enchantment == null) {
+                expanded.add(enchantmentKey);
+                continue;
+            }
+
+            int maxLevel = Math.max(1, enchantment.getMaxLevel());
+            for (int level = 1; level <= maxLevel; level++) {
+                expanded.add(enchantmentKey + ":" + level);
+            }
+        }
+        return expanded;
     }
 
     /**

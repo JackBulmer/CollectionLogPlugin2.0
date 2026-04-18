@@ -7,6 +7,8 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,9 +41,10 @@ public class CollectionGUI implements Listener {
     private static final int COLLECTION_PAGE_SIZE = 27;
     private static final int SUB_PAGE_SIZE = 36;
 
-    private static final int SLOT_BACK = 45;
+    private static final int SLOT_PREV = 45;
+    private static final int SLOT_BACK = 48;
+    private static final int SLOT_MAIN_CLOSE = 49;
     private static final int SLOT_FILTER = 50;
-    private static final int SLOT_PREV = 52;
     private static final int SLOT_NEXT = 53;
     private static final int SLOT_INFO = 4;
 
@@ -68,7 +71,7 @@ public class CollectionGUI implements Listener {
 
         String collectionId = findCollectionIdByQuery(query);
         if (collectionId != null) {
-            openCollectionView(player, collectionId, 0, false);
+            openCollectionOrSubCollectionListing(player, collectionId, 0, false);
             return true;
         }
 
@@ -90,12 +93,13 @@ public class CollectionGUI implements Listener {
         }
 
         Set<String> collected = getCollectedSet(player, collectionId);
-        List<String> items = new ArrayList<>(collection.getItems());
+        List<String> items = buildDisplayItems(collectionId, collection.getItems());
         if (showUncollectedOnly) {
-            items.removeIf(collected::contains);
+            items.removeIf(signature -> isCollectedForDisplay(collectionId, signature, collected));
         }
 
         PageSlice<String> pageSlice = slice(items, page, COLLECTION_PAGE_SIZE);
+        int totalPages = Math.max(1, (items.size() + COLLECTION_PAGE_SIZE - 1) / COLLECTION_PAGE_SIZE);
 
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
 
@@ -103,41 +107,62 @@ public class CollectionGUI implements Listener {
         int collectedCount = total - countMissing(collection.getItems(), collected);
         inventory.setItem(SLOT_INFO, GUIHelper.createCollectionIcon(collection.getId(), collection, collectedCount, total));
 
-        Map<Integer, SlotAction> slotActions = new HashMap<>();
-
-        int subSlot = 9;
-        for (SubCollectionDefinition subCollection : collection.getSubCollections()) {
-            if (subSlot > 17) {
-                break;
-            }
-
-            int subCollected = countCollected(subCollection.getItems(), collected);
-            ItemStack subIcon = createSubCollectionIcon(collection.getId(), subCollection, subCollected);
-            inventory.setItem(subSlot, subIcon);
-            slotActions.put(subSlot, SlotAction.openSubCollection(collection.getId(), subCollection.getId()));
-            subSlot++;
-        }
-
         int[] itemSlots = buildSlotRange(18, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
             String signature = pageSlice.pageItems().get(i);
-            boolean isCollected = collected.contains(signature);
+            boolean isCollected = isCollectedForDisplay(collectionId, signature, collected);
             inventory.setItem(itemSlots[i], GUIHelper.createItemDisplay(signature, isCollected, collection.getName(), collectionId));
         }
 
-        inventory.setItem(SLOT_BACK, GUIHelper.createNavigationButton("Back", 24001));
-        inventory.setItem(SLOT_FILTER, GUIHelper.createFilterButton(showUncollectedOnly));
-        if (pageSlice.hasPrevious()) {
-            inventory.setItem(SLOT_PREV, GUIHelper.createNavigationButton("Previous", 100002));
-        }
-        if (pageSlice.hasNext()) {
-            inventory.setItem(SLOT_NEXT, GUIHelper.createNavigationButton("Next", 100003));
-        }
+        addNavigationButtons(inventory, pageSlice.page(), totalPages, showUncollectedOnly);
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
                 ViewType.COLLECTION,
                 collection.getId(),
+                null,
+                pageSlice.page(),
+                showUncollectedOnly,
+                pageSlice.hasPrevious(),
+                pageSlice.hasNext(),
+                Map.of()
+        ));
+    }
+
+    public void openSubCollectionListingView(Player player, String collectionId, int page, boolean showUncollectedOnly) {
+        CollectionDefinition collection = getCollectionById(collectionId);
+        if (collection == null) {
+            player.sendMessage(ChatColor.RED + "Collection not found: " + collectionId);
+            openMainMenu(player);
+            return;
+        }
+
+        Set<String> collected = getCollectedSet(player, collectionId);
+        List<SubCollectionDefinition> subCollections = new ArrayList<>(collection.getSubCollections());
+        if (showUncollectedOnly) {
+            subCollections.removeIf(subCollection -> countCollected(subCollection.getItems(), collected) >= subCollection.getTotalItems());
+        }
+
+        PageSlice<SubCollectionDefinition> pageSlice = slice(subCollections, page, MAIN_PAGE_SIZE);
+        int totalPages = Math.max(1, (subCollections.size() + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE);
+
+        Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
+        Map<Integer, SlotAction> slotActions = new HashMap<>();
+
+        for (int i = 0; i < pageSlice.pageItems().size() && i < MAIN_PAGE_SIZE; i++) {
+            SubCollectionDefinition subCollection = pageSlice.pageItems().get(i);
+            int subCollected = countCollected(subCollection.getItems(), collected);
+            ItemStack subIcon = createSubCollectionIcon(collectionId, subCollection, subCollected);
+            inventory.setItem(i, subIcon);
+            slotActions.put(i, SlotAction.openSubCollection(collectionId, subCollection.getId()));
+        }
+
+        addNavigationButtons(inventory, pageSlice.page(), totalPages, showUncollectedOnly);
+
+        player.openInventory(inventory);
+        guiStates.put(player.getUniqueId(), new GUIState(
+                ViewType.SUB_COLLECTION_LIST,
+                collectionId,
                 null,
                 pageSlice.page(),
                 showUncollectedOnly,
@@ -158,17 +183,18 @@ public class CollectionGUI implements Listener {
         SubCollectionDefinition subCollection = getSubCollectionById(collection, subCollectionId);
         if (subCollection == null) {
             player.sendMessage(ChatColor.RED + "Sub-collection not found: " + subCollectionId);
-            openCollectionView(player, collectionId, 0, showUncollectedOnly);
+            openCollectionOrSubCollectionListing(player, collectionId, 0, showUncollectedOnly);
             return;
         }
 
         Set<String> collected = getCollectedSet(player, collectionId);
         List<String> items = new ArrayList<>(subCollection.getItems());
         if (showUncollectedOnly) {
-            items.removeIf(collected::contains);
+            items.removeIf(signature -> isCollectedForDisplay(collectionId, signature, collected));
         }
 
         PageSlice<String> pageSlice = slice(items, page, SUB_PAGE_SIZE);
+        int totalPages = Math.max(1, (items.size() + SUB_PAGE_SIZE - 1) / SUB_PAGE_SIZE);
 
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
 
@@ -179,18 +205,11 @@ public class CollectionGUI implements Listener {
         int[] itemSlots = buildSlotRange(9, 44);
         for (int i = 0; i < pageSlice.pageItems().size() && i < itemSlots.length; i++) {
             String signature = pageSlice.pageItems().get(i);
-            boolean isCollected = collected.contains(signature);
+            boolean isCollected = isCollectedForDisplay(collectionId, signature, collected);
             inventory.setItem(itemSlots[i], GUIHelper.createItemDisplay(signature, isCollected, subCollection.getName(), collectionId));
         }
 
-        inventory.setItem(SLOT_BACK, GUIHelper.createNavigationButton("Back to Parent", 24001));
-        inventory.setItem(SLOT_FILTER, GUIHelper.createFilterButton(showUncollectedOnly));
-        if (pageSlice.hasPrevious()) {
-            inventory.setItem(SLOT_PREV, GUIHelper.createNavigationButton("Previous", 100002));
-        }
-        if (pageSlice.hasNext()) {
-            inventory.setItem(SLOT_NEXT, GUIHelper.createNavigationButton("Next", 100003));
-        }
+        addNavigationButtons(inventory, pageSlice.page(), totalPages, showUncollectedOnly);
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
@@ -222,7 +241,12 @@ public class CollectionGUI implements Listener {
         }
         int slot = event.getRawSlot();
 
-        if (slot == SLOT_BACK) {
+        if (slot == SLOT_MAIN_CLOSE && state.viewType() == ViewType.MAIN) {
+            player.closeInventory();
+            return;
+        }
+
+        if (slot == SLOT_BACK && state.viewType() != ViewType.MAIN) {
             handleBack(player, state);
             return;
         }
@@ -232,12 +256,12 @@ public class CollectionGUI implements Listener {
             return;
         }
 
-        if (slot == SLOT_PREV && state.hasPrevious()) {
+        if (slot == SLOT_PREV && state.viewType() != ViewType.MAIN && state.hasPrevious()) {
             navigate(player, state, state.page() - 1);
             return;
         }
 
-        if (slot == SLOT_NEXT && state.hasNext()) {
+        if (slot == SLOT_NEXT && state.viewType() != ViewType.MAIN && state.hasNext()) {
             navigate(player, state, state.page() + 1);
             return;
         }
@@ -248,7 +272,7 @@ public class CollectionGUI implements Listener {
         }
 
         if (action.type() == ActionType.OPEN_COLLECTION) {
-            openCollectionView(player, action.collectionId(), 0, state.showUncollectedOnly());
+            openCollectionOrSubCollectionListing(player, action.collectionId(), 0, state.showUncollectedOnly());
         } else if (action.type() == ActionType.OPEN_SUB_COLLECTION) {
             openSubCollectionView(player, action.collectionId(), action.subCollectionId(), 0, state.showUncollectedOnly());
         }
@@ -293,12 +317,7 @@ public class CollectionGUI implements Listener {
             slotActions.put(i, SlotAction.openCollection(entry.collectionId()));
         }
 
-        if (pageSlice.hasPrevious()) {
-            inventory.setItem(SLOT_PREV, GUIHelper.createNavigationButton("Previous", 100002));
-        }
-        if (pageSlice.hasNext()) {
-            inventory.setItem(SLOT_NEXT, GUIHelper.createNavigationButton("Next", 100003));
-        }
+        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", 24001));
 
         player.openInventory(inventory);
         guiStates.put(player.getUniqueId(), new GUIState(
@@ -307,8 +326,8 @@ public class CollectionGUI implements Listener {
                 null,
                 pageSlice.page(),
                 showUncollectedOnly,
-                pageSlice.hasPrevious(),
-                pageSlice.hasNext(),
+                false,
+                false,
                 slotActions
         ));
     }
@@ -317,7 +336,8 @@ public class CollectionGUI implements Listener {
         switch (state.viewType()) {
             case MAIN -> player.closeInventory();
             case COLLECTION -> openMainMenu(player, 0, false);
-            case SUB_COLLECTION -> openCollectionView(player, state.collectionId(), 0, state.showUncollectedOnly());
+            case SUB_COLLECTION_LIST -> openMainMenu(player, 0, false);
+            case SUB_COLLECTION -> openSubCollectionListingView(player, state.collectionId(), 0, state.showUncollectedOnly());
         }
     }
 
@@ -334,8 +354,17 @@ public class CollectionGUI implements Listener {
         switch (state.viewType()) {
             case MAIN -> openMainMenu(player, page, showUncollectedOnly);
             case COLLECTION -> openCollectionView(player, state.collectionId(), page, showUncollectedOnly);
+            case SUB_COLLECTION_LIST -> openSubCollectionListingView(player, state.collectionId(), page, showUncollectedOnly);
             case SUB_COLLECTION -> openSubCollectionView(player, state.collectionId(), state.subCollectionId(), page, showUncollectedOnly);
         }
+    }
+
+    private void openCollectionOrSubCollectionListing(Player player, String collectionId, int page, boolean showUncollectedOnly) {
+        if (hasSubCollections(collectionId)) {
+            openSubCollectionListingView(player, collectionId, page, showUncollectedOnly);
+            return;
+        }
+        openCollectionView(player, collectionId, page, showUncollectedOnly);
     }
 
     private boolean isCollectionGuiInventory(Inventory inventory) {
@@ -445,6 +474,97 @@ public class CollectionGUI implements Listener {
 
     private int countMissing(List<String> sourceItems, Set<String> collectedSet) {
         return sourceItems.size() - countCollected(sourceItems, collectedSet);
+    }
+
+    private List<String> buildDisplayItems(String collectionId, List<String> sourceItems) {
+        if (!"enchantments".equals(normalizeAlias(collectionId))) {
+            return new ArrayList<>(sourceItems);
+        }
+
+        List<String> expanded = new ArrayList<>();
+        for (String signature : sourceItems) {
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(signature.toLowerCase(Locale.ROOT)));
+            if (enchantment == null) {
+                expanded.add(signature);
+                continue;
+            }
+
+            int maxLevel = Math.max(1, enchantment.getMaxLevel());
+            for (int level = 1; level <= maxLevel; level++) {
+                expanded.add(signature + ":" + level);
+            }
+        }
+        return expanded;
+    }
+
+    private boolean isCollectedForDisplay(String collectionId, String signature, Set<String> collectedSet) {
+        if (!"enchantments".equals(normalizeAlias(collectionId))) {
+            return collectedSet.contains(signature);
+        }
+
+        if (!signature.contains(":")) {
+            return collectedSet.contains(signature);
+        }
+
+        String[] parts = signature.split(":", 2);
+        String enchantmentKey = parts[0];
+        String levelPart = parts[1];
+        return collectedSet.contains(signature)
+                || collectedSet.contains(enchantmentKey)
+                || collectedSet.contains(enchantmentKey + "_lvl_" + levelPart)
+                || collectedSet.contains((enchantmentKey + "_lvl_" + levelPart).toUpperCase(Locale.ROOT));
+    }
+
+    private boolean hasSubCollections(String collectionId) {
+        CollectionDefinition collection = getCollectionById(collectionId);
+        return collection != null && !collection.getSubCollections().isEmpty();
+    }
+
+    private void addNavigationButtons(Inventory inventory, int page, int totalPages, boolean filterUncollectedOnly) {
+        if (page > 0) {
+            ItemStack prevButton = new ItemStack(Material.PAPER);
+            ItemMeta prevMeta = prevButton.getItemMeta();
+            if (prevMeta != null) {
+                prevMeta.setCustomModelData(100002);
+                prevMeta.setDisplayName("§aPrevious Page");
+                prevButton.setItemMeta(prevMeta);
+            }
+            inventory.setItem(SLOT_PREV, prevButton);
+        }
+
+        ItemStack backButton = new ItemStack(Material.PAPER);
+        ItemMeta backMeta = backButton.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setCustomModelData(24001);
+            backMeta.setDisplayName("§cBack");
+            backButton.setItemMeta(backMeta);
+        }
+        inventory.setItem(SLOT_BACK, backButton);
+
+        ItemStack filterToggle = new ItemStack(filterUncollectedOnly ? Material.PAPER : Material.HOPPER);
+        ItemMeta filterMeta = filterToggle.getItemMeta();
+        if (filterMeta != null) {
+            if (filterUncollectedOnly) {
+                filterMeta.setCustomModelData(100001);
+            }
+            filterMeta.setDisplayName(filterUncollectedOnly
+                    ? "§eShowing: §aNot Collected Only"
+                    : "§eShowing: §fAll Items");
+            filterMeta.setLore(List.of("§7Click to toggle item filter"));
+            filterToggle.setItemMeta(filterMeta);
+        }
+        inventory.setItem(SLOT_FILTER, filterToggle);
+
+        if (page < totalPages - 1) {
+            ItemStack nextButton = new ItemStack(Material.PAPER);
+            ItemMeta nextMeta = nextButton.getItemMeta();
+            if (nextMeta != null) {
+                nextMeta.setCustomModelData(100003);
+                nextMeta.setDisplayName("§aNext Page");
+                nextButton.setItemMeta(nextMeta);
+            }
+            inventory.setItem(SLOT_NEXT, nextButton);
+        }
     }
 
     private ItemStack createSubCollectionIcon(String collectionId, SubCollectionDefinition subCollection, int collected) {
@@ -661,6 +781,7 @@ public class CollectionGUI implements Listener {
 
     private enum ViewType {
         MAIN,
+        SUB_COLLECTION_LIST,
         COLLECTION,
         SUB_COLLECTION
     }
