@@ -30,9 +30,10 @@ public final class ProgressMessageHelper {
             return;
         }
 
+        // Main collection progress message
         double percentage = progress.getPercentage();
         String message = String.format(
-                "§6✦ §aItem Collection Updated: §9%s §dProgress: %.2f%% (%d/%d)",
+                "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
                 collection.getName(),
                 percentage,
                 progress.getCollectedItems(),
@@ -40,14 +41,31 @@ public final class ProgressMessageHelper {
         );
         player.sendMessage(message);
 
-        if (result.completedSubCollection()) {
-            SubCollectionDefinition sub = result.getSubCollection();
-            if (sub != null) {
+        // Sub-collection progress message (if item belongs to a sub-collection)
+        SubCollectionDefinition subCollection = result.getSubCollection();
+        if (subCollection != null) {
+            // Calculate sub-collection progress
+            int subCollectedCount = getSubCollectionProgress(plugin, player, collection, subCollection);
+            int subTotalCount = subCollection.getTotalItems();
+            double subPercentage = (subCollectedCount * 100.0) / subTotalCount;
+
+            String subMessage = String.format(
+                    "§6✦ §eItem Collection Updated: §f%s §dProgress: %.2f%% (%d/%d)",
+                    subCollection.getName(),
+                    subPercentage,
+                    subCollectedCount,
+                    subTotalCount
+            );
+            player.sendMessage(subMessage);
+
+            // Show completion message if just completed
+            if (result.completedSubCollection()) {
                 player.sendMessage(ChatColor.DARK_AQUA + "[CollectionLog] " + ChatColor.GOLD
-                        + "Sub-Collection completed: " + ChatColor.YELLOW + sub.getName());
+                        + "Sub-Collection completed: " + ChatColor.YELLOW + subCollection.getName());
             }
         }
 
+        // Collection completion broadcast
         if (result.completedCollection()) {
             String completionMessage = ChatColor.GOLD + "[CollectionLog] " + ChatColor.YELLOW + player.getName()
                     + ChatColor.GOLD + " completed the " + ChatColor.AQUA + collection.getName()
@@ -58,6 +76,39 @@ public final class ProgressMessageHelper {
                 plugin.getLogger().info("Broadcasted collection completion for "
                         + player.getName() + " -> " + collection.getId());
             }
+        }
+    }
+
+    /**
+     * Count how many items from a sub-collection the player has collected
+     */
+    private static int getSubCollectionProgress(Plugin plugin, Player player, CollectionDefinition collection, SubCollectionDefinition subCollection) {
+        // Access the PlayerCollectionDAO through the plugin
+        try {
+            java.lang.reflect.Method method = plugin.getClass().getMethod("getPlayerCollectionDAO");
+            Object dao = method.invoke(plugin);
+
+            // Get collected items
+            method = dao.getClass().getMethod("getCollectedItems", java.util.UUID.class, String.class);
+            @SuppressWarnings("unchecked")
+            java.util.concurrent.CompletableFuture<java.util.List<String>> future =
+                    (java.util.concurrent.CompletableFuture<java.util.List<String>>) method.invoke(dao, player.getUniqueId(), collection.getId());
+
+            java.util.List<String> collectedItems = future.join();
+            java.util.Set<String> collectedSet = new java.util.HashSet<>(collectedItems);
+
+            // Count how many sub-collection items are collected
+            int count = 0;
+            for (String item : subCollection.getItems()) {
+                if (collectedSet.contains(item)) {
+                    count++;
+                }
+            }
+            return count;
+
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to get sub-collection progress: " + e.getMessage());
+            return 0;
         }
     }
 }
