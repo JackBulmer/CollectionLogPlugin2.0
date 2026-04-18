@@ -2,6 +2,7 @@ package collectionlog.milestones;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class SubCollectionMilestone extends Milestone {
     private final String parentCollection;
@@ -15,7 +16,7 @@ public class SubCollectionMilestone extends Milestone {
         this.parentCollection = parentCollection;
         this.subCollection = subCollection;
         this.xpReward = xpReward;
-        this.itemRewards = itemRewards;
+        this.itemRewards = itemRewards == null ? List.of() : new ArrayList<>(itemRewards);
     }
 
     public String getParentCollection() {
@@ -31,6 +32,6 @@ public class SubCollectionMilestone extends Milestone {
     }
 
     public List<String> getItemRewards() {
-        return itemRewards;
+        return Collections.unmodifiableList(itemRewards);
     }
 }

@@ -1,6 +1,8 @@
 package collectionlog.milestones;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class Milestone {
     private final String name;
@@ -14,8 +16,8 @@ public class Milestone {
                      String toastMessage, String announcementMessage) {
         this.name = name;
         this.type = type;
-        this.perks = perks;
-        this.tags = tags;
+        this.perks = perks == null ? List.of() : new ArrayList<>(perks);
+        this.tags = tags == null ? List.of() : new ArrayList<>(tags);
         this.toastMessage = toastMessage;
         this.announcementMessage = announcementMessage;
     }
@@ -29,11 +31,11 @@ public class Milestone {
     }
 
     public List<String> getPerks() {
-        return perks;
+        return Collections.unmodifiableList(perks);
     }
 
     public List<String> getTags() {
-        return tags;
+        return Collections.unmodifiableList(tags);
     }
 
     public String getToastMessage() {
