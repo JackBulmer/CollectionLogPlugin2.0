@@ -1,10 +1,8 @@
 package collectionlog.milestones;
 
-import com.google.gson.JsonObject;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.DatabaseType;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
@@ -197,67 +195,79 @@ public class MilestoneManager {
     }
 
     private void showToastNotification(Player player, String message, MilestoneType type) {
-        final NamespacedKey key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
         try {
-            Material icon = type == MilestoneType.COLLECTION ? Material.DIAMOND : Material.EXPERIENCE_BOTTLE;
+            final NamespacedKey key = new NamespacedKey(
+                    plugin,
+                    "collection_" + message.toLowerCase(Locale.ROOT).replace(" ", "_") + "_" + System.currentTimeMillis()
+            );
+
+            plugin.getLogger().info("🏆 [TOAST] Showing toast for: " + message);
+
+            String iconMaterial = type == MilestoneType.COLLECTION ? "diamond" : "experience_bottle";
             String frame = type == MilestoneType.COLLECTION ? "challenge" : "task";
+            String safeMessage = message.replace("\\", "\\\\").replace("\"", "\\\"");
 
-            JsonObject json = new JsonObject();
+            String advancementJson = String.format(
+                    "{" +
+                            "  \"criteria\": {" +
+                            "    \"trigger\": {" +
+                            "      \"trigger\": \"minecraft:impossible\"" +
+                            "    }" +
+                            "  }," +
+                            "  \"display\": {" +
+                            "    \"icon\": {" +
+                            "      \"id\": \"minecraft:%s\"" +
+                            "    }," +
+                            "    \"title\": {" +
+                            "      \"text\": \"%s\"" +
+                            "    }," +
+                            "    \"description\": {" +
+                            "      \"text\": \"Collection Complete!\"" +
+                            "    }," +
+                            "    \"frame\": \"%s\"," +
+                            "    \"show_toast\": true," +
+                            "    \"announce_to_chat\": false," +
+                            "    \"hidden\": true" +
+                            "  }" +
+                            "}",
+                    iconMaterial,
+                    safeMessage,
+                    frame
+            );
 
-            JsonObject display = new JsonObject();
-            JsonObject displayIcon = new JsonObject();
-            displayIcon.addProperty("item", icon.getKey().toString());
-            display.add("icon", displayIcon);
+            plugin.getLogger().info("🏆 [TOAST] Loading advancement...");
+            Bukkit.getUnsafe().loadAdvancement(key, advancementJson);
+            plugin.getLogger().info("🏆 [TOAST] Advancement loaded successfully");
 
-            JsonObject title = new JsonObject();
-            title.addProperty("text", message);
-            display.add("title", title);
+            Advancement advancement = Bukkit.getAdvancement(key);
+            plugin.getLogger().info("🏆 [TOAST] Retrieved advancement: " + (advancement != null ? "SUCCESS" : "NULL"));
 
-            JsonObject description = new JsonObject();
-            description.addProperty("text", "");
-            display.add("description", description);
+            if (advancement != null) {
+                AdvancementProgress progress = player.getAdvancementProgress(advancement);
+                plugin.getLogger().info("🏆 [TOAST] Progress is done: " + progress.isDone());
 
-            display.addProperty("frame", frame);
-            display.addProperty("show_toast", true);
-            display.addProperty("announce_to_chat", false);
-            display.addProperty("hidden", true);
-            json.add("display", display);
-
-            JsonObject criteria = new JsonObject();
-            JsonObject impossible = new JsonObject();
-            impossible.addProperty("trigger", "minecraft:impossible");
-            criteria.add("impossible", impossible);
-            json.add("criteria", criteria);
-
-            Advancement advancement = Bukkit.getUnsafe().loadAdvancement(key, json.toString());
-            if (advancement == null) {
-                Bukkit.getUnsafe().removeAdvancement(key);
-                player.sendMessage("§6§l✦ " + message);
-                return;
-            }
-
-            AdvancementProgress progress = player.getAdvancementProgress(advancement);
-            Set<String> remainingCriteria = new HashSet<>(progress.getRemainingCriteria());
-            for (String criterion : remainingCriteria) {
-                progress.awardCriteria(criterion);
-            }
-
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                try {
-                    if (player.isOnline()) {
-                        AdvancementProgress updatedProgress = player.getAdvancementProgress(advancement);
-                        Set<String> awardedCriteria = new HashSet<>(updatedProgress.getAwardedCriteria());
-                        for (String criterion : awardedCriteria) {
-                            updatedProgress.revokeCriteria(criterion);
-                        }
-                    }
-                } finally {
-                    Bukkit.getUnsafe().removeAdvancement(key);
+                if (!progress.isDone()) {
+                    progress.getRemainingCriteria().forEach(criteria -> {
+                        plugin.getLogger().info("🏆 [TOAST] Awarding criteria: " + criteria);
+                        progress.awardCriteria(criteria);
+                    });
+                    plugin.getLogger().info("🏆 [TOAST] All criteria awarded");
                 }
-            }, 20L);
+
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    plugin.getLogger().info("🏆 [TOAST] Removing advancement...");
+                    AdvancementProgress revokeProgress = player.getAdvancementProgress(advancement);
+                    revokeProgress.getAwardedCriteria().forEach(revokeProgress::revokeCriteria);
+                    Bukkit.getUnsafe().removeAdvancement(key);
+                    plugin.getLogger().info("🏆 [TOAST] Advancement removed");
+                }, 20L);
+            } else {
+                plugin.getLogger().warning("🏆 [TOAST] Failed to retrieve advancement after loading!");
+                player.sendMessage("§6§l✦ " + message);
+            }
         } catch (Exception exception) {
-            plugin.getLogger().warning("Failed to show toast notification: " + exception.getMessage());
-            Bukkit.getUnsafe().removeAdvancement(key);
+            plugin.getLogger().warning("Error creating advancement toast: " + exception.getMessage());
+            exception.printStackTrace();
             player.sendMessage("§6§l✦ " + message);
         }
     }
