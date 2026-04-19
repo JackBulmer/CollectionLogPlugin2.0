@@ -37,13 +37,14 @@ public class CollectionGUI implements Listener {
     private static final String BLANK_TITLE = " ";
 
     private static final int INVENTORY_SIZE = 54;
-    private static final int MAIN_PAGE_SIZE = 45;
+    private static final int MAIN_PAGE_SIZE = 44;
     private static final int COLLECTION_PAGE_SIZE = 45;
     private static final int SUB_COLLECTION_LIST_PAGE_SIZE = 27;
     private static final int SUB_PAGE_SIZE = 45;
 
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 48;
+    private static final int SLOT_MAIN_STATS = 4;
     private static final int SLOT_MAIN_CLOSE = 49;
     private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
@@ -257,6 +258,10 @@ public class CollectionGUI implements Listener {
         }
         int slot = event.getRawSlot();
 
+        if (slot == SLOT_MAIN_STATS && state.viewType() == ViewType.MAIN) {
+            return;
+        }
+
         if (slot == SLOT_MAIN_CLOSE && state.viewType() == ViewType.MAIN) {
             player.closeInventory();
             return;
@@ -333,12 +338,22 @@ public class CollectionGUI implements Listener {
         PageSlice<CollectionEntry> pageSlice = slice(entries, page, MAIN_PAGE_SIZE);
         Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
 
+        int totalCollected = 0;
+        int totalItems = 0;
+        for (CollectionEntry entry : entries) {
+            totalCollected += entry.collected();
+            totalItems += entry.total();
+        }
+        inventory.setItem(SLOT_MAIN_STATS, createMainStatsItem(totalCollected, totalItems));
+
+        int[] mainSlots = buildMainMenuSlots();
         Map<Integer, SlotAction> slotActions = new HashMap<>();
-        for (int i = 0; i < pageSlice.pageItems().size() && i < MAIN_PAGE_SIZE; i++) {
+        for (int i = 0; i < pageSlice.pageItems().size() && i < mainSlots.length; i++) {
             CollectionEntry entry = pageSlice.pageItems().get(i);
             Material iconMaterial = getMaterialForCollection(entry.collectionId());
-            inventory.setItem(i, GUIHelper.createCollectionIcon(entry.collectionId(), entry.collection(), entry.collected(), entry.total(), iconMaterial));
-            slotActions.put(i, SlotAction.openCollection(entry.collectionId()));
+            int slot = mainSlots[i];
+            inventory.setItem(slot, GUIHelper.createCollectionIcon(entry.collectionId(), entry.collection(), entry.collected(), entry.total(), iconMaterial));
+            slotActions.put(slot, SlotAction.openCollection(entry.collectionId()));
         }
 
         inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", BACK_ICON_CUSTOM_MODEL_DATA));
@@ -649,6 +664,24 @@ public class CollectionGUI implements Listener {
         return overview;
     }
 
+    private ItemStack createMainStatsItem(int collected, int total) {
+        ItemStack overview = new ItemStack(Material.PAPER);
+        ItemMeta meta = overview.getItemMeta();
+        if (meta == null) {
+            return overview;
+        }
+
+        double percentage = total == 0 ? 0 : (double) collected / total * 100;
+        meta.setCustomModelData(STATS_ICON_CUSTOM_MODEL_DATA);
+        meta.setDisplayName("§6§lCollection Logs");
+        meta.setLore(List.of(
+                "§7Progress: §e" + collected + "§7/§e" + total,
+                String.format(Locale.ROOT, "§d%.2f%% Complete", percentage)
+        ));
+        overview.setItemMeta(meta);
+        return overview;
+    }
+
     private ItemStack createSubCollectionListBackButton() {
         ItemStack backButton = new ItemStack(Material.PAPER);
         ItemMeta backMeta = backButton.getItemMeta();
@@ -829,6 +862,18 @@ public class CollectionGUI implements Listener {
         int[] slots = new int[(endInclusive - start) + 1];
         for (int i = 0; i < slots.length; i++) {
             slots[i] = start + i;
+        }
+        return slots;
+    }
+
+    private int[] buildMainMenuSlots() {
+        int[] slots = new int[44];
+        int index = 0;
+        for (int slot = 9; slot < INVENTORY_SIZE; slot++) {
+            if (slot == SLOT_MAIN_CLOSE) {
+                continue;
+            }
+            slots[index++] = slot;
         }
         return slots;
     }

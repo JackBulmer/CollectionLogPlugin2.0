@@ -9,7 +9,12 @@ commands:
   logs:
     description: Open the collection log GUI
     usage: /logs [collection]
-    aliases: [cl, collections]
+    aliases: [log, collections]
+
+  cl:
+    description: Collection Log admin commands
+    usage: /cl <collection|item|reload>
+    permission: collectionlog.admin
 
   cldb:
     description: Database management commands
