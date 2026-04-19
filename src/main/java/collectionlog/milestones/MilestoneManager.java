@@ -197,9 +197,8 @@ public class MilestoneManager {
     }
 
     private void showToastNotification(Player player, String message, MilestoneType type) {
-        NamespacedKey key = null;
+        final NamespacedKey key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
         try {
-            key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
             Material icon = type == MilestoneType.COLLECTION ? Material.DIAMOND : Material.EXPERIENCE_BOTTLE;
             String frame = type == MilestoneType.COLLECTION ? "challenge" : "task";
 
@@ -258,9 +257,7 @@ public class MilestoneManager {
             }, 20L);
         } catch (Exception exception) {
             plugin.getLogger().warning("Failed to show toast notification: " + exception.getMessage());
-            if (key != null) {
-                Bukkit.getUnsafe().removeAdvancement(key);
-            }
+            Bukkit.getUnsafe().removeAdvancement(key);
             player.sendMessage("§6§l✦ " + message);
         }
     }
