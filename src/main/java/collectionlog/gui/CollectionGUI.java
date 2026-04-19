@@ -44,7 +44,7 @@ public class CollectionGUI implements Listener {
 
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 48;
-    private static final int SLOT_MAIN_STATS = 4;
+    private static final int SLOT_MAIN_STATS = 49;
     private static final int SLOT_MAIN_CLOSE = 50;
     private static final int SLOT_FILTER = 51;
     private static final int SLOT_NEXT = 53;
@@ -869,8 +869,8 @@ public class CollectionGUI implements Listener {
     private int[] buildMainMenuSlots() {
         int[] slots = new int[44];
         int index = 0;
-        for (int slot = 9; slot < INVENTORY_SIZE; slot++) {
-            if (slot == SLOT_MAIN_CLOSE) {
+        for (int slot = 0; slot < INVENTORY_SIZE && index < slots.length; slot++) {
+            if (slot == SLOT_MAIN_STATS || slot == SLOT_MAIN_CLOSE) {
                 continue;
             }
             slots[index++] = slot;
