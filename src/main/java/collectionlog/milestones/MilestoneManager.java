@@ -196,16 +196,20 @@ public class MilestoneManager {
 
     private void showToastNotification(Player player, String message, MilestoneType type) {
         try {
+            String keySuffix = message
+                    .toLowerCase(Locale.ROOT)
+                    .replace(" ", "_")
+                    .replaceAll("[^a-z0-9._-]", "_");
             final NamespacedKey key = new NamespacedKey(
                     plugin,
-                    "collection_" + message.toLowerCase(Locale.ROOT).replace(" ", "_") + "_" + System.currentTimeMillis()
+                    "collection_" + keySuffix + "_" + UUID.randomUUID()
             );
 
             plugin.getLogger().info("🏆 [TOAST] Showing toast for: " + message);
 
             String iconMaterial = type == MilestoneType.COLLECTION ? "diamond" : "experience_bottle";
             String frame = type == MilestoneType.COLLECTION ? "challenge" : "task";
-            String safeMessage = message.replace("\\", "\\\\").replace("\"", "\\\"");
+            String safeMessage = escapeJson(message);
 
             String advancementJson = String.format(
                     "{" +
@@ -267,9 +271,18 @@ public class MilestoneManager {
             }
         } catch (Exception exception) {
             plugin.getLogger().warning("Error creating advancement toast: " + exception.getMessage());
-            exception.printStackTrace();
+            plugin.getLogger().log(Level.WARNING, "Toast notification stack trace", exception);
             player.sendMessage("§6§l✦ " + message);
         }
+    }
+
+    private String escapeJson(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     public void unlockPerk(UUID playerId, String perkId) {
