@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.logging.Level;
 
 public class AdminCommands implements CommandExecutor, TabCompleter {
     private final CollectionLogPlugin plugin;
@@ -57,7 +58,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         } catch (CompletionException exception) {
             Throwable cause = exception.getCause() != null ? exception.getCause() : exception;
             sender.sendMessage("§cCommand failed: " + cause.getMessage());
-            plugin.getLogger().warning("Admin command failed: " + exception.getMessage());
+            plugin.getLogger().log(Level.WARNING, "Admin command failed", exception);
             return true;
         }
     }
@@ -359,11 +360,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
     }
 
     private <T> T joinFuture(CompletableFuture<T> future) {
-        try {
-            return future.join();
-        } catch (CompletionException e) {
-            throw e;
-        }
+        return future.join();
     }
 
     private record ItemCollectionMatch(CollectionDefinition collection, String signature) {
