@@ -4,6 +4,7 @@ import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
+import collectionlog.commands.AdminCommands;
 import collectionlog.commands.LogsCommand;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
@@ -146,6 +147,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 LogsCommand executor = new LogsCommand(this);
                 logsCommand.setExecutor(executor);
                 logsCommand.setTabCompleter(executor);
+            }
+
+            PluginCommand adminCommand = getCommand("cl");
+            if (adminCommand != null) {
+                AdminCommands executor = new AdminCommands(this);
+                adminCommand.setExecutor(executor);
+                adminCommand.setTabCompleter(executor);
             }
             getLogger().info("✅ GUI and commands registered");
 

@@ -120,6 +120,27 @@ public class PlayerCollectionDAO {
     }
 
     /**
+     * Remove a collected item from player's collection.
+     */
+    public CompletableFuture<Boolean> removeCollectedItem(UUID playerUUID, String collectionId, String itemSignature) {
+        return asyncTaskManager.runAsync(() -> {
+            String sql = "DELETE FROM collected_items WHERE player_uuid = ? AND collection_id = ? AND item_signature = ?";
+
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setString(1, playerUUID.toString());
+                stmt.setString(2, collectionId);
+                stmt.setString(3, itemSignature);
+                return stmt.executeUpdate() > 0;
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to remove collected item", e);
+                return false;
+            }
+        });
+    }
+
+    /**
      * Initialize or update player's collection progress
      */
     public CompletableFuture<Void> initializeCollection(UUID playerUUID, String collectionId, int totalItems) {
@@ -235,6 +256,95 @@ public class PlayerCollectionDAO {
                 } catch (SQLException e) {
                     plugin.getLogger().log(Level.SEVERE, "Failed to mark collection complete", e);
                 }
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Clear completion state for a collection.
+     */
+    public CompletableFuture<Void> clearCollectionCompletion(UUID playerUUID, String collectionId) {
+        return asyncTaskManager.runAsync(() -> {
+            String updateProgress = "UPDATE player_collections "
+                    + "SET completion_date = NULL, last_updated = ? "
+                    + "WHERE player_uuid = ? AND collection_id = ?";
+            String deleteCompletion = "DELETE FROM collection_completions WHERE player_uuid = ? AND collection_id = ?";
+
+            try (Connection conn = databaseManager.getConnection()) {
+                conn.setAutoCommit(false);
+                try {
+                    try (PreparedStatement progressStmt = conn.prepareStatement(updateProgress)) {
+                        progressStmt.setLong(1, System.currentTimeMillis());
+                        progressStmt.setString(2, playerUUID.toString());
+                        progressStmt.setString(3, collectionId);
+                        progressStmt.executeUpdate();
+                    }
+
+                    try (PreparedStatement completionStmt = conn.prepareStatement(deleteCompletion)) {
+                        completionStmt.setString(1, playerUUID.toString());
+                        completionStmt.setString(2, collectionId);
+                        completionStmt.executeUpdate();
+                    }
+
+                    conn.commit();
+                } catch (SQLException e) {
+                    conn.rollback();
+                    throw e;
+                } finally {
+                    conn.setAutoCommit(true);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear collection completion", e);
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Reset all collected items and completion state for a collection.
+     */
+    public CompletableFuture<Void> resetCollectionProgress(UUID playerUUID, String collectionId) {
+        return asyncTaskManager.runAsync(() -> {
+            String deleteItems = "DELETE FROM collected_items WHERE player_uuid = ? AND collection_id = ?";
+            String updateProgress = "UPDATE player_collections "
+                    + "SET collected_items = 0, completion_date = NULL, last_updated = ? "
+                    + "WHERE player_uuid = ? AND collection_id = ?";
+            String deleteCompletion = "DELETE FROM collection_completions WHERE player_uuid = ? AND collection_id = ?";
+
+            try (Connection conn = databaseManager.getConnection()) {
+                conn.setAutoCommit(false);
+                try {
+                    try (PreparedStatement deleteItemsStmt = conn.prepareStatement(deleteItems)) {
+                        deleteItemsStmt.setString(1, playerUUID.toString());
+                        deleteItemsStmt.setString(2, collectionId);
+                        deleteItemsStmt.executeUpdate();
+                    }
+
+                    try (PreparedStatement progressStmt = conn.prepareStatement(updateProgress)) {
+                        progressStmt.setLong(1, System.currentTimeMillis());
+                        progressStmt.setString(2, playerUUID.toString());
+                        progressStmt.setString(3, collectionId);
+                        progressStmt.executeUpdate();
+                    }
+
+                    try (PreparedStatement completionStmt = conn.prepareStatement(deleteCompletion)) {
+                        completionStmt.setString(1, playerUUID.toString());
+                        completionStmt.setString(2, collectionId);
+                        completionStmt.executeUpdate();
+                    }
+
+                    conn.commit();
+                } catch (SQLException e) {
+                    conn.rollback();
+                    throw e;
+                } finally {
+                    conn.setAutoCommit(true);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to reset collection progress", e);
             }
 
             return null;

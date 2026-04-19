@@ -1,0 +1,371 @@
+package collectionlog.commands;
+
+import collectionlog.CollectionLogPlugin;
+import collectionlog.collections.CollectionDefinition;
+import collectionlog.database.dao.PlayerCollectionDAO;
+import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.milestones.MilestoneManager;
+import collectionlog.models.PlayerCollectionProgress;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+public class AdminCommands implements CommandExecutor, TabCompleter {
+    private final CollectionLogPlugin plugin;
+
+    public AdminCommands(CollectionLogPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("collectionlog.admin")) {
+            sender.sendMessage("§cYou don't have permission to use this command.");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendHelp(sender);
+            return true;
+        }
+
+        try {
+            return switch (args[0].toLowerCase(Locale.ROOT)) {
+                case "collection" -> handleCollectionCommand(sender, args);
+                case "item" -> handleItemCommand(sender, args);
+                case "reload" -> handleReload(sender);
+                default -> {
+                    sendHelp(sender);
+                    yield true;
+                }
+            };
+        } catch (CompletionException exception) {
+            Throwable cause = exception.getCause() != null ? exception.getCause() : exception;
+            sender.sendMessage("§cCommand failed: " + cause.getMessage());
+            plugin.getLogger().warning("Admin command failed: " + exception.getMessage());
+            return true;
+        }
+    }
+
+    private boolean handleCollectionCommand(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage("§cUsage: /cl collection <complete|reset> <player> <collection>");
+            return true;
+        }
+
+        String action = args[1].toLowerCase(Locale.ROOT);
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            sender.sendMessage("§cPlayer not found: " + args[2]);
+            return true;
+        }
+
+        String collectionQuery = String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length));
+        CollectionDefinition collection = findCollectionByQuery(collectionQuery);
+        if (collection == null) {
+            sender.sendMessage("§cCollection not found: " + collectionQuery);
+            return true;
+        }
+
+        return switch (action) {
+            case "complete" -> completeCollection(sender, target, collection);
+            case "reset" -> resetCollection(sender, target, collection);
+            default -> {
+                sender.sendMessage("§cInvalid action. Use 'complete' or 'reset'.");
+                yield true;
+            }
+        };
+    }
+
+    private boolean completeCollection(CommandSender sender, Player target, CollectionDefinition collection) {
+        ProgressTrackingManager progressTrackingManager = plugin.getProgressTrackingManager();
+        if (progressTrackingManager == null) {
+            sender.sendMessage("§cProgress tracking is unavailable.");
+            return true;
+        }
+
+        for (String signature : collection.getItems()) {
+            joinFuture(progressTrackingManager.trackItemCollection(target, collection, signature));
+        }
+
+        sender.sendMessage("§aMarked collection '" + collection.getName() + "' as complete for " + target.getName());
+        target.sendMessage("§a§lCollection completed by admin: " + collection.getName());
+        return true;
+    }
+
+    private boolean resetCollection(CommandSender sender, Player target, CollectionDefinition collection) {
+        PlayerCollectionDAO playerCollectionDAO = plugin.getPlayerCollectionDAO();
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
+        UUID playerId = target.getUniqueId();
+
+        joinFuture(playerCollectionDAO.resetCollectionProgress(playerId, collection.getId()));
+        if (milestoneManager != null) {
+            milestoneManager.revokeCollectionMilestones(playerId, collection.getId());
+        }
+
+        sender.sendMessage("§aReset collection '" + collection.getName() + "' for " + target.getName());
+        target.sendMessage("§cCollection reset by admin: " + collection.getName());
+        return true;
+    }
+
+    private boolean handleItemCommand(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage("§cUsage: /cl item <add|remove> <player> <item_id>");
+            return true;
+        }
+
+        String action = args[1].toLowerCase(Locale.ROOT);
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            sender.sendMessage("§cPlayer not found: " + args[2]);
+            return true;
+        }
+
+        String itemId = args[3];
+        List<ItemCollectionMatch> matches = findCollectionsWithItem(itemId);
+        if (matches.isEmpty()) {
+            sender.sendMessage("§cItem " + itemId + " is not in any collection.");
+            return true;
+        }
+
+        return switch (action) {
+            case "add" -> addItem(sender, target, matches, itemId);
+            case "remove" -> removeItem(sender, target, matches, itemId);
+            default -> {
+                sender.sendMessage("§cInvalid action. Use 'add' or 'remove'.");
+                yield true;
+            }
+        };
+    }
+
+    private boolean addItem(CommandSender sender, Player target, List<ItemCollectionMatch> matches, String itemId) {
+        ProgressTrackingManager progressTrackingManager = plugin.getProgressTrackingManager();
+        if (progressTrackingManager == null) {
+            sender.sendMessage("§cProgress tracking is unavailable.");
+            return true;
+        }
+
+        Set<String> affectedCollections = new LinkedHashSet<>();
+        for (ItemCollectionMatch match : matches) {
+            joinFuture(progressTrackingManager.trackItemCollection(target, match.collection(), match.signature()));
+            affectedCollections.add(match.collection().getName());
+        }
+
+        sender.sendMessage("§aAdded " + itemId + " to collections for " + target.getName());
+        sender.sendMessage("§7Affected collections: " + String.join(", ", affectedCollections));
+        return true;
+    }
+
+    private boolean removeItem(CommandSender sender, Player target, List<ItemCollectionMatch> matches, String itemId) {
+        PlayerCollectionDAO playerCollectionDAO = plugin.getPlayerCollectionDAO();
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
+        UUID playerId = target.getUniqueId();
+
+        Set<String> affectedCollections = new LinkedHashSet<>();
+        Set<String> revokedCollections = new LinkedHashSet<>();
+
+        for (ItemCollectionMatch match : matches) {
+            String collectionId = match.collection().getId();
+            PlayerCollectionProgress previousProgress = joinFuture(playerCollectionDAO.getProgress(playerId, collectionId));
+            boolean wasComplete = previousProgress != null && previousProgress.isComplete();
+
+            boolean removed = joinFuture(playerCollectionDAO.removeCollectedItem(playerId, collectionId, match.signature()));
+            if (!removed) {
+                continue;
+            }
+
+            joinFuture(playerCollectionDAO.updateProgress(playerId, collectionId));
+            PlayerCollectionProgress currentProgress = joinFuture(playerCollectionDAO.getProgress(playerId, collectionId));
+            boolean nowComplete = currentProgress != null && currentProgress.isComplete();
+
+            affectedCollections.add(match.collection().getName());
+            if (wasComplete && !nowComplete) {
+                joinFuture(playerCollectionDAO.clearCollectionCompletion(playerId, collectionId));
+                if (milestoneManager != null) {
+                    milestoneManager.revokeCollectionMilestone(playerId, collectionId);
+                }
+                revokedCollections.add(match.collection().getName());
+            }
+        }
+
+        if (affectedCollections.isEmpty()) {
+            sender.sendMessage("§eNo progress changed for " + itemId + ".");
+            return true;
+        }
+
+        sender.sendMessage("§aRemoved " + itemId + " from collections for " + target.getName());
+        sender.sendMessage("§7Affected collections: " + String.join(", ", affectedCollections));
+        if (!revokedCollections.isEmpty()) {
+            sender.sendMessage("§eRevoked collection perks: " + String.join(", ", revokedCollections));
+        }
+        return true;
+    }
+
+    private boolean handleReload(CommandSender sender) {
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
+        if (milestoneManager != null) {
+            milestoneManager.reload();
+        }
+        sender.sendMessage("§aReloaded milestones configuration.");
+        return true;
+    }
+
+    private CollectionDefinition findCollectionByQuery(String query) {
+        String normalizedQuery = normalizeIdentifier(query);
+        for (CollectionDefinition collection : getAllCollections().values()) {
+            if (normalizeIdentifier(collection.getId()).equals(normalizedQuery)
+                    || normalizeIdentifier(collection.getName()).equals(normalizedQuery)) {
+                return collection;
+            }
+        }
+        return null;
+    }
+
+    private List<ItemCollectionMatch> findCollectionsWithItem(String itemId) {
+        List<ItemCollectionMatch> matches = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+        String normalizedItem = normalizeIdentifier(itemId);
+        Material material = Material.matchMaterial(itemId);
+
+        for (CollectionDefinition collection : getAllCollections().values()) {
+            for (String signature : collection.getItems()) {
+                if (!matchesItemId(signature, itemId, normalizedItem, material)) {
+                    continue;
+                }
+
+                String key = collection.getId() + "|" + signature;
+                if (seen.add(key)) {
+                    matches.add(new ItemCollectionMatch(collection, signature));
+                }
+            }
+        }
+        return matches;
+    }
+
+    private boolean matchesItemId(String signature, String itemId, String normalizedItem, Material material) {
+        if (signature.equalsIgnoreCase(itemId)) {
+            return true;
+        }
+
+        if (normalizeIdentifier(signature).equals(normalizedItem)) {
+            return true;
+        }
+
+        return material != null && signature.equalsIgnoreCase(material.name());
+    }
+
+    private Map<String, CollectionDefinition> getAllCollections() {
+        Map<String, CollectionDefinition> allCollections = new LinkedHashMap<>();
+        allCollections.putAll(plugin.getCollectionLoader().getCollections());
+        allCollections.putAll(plugin.getSpecialCollectionLoader().getSpecialCollections());
+        return allCollections;
+    }
+
+    private String normalizeIdentifier(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim()
+                .toLowerCase(Locale.ROOT)
+                .replace(' ', '_')
+                .replaceAll("_+", "_");
+    }
+
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage("§6§l=== Collection Log Admin Commands ===");
+        sender.sendMessage("§e/cl collection complete <player> <collection>");
+        sender.sendMessage("§7  - Mark collection as complete and award perks");
+        sender.sendMessage("§e/cl collection reset <player> <collection>");
+        sender.sendMessage("§7  - Reset collection and revoke perks");
+        sender.sendMessage("§e/cl item add <player> <item_id>");
+        sender.sendMessage("§7  - Add item to all collections it appears in");
+        sender.sendMessage("§e/cl item remove <player> <item_id>");
+        sender.sendMessage("§7  - Remove item from all collections");
+        sender.sendMessage("§e/cl reload");
+        sender.sendMessage("§7  - Reload milestone configuration");
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission("collectionlog.admin")) {
+            return List.of();
+        }
+
+        if (args.length == 1) {
+            return filterCompletions(args[0], List.of("collection", "item", "reload"));
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
+            return filterCompletions(args[1], List.of("complete", "reset"));
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("item")) {
+            return filterCompletions(args[1], List.of("add", "remove"));
+        }
+
+        if (args.length == 3) {
+            List<String> players = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                players.add(player.getName());
+            }
+            return filterCompletions(args[2], players);
+        }
+
+        if (args.length >= 4 && args[0].equalsIgnoreCase("collection")) {
+            String query = String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length));
+            Set<String> collectionNames = new LinkedHashSet<>();
+            for (CollectionDefinition collection : getAllCollections().values()) {
+                collectionNames.add(collection.getName());
+                collectionNames.add(collection.getId());
+            }
+            return filterCompletions(query, new ArrayList<>(collectionNames));
+        }
+
+        if (args.length == 4 && args[0].equalsIgnoreCase("item")) {
+            Set<String> itemIds = new LinkedHashSet<>();
+            for (CollectionDefinition collection : getAllCollections().values()) {
+                itemIds.addAll(collection.getItems());
+            }
+            return filterCompletions(args[3], new ArrayList<>(itemIds));
+        }
+
+        return List.of();
+    }
+
+    private List<String> filterCompletions(String input, List<String> values) {
+        String normalizedInput = input == null ? "" : input.toLowerCase(Locale.ROOT);
+        List<String> filtered = new ArrayList<>();
+        for (String value : values) {
+            if (value.toLowerCase(Locale.ROOT).startsWith(normalizedInput)) {
+                filtered.add(value);
+            }
+        }
+        return filtered;
+    }
+
+    private <T> T joinFuture(CompletableFuture<T> future) {
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            throw e;
+        }
+    }
+
+    private record ItemCollectionMatch(CollectionDefinition collection, String signature) {
+    }
+}

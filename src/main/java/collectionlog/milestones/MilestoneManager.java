@@ -172,6 +172,11 @@ public class MilestoneManager {
     }
 
     private void showMilestoneNotifications(Player player, Milestone milestone) {
+        if (milestone.getToastMessage() != null && !milestone.getToastMessage().isBlank()) {
+            player.sendTitle("§6§lCollection Complete!", "§e" + milestone.getToastMessage(), 10, 60, 20);
+            player.sendMessage("§d" + milestone.getToastMessage());
+        }
+
         plugin.getLogger().info(player.getName() + " completed milestone: " + milestone.getName());
     }
 
@@ -262,9 +267,113 @@ public class MilestoneManager {
         ensurePerksLoaded(playerId);
     }
 
+    public void revokeCollectionMilestone(UUID playerId, String collectionName) {
+        Milestone milestone = milestones.get(normalizeMilestoneKey(collectionName));
+        if (milestone == null) {
+            return;
+        }
+
+        revokeMilestoneRewards(playerId, milestone);
+        removeCompletedMilestone(playerId, collectionName);
+    }
+
+    public void revokeCollectionMilestones(UUID playerId, String collectionName) {
+        revokeCollectionMilestone(playerId, collectionName);
+
+        ensureCompletedMilestonesLoaded(playerId);
+        String prefix = normalizeMilestoneKey(collectionName) + ":";
+        Set<String> completed = playerCompletedMilestones.get(playerId);
+        if (completed == null || completed.isEmpty()) {
+            return;
+        }
+
+        List<String> toRemove = new ArrayList<>();
+        for (String milestoneName : completed) {
+            if (milestoneName.startsWith(prefix)) {
+                toRemove.add(milestoneName);
+            }
+        }
+
+        if (toRemove.isEmpty()) {
+            return;
+        }
+
+        completed.removeAll(toRemove);
+        for (String milestoneName : toRemove) {
+            removeCompletedMilestoneFromDatabase(playerId, milestoneName);
+        }
+    }
+
     public void reload() {
         milestones.clear();
         loadMilestones();
+    }
+
+    private void revokeMilestoneRewards(UUID playerId, Milestone milestone) {
+        ensurePerksLoaded(playerId);
+        Set<String> perks = playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet());
+        for (String perkId : milestone.getPerks()) {
+            perks.remove(perkId);
+            removePerkFromDatabase(playerId, perkId);
+        }
+
+        for (String tagId : milestone.getTags()) {
+            removeTagFromDatabase(playerId, tagId);
+        }
+    }
+
+    private void removeCompletedMilestone(UUID playerId, String milestoneName) {
+        ensureCompletedMilestonesLoaded(playerId);
+        String normalizedMilestone = normalizeMilestoneKey(milestoneName);
+        playerCompletedMilestones
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .remove(normalizedMilestone);
+        removeCompletedMilestoneFromDatabase(playerId, normalizedMilestone);
+    }
+
+    private void removePerkFromDatabase(UUID playerId, String perkId) {
+        plugin.getAsyncTaskManager().runAsync(() -> {
+            String sql = "DELETE FROM player_perks WHERE player_uuid = ? AND perk_id = ?";
+            try (Connection conn = plugin.getDatabaseManager().getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setString(1, playerId.toString());
+                stmt.setString(2, perkId);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to remove perk " + perkId + " for " + playerId, e);
+            }
+        });
+    }
+
+    private void removeTagFromDatabase(UUID playerId, String tagId) {
+        plugin.getAsyncTaskManager().runAsync(() -> {
+            String sql = "DELETE FROM player_tags WHERE player_uuid = ? AND tag_id = ?";
+            try (Connection conn = plugin.getDatabaseManager().getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setString(1, playerId.toString());
+                stmt.setString(2, tagId);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to remove tag " + tagId + " for " + playerId, e);
+            }
+        });
+    }
+
+    private void removeCompletedMilestoneFromDatabase(UUID playerId, String milestoneName) {
+        plugin.getAsyncTaskManager().runAsync(() -> {
+            String sql = "DELETE FROM completed_milestones WHERE player_uuid = ? AND milestone_name = ?";
+            try (Connection conn = plugin.getDatabaseManager().getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setString(1, playerId.toString());
+                stmt.setString(2, normalizeMilestoneKey(milestoneName));
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to remove completed milestone " + milestoneName + " for " + playerId, e);
+            }
+        });
     }
 
     private void ensurePerksLoaded(UUID playerId) {
