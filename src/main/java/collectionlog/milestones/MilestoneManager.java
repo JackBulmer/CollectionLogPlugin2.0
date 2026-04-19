@@ -1,7 +1,13 @@
 package collectionlog.milestones;
 
+import com.google.gson.JsonObject;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.DatabaseType;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.advancement.Advancement;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -173,11 +179,90 @@ public class MilestoneManager {
 
     private void showMilestoneNotifications(Player player, Milestone milestone) {
         if (milestone.getToastMessage() != null && !milestone.getToastMessage().isBlank()) {
-            player.sendTitle("§6§lCollection Complete!", "§e" + milestone.getToastMessage(), 10, 60, 20);
-            player.sendMessage("§d" + milestone.getToastMessage());
+            showToastNotification(player, milestone.getToastMessage(), milestone.getType());
+        }
+
+        if (milestone.getType() == MilestoneType.COLLECTION) {
+            String announcementTemplate = milestone.getAnnouncementMessage();
+            if (announcementTemplate == null || announcementTemplate.isBlank()) {
+                announcementTemplate = "{player} has completed the {collection} collection!";
+            }
+            String announcement = announcementTemplate
+                    .replace("{player}", player.getName())
+                    .replace("{collection}", milestone.getName());
+            plugin.getServer().broadcastMessage("§6§l✦ " + announcement);
         }
 
         plugin.getLogger().info(player.getName() + " completed milestone: " + milestone.getName());
+    }
+
+    private void showToastNotification(Player player, String message, MilestoneType type) {
+        NamespacedKey key = null;
+        try {
+            key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
+            Material icon = type == MilestoneType.COLLECTION ? Material.DIAMOND : Material.EXPERIENCE_BOTTLE;
+            String frame = type == MilestoneType.COLLECTION ? "challenge" : "task";
+
+            JsonObject json = new JsonObject();
+
+            JsonObject display = new JsonObject();
+            JsonObject displayIcon = new JsonObject();
+            displayIcon.addProperty("item", icon.getKey().toString());
+            display.add("icon", displayIcon);
+
+            JsonObject title = new JsonObject();
+            title.addProperty("text", message);
+            display.add("title", title);
+
+            JsonObject description = new JsonObject();
+            description.addProperty("text", "");
+            display.add("description", description);
+
+            display.addProperty("frame", frame);
+            display.addProperty("show_toast", true);
+            display.addProperty("announce_to_chat", false);
+            display.addProperty("hidden", true);
+            json.add("display", display);
+
+            JsonObject criteria = new JsonObject();
+            JsonObject impossible = new JsonObject();
+            impossible.addProperty("trigger", "minecraft:impossible");
+            criteria.add("impossible", impossible);
+            json.add("criteria", criteria);
+
+            Advancement advancement = Bukkit.getUnsafe().loadAdvancement(key, json.toString());
+            if (advancement == null) {
+                Bukkit.getUnsafe().removeAdvancement(key);
+                player.sendMessage("§6§l✦ " + message);
+                return;
+            }
+
+            AdvancementProgress progress = player.getAdvancementProgress(advancement);
+            Set<String> remainingCriteria = new HashSet<>(progress.getRemainingCriteria());
+            for (String criterion : remainingCriteria) {
+                progress.awardCriteria(criterion);
+            }
+
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                try {
+                    if (player.isOnline()) {
+                        AdvancementProgress updatedProgress = player.getAdvancementProgress(advancement);
+                        Set<String> awardedCriteria = new HashSet<>(updatedProgress.getAwardedCriteria());
+                        for (String criterion : awardedCriteria) {
+                            updatedProgress.revokeCriteria(criterion);
+                        }
+                    }
+                } finally {
+                    Bukkit.getUnsafe().removeAdvancement(key);
+                }
+            }, 20L);
+        } catch (Exception exception) {
+            plugin.getLogger().warning("Failed to show toast notification: " + exception.getMessage());
+            if (key != null) {
+                Bukkit.getUnsafe().removeAdvancement(key);
+            }
+            player.sendMessage("§6§l✦ " + message);
+        }
     }
 
     public void unlockPerk(UUID playerId, String perkId) {

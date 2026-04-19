@@ -65,13 +65,25 @@ public class ProgressTrackingManager {
      * Track item collection and send global progress messages if there is progress.
      */
     public CompletableFuture<ProgressResult> trackItemCollection(Player player, CollectionDefinition collection, String itemSignature) {
+        return trackItemCollection(player, collection, itemSignature, false);
+    }
+
+    /**
+     * Track item collection with optional silent mode (no progress messages or milestone checks).
+     */
+    public CompletableFuture<ProgressResult> trackItemCollection(
+            Player player,
+            CollectionDefinition collection,
+            String itemSignature,
+            boolean silent
+    ) {
         if (player == null) {
             return CompletableFuture.completedFuture(ProgressResult.noProgress());
         }
 
         return trackItemCollection(player.getUniqueId(), collection, itemSignature)
                 .thenApply(result -> {
-                    if (result.hasProgress()) {
+                    if (result.hasProgress() && !silent) {
                         asyncTaskManager.runSync(() -> {
                             ProgressMessageHelper.sendProgressMessage(plugin, player, result);
                             triggerMilestoneChecks(player, result);
