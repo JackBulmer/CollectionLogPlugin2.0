@@ -6,8 +6,6 @@ import collectionlog.collections.SubCollectionDefinition;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.models.PlayerCollectionProgress;
 import collectionlog.models.ProgressResult;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
@@ -64,24 +62,6 @@ public final class ProgressMessageHelper {
             );
             player.sendMessage(subMessage);
 
-            // Show completion message if just completed
-            if (result.completedSubCollection()) {
-                player.sendMessage(ChatColor.DARK_AQUA + "[CollectionLog] " + ChatColor.GOLD
-                        + "Sub-Collection completed: " + ChatColor.YELLOW + subCollection.getName());
-            }
-        }
-
-        // Collection completion broadcast
-        if (result.completedCollection()) {
-            String completionMessage = ChatColor.GOLD + "[CollectionLog] " + ChatColor.YELLOW + player.getName()
-                    + ChatColor.GOLD + " completed the " + ChatColor.AQUA + collection.getName()
-                    + ChatColor.GOLD + " collection!";
-            Bukkit.getServer().broadcastMessage(completionMessage);
-
-            if (plugin.getConfig().getBoolean("plugin.debug", false)) {
-                plugin.getLogger().info("Broadcasted collection completion for "
-                        + player.getName() + " -> " + collection.getId());
-            }
         }
     }
 

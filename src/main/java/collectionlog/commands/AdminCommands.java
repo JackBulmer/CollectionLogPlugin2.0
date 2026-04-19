@@ -95,13 +95,18 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
     private boolean completeCollection(CommandSender sender, Player target, CollectionDefinition collection) {
         ProgressTrackingManager progressTrackingManager = plugin.getProgressTrackingManager();
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
         if (progressTrackingManager == null) {
             sender.sendMessage("§cProgress tracking is unavailable.");
             return true;
         }
 
         for (String signature : collection.getItems()) {
-            joinFuture(progressTrackingManager.trackItemCollection(target, collection, signature));
+            joinFuture(progressTrackingManager.trackItemCollection(target, collection, signature, true));
+        }
+
+        if (milestoneManager != null) {
+            milestoneManager.checkCollectionCompletion(target.getUniqueId(), collection.getId());
         }
 
         sender.sendMessage("§aMarked collection '" + collection.getName() + "' as complete for " + target.getName());
