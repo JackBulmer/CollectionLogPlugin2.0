@@ -9,13 +9,84 @@ collections:
     perks:
       - tree_capitator
     tags:
-      - woodcutter
+      - lumberjack
 
   ores:
     perks:
       - vein_miner
     tags:
-      - master_miner
+      - miner
+
+  redstone:
+    perks: []
+    tags:
+      - stoner
+
+  copper:
+    perks: []
+    tags:
+      - gypsy
+
+  nature:
+    perks: []
+    tags:
+      - environmentalist
+
+  mob drops:
+    perks: []
+    tags:
+      - hunter
+
+  music discs:
+    perks: []
+    tags:
+      - platinum_artist
+
+  terracotta:
+    perks: []
+    tags:
+      - decorator
+
+  glass:
+    perks: []
+    tags:
+      - shatterproof
+
+  wool:
+    perks: []
+    tags:
+      - shepherd
+
+  utilities:
+    perks: []
+    tags:
+      - handy
+
+  heads:
+    perks: []
+    tags:
+      - head_hunter
+
+  dyes:
+    perks:
+      - dye_swap
+    tags:
+      - dying
+
+  banners:
+    perks: []
+    tags:
+      - banned
+
+  armour:
+    perks: []
+    tags:
+      - armourer
+
+  weapons and tools:
+    perks: []
+    tags:
+      - tool
 
   end:
     perks:
@@ -35,17 +106,11 @@ collections:
     tags:
       - sniffer_friend
 
-  dyes:
-    perks:
-      - dye_swap
-    tags:
-      - colorful
-
   mob_heads:
     perks:
       - craftable_spawners
     tags:
-      - head_hunter
+      - mob_head_collector
 
   spawn_eggs:
     perks:
