@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.StonecutterInventory;
@@ -37,12 +38,27 @@ public class StonecutterListener implements Listener {
             return;
         }
 
-        // Result slot is slot 2 in stonecutter inventory (raw slot 2)
-        if (event.getRawSlot() != 2) {
+        // Stonecutter result slot is slot 1 (raw slot 1)
+        if (event.getRawSlot() != 1) {
             return;
         }
 
+        // Only track on pickup actions (when player takes the item)
+        InventoryAction action = event.getAction();
+        if (action != InventoryAction.PICKUP_ALL
+            && action != InventoryAction.PICKUP_HALF
+            && action != InventoryAction.PICKUP_ONE
+            && action != InventoryAction.PICKUP_SOME
+            && action != InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+            return;
+        }
+
+        // Check both current item and cursor item
         ItemStack result = event.getCurrentItem();
+        if (result == null || result.getType().isAir()) {
+            result = event.getCursor();
+        }
+
         if (result == null || result.getType().isAir()) {
             return;
         }
