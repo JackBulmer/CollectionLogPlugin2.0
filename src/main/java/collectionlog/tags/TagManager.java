@@ -72,7 +72,7 @@ public class TagManager {
         for (Tag tag : allTags) {
             // Strip §-based color codes and compare with tag name
             String strippedName = tag.getName()
-                    .replaceAll("§[0-9a-fk-orA-FK-OR]", "")
+                    .replaceAll("(?i)§[0-9a-fk-or]", "")
                     .toLowerCase(Locale.ROOT)
                     .trim();
             if (strippedName.equals(normalized)) {

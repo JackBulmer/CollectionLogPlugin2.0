@@ -186,7 +186,7 @@ public class MilestoneManager {
                     tagDisplayName = formatDisplayName(tagId);
                 }
 
-                unlockedRewards.add("§6Tag: " + tagDisplayName);
+                unlockedRewards.add("§6Tag: §r" + tagDisplayName);
             }
         }
 
