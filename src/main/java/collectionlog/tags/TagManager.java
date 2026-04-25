@@ -5,6 +5,7 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -52,6 +53,39 @@ public class TagManager {
 
     public List<Tag> getAllTags() {
         return new ArrayList<>(allTags);
+    }
+
+    /**
+     * Get a tag by its milestone ID. Matches first by stripping color codes from the tag name,
+     * then falls back to matching by required collection name.
+     *
+     * @param tagId the tag identifier used in milestones.yml (e.g. "lumberjack")
+     * @return the matching Tag, or null if not found
+     */
+    public Tag getTagById(String tagId) {
+        if (tagId == null) {
+            return null;
+        }
+
+        String normalized = tagId.toLowerCase(Locale.ROOT).trim();
+
+        for (Tag tag : allTags) {
+            // Strip §-based color codes and compare with tag name
+            String strippedName = tag.getName()
+                    .replaceAll("§[0-9a-fk-orA-FK-OR]", "")
+                    .toLowerCase(Locale.ROOT)
+                    .trim();
+            if (strippedName.equals(normalized)) {
+                return tag;
+            }
+
+            // Fallback: compare with the required collection name
+            if (tag.hasRequirement() && tag.getRequiredCollection().equalsIgnoreCase(normalized)) {
+                return tag;
+            }
+        }
+
+        return null;
     }
 
     /**
