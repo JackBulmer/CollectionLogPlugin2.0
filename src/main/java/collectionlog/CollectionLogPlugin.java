@@ -27,12 +27,16 @@ import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.MobHeadDropListener;
 import collectionlog.listeners.PistonListener;
 import collectionlog.listeners.PlayerFishListener;
+import collectionlog.listeners.BedrockBreakListener;
 import collectionlog.listeners.PlayerDropItemListener;
+import collectionlog.listeners.SilkTouchObtainableListener;
 import collectionlog.listeners.SmithingTableListener;
 import collectionlog.listeners.StonecutterListener;
+import collectionlog.listeners.StrafeListener;
 import collectionlog.listeners.VillagerTradingListener;
-import collectionlog.milestones.MilestoneManager;
 import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.managers.StrafeManager;
+import collectionlog.milestones.MilestoneManager;
 import collectionlog.utils.CollectionMatcher;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -56,6 +60,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private MilestoneManager milestoneManager;
     private CollectionMatcher collectionMatcher;
     private CollectionGUI collectionGUI;
+    private StrafeManager strafeManager;
 
     @Override
     public void onEnable() {
@@ -132,6 +137,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             // Initialize managers
             itemTrackingManager = new ItemTrackingManager(this);
             containerTrackingManager = new ContainerTrackingManager(this, containerItemDAO, asyncTaskManager);
+            strafeManager = new StrafeManager(this);
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -153,6 +159,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new SmithingTableListener(this), this);
             getServer().getPluginManager().registerEvents(new StonecutterListener(this), this);
             getServer().getPluginManager().registerEvents(new VillagerTradingListener(this), this);
+            getServer().getPluginManager().registerEvents(new BedrockBreakListener(this), this);
+            getServer().getPluginManager().registerEvents(new SilkTouchObtainableListener(this), this);
+            getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getLogger().info("✅ Listeners registered");
 
@@ -259,5 +268,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CollectionGUI getCollectionGUI() {
         return collectionGUI;
+    }
+
+    public StrafeManager getStrafeManager() {
+        return strafeManager;
     }
 }
