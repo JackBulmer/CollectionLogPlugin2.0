@@ -3,120 +3,169 @@
 # Defaults:
 #   toast_message: "{Collection Name} Collection Complete!"
 #   announcement_message: "{player} has completed the {Collection Name} Collection!"
+#
+# Tags are defined directly here with their full display names (including colour codes).
+#   tags.prefix - list of prefix tag display names awarded on completion
+#   tags.suffix - list of suffix tag display names awarded on completion
+#
+# Global tags (no collection requirement, always available to all players) are defined
+# under the top-level "global_tags" section.
+
+global_tags:
+  prefix: []
+  suffix:
+    - " §bis Collecting§r"
 
 collections:
   wood:
     perks:
       - tree_capitator
     tags:
-      - lumberjack
+      prefix:
+        - "§2Lumberjack§r "
+      suffix: []
 
   ores:
     perks:
       - vein_miner
     tags:
-      - miner
+      prefix:
+        - "§6Miner§r "
+      suffix: []
 
   redstone:
     perks: []
     tags:
-      - stoner
+      prefix:
+        - "§cStoner§r "
+      suffix: []
 
   copper:
     perks: []
     tags:
-      - gypsy
+      prefix:
+        - "§nGypsy§r "
+      suffix: []
 
   nature:
     perks: []
     tags:
-      - environmentalist
+      prefix:
+        - "§2Environmentalist§r "
+      suffix: []
 
   mob drops:
     perks: []
     tags:
-      - hunter
+      prefix:
+        - "§4Hunter§r "
+      suffix: []
 
   music discs:
     perks: []
     tags:
-      - platinum_artist
+      prefix:
+        - "§7Platinum Artist§r "
+      suffix: []
 
   terracotta:
     perks: []
     tags:
-      - decorator
+      prefix:
+        - "§4D§ce§6c§eo§2r§aa§bt§9o§dr§5"
+      suffix: []
 
   glass:
     perks: []
     tags:
-      - shatterproof
+      prefix:
+        - "§bShatterproof§r "
+      suffix: []
 
   wool:
     perks: []
     tags:
-      - shepherd
+      prefix:
+        - "§6Shepherd§r "
+      suffix: []
 
   utilities:
     perks: []
     tags:
-      - handy
+      prefix: []
+      suffix:
+        - " §jis Handy§r"
 
   heads:
     perks: []
     tags:
-      - head_hunter
+      prefix: []
+      suffix:
+        - " §dIs getting head§r"
 
   dyes:
     perks:
       - dye_swap
     tags:
-      - dying
+      prefix: []
+      suffix:
+        - " §0is Dying§r"
 
   banners:
     perks: []
     tags:
-      - banned
+      prefix: []
+      suffix:
+        - " §4Got Banned§r"
 
   armour:
     perks: []
     tags:
-      - armourer
+      prefix: []
+      suffix:
+        - " §7The Armourer§r"
 
   weapons and tools:
     perks: []
     tags:
-      - tool
+      prefix: []
+      suffix:
+        - " §7The Tool§r"
 
   end:
     perks:
       - double_ender_chest
     tags:
-      - end_master
+      prefix: []
+      suffix: []
 
   shulker:
     perks:
       - shulker_access
     tags:
-      - shulker_hunter
+      prefix: []
+      suffix: []
 
   sniffer:
     perks:
       - sniffer_flowers
     tags:
-      - sniffer_friend
+      prefix: []
+      suffix: []
 
   mob_heads:
     perks:
       - craftable_spawners
     tags:
-      - mob_head_collector
+      prefix: []
+      suffix: []
 
   spawn_eggs:
     perks:
       - extra_heart
     tags:
-      - egg_collector
+      prefix: []
+      suffix: []
 
 # Sub-collection milestones
 sub_collections:
