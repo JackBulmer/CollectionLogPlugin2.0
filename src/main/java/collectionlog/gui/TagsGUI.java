@@ -148,12 +148,17 @@ public class TagsGUI implements Listener {
     }
 
     private ItemStack createFilterButton(boolean showUnlockedOnly) {
-        ItemStack button = new ItemStack(showUnlockedOnly ? Material.LIME_DYE : Material.GRAY_DYE);
+        ItemStack button = new ItemStack(showUnlockedOnly ? Material.PAPER : Material.HOPPER);
         ItemMeta meta = button.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(showUnlockedOnly ? "§aFilter: Unlocked Only" : "§7Filter: Show All");
+            if (showUnlockedOnly) {
+                meta.setCustomModelData(100001);
+            }
+            meta.setDisplayName(showUnlockedOnly
+                    ? "§eShowing: §aUnlocked Only"
+                    : "§eShowing: §fAll Tags");
             List<String> lore = new ArrayList<>();
-            lore.add("§7Click to toggle");
+            lore.add("§7Click to toggle tag filter");
             meta.setLore(lore);
             button.setItemMeta(meta);
         }
