@@ -32,13 +32,19 @@ public class MissingItemsReportGenerator {
             "SPAWNER", "TRIAL_SPAWNER"
     );
 
-    private static final Set<String> HARD_EXCLUDE = Set.of(
+    private static final Set<String> HARD_EXCLUDE_NAMES = Set.of(
             "AIR", "CAVE_AIR", "VOID_AIR",
             "WATER", "LAVA",
             "FIRE", "SOUL_FIRE",
             "PISTON_HEAD", "MOVING_PISTON",
             "FROSTED_ICE", "END_PORTAL", "NETHER_PORTAL",
             "BEDROCK"
+    );
+
+    private static final Set<String> WALL_MOUNT_SUFFIXES = Set.of(
+            "_WALL_SIGN", "_WALL_BANNER",
+            "_WALL_SKULL", "_WALL_HEAD",
+            "_WALL_TORCH", "_WALL_FAN"
     );
 
     private final Plugin plugin;
@@ -68,11 +74,7 @@ public class MissingItemsReportGenerator {
         for (Material material : Material.values()) {
             String name = material.name();
 
-            if (HARD_EXCLUDE.contains(name) || !material.isItem() || material.isAir()) {
-                continue;
-            }
-
-            if (isHardExcluded(name)) {
+            if (!material.isItem() || material.isAir() || isHardExcluded(name)) {
                 continue;
             }
 
@@ -169,14 +171,19 @@ public class MissingItemsReportGenerator {
     }
 
     /**
-     * Additional hard-exclude checks that cannot be expressed as a simple set lookup.
+     * Returns true if the material should be completely excluded from the report.
      */
     private boolean isHardExcluded(String name) {
-        // Wall-mounted variants that duplicate a placeable block (e.g. OAK_WALL_SIGN vs OAK_SIGN)
-        if (name.contains("WALL_") && !name.endsWith("_WALL")) {
+        if (HARD_EXCLUDE_NAMES.contains(name)) {
             return true;
         }
-        // Potted plant blocks have no item form meaningful for collection
+        // Wall-mounted variants that duplicate a placeable block (e.g. OAK_WALL_SIGN vs OAK_SIGN)
+        for (String suffix : WALL_MOUNT_SUFFIXES) {
+            if (name.endsWith(suffix)) {
+                return true;
+            }
+        }
+        // Potted plant blocks have no meaningful item form for collection purposes
         if (name.startsWith("POTTED_")) {
             return true;
         }
