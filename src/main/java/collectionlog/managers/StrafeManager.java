@@ -87,17 +87,15 @@ public class StrafeManager {
                 double progressPercent = (double) progress / totalTicks;
                 int charsFilled = (int) (progressPercent * PROGRESS_BAR.length());
 
-                StringBuilder bar = new StringBuilder("§6Strafe: §a");
+                StringBuilder bar = new StringBuilder();
+                bar.append("§a");
                 for (int i = 0; i < charsFilled; i++) {
                     bar.append("|");
                 }
-                bar.append("§7");
+                bar.append("§c");
                 for (int i = charsFilled; i < PROGRESS_BAR.length(); i++) {
                     bar.append("|");
                 }
-
-                int secondsRemaining = COOLDOWN_SECONDS - (progress / 20);
-                bar.append(" §e").append(secondsRemaining).append("s");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(bar.toString()));
 
