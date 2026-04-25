@@ -206,7 +206,7 @@ public class MilestoneManager {
 
             JsonObject display = new JsonObject();
             JsonObject displayIcon = new JsonObject();
-            displayIcon.addProperty("item", icon.getKey().toString());
+            displayIcon.addProperty("id", icon.getKey().toString());
             display.add("icon", displayIcon);
 
             JsonObject title = new JsonObject();
