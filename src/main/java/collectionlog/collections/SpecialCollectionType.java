@@ -9,6 +9,7 @@ public enum SpecialCollectionType {
     ARMOUR_TRIMS("armour_trims", "Armour Trims"),
     HORNS("horns", "Horns"),
     MOB_HEADS("mob_heads", "Mob Heads"),
+    SPAWN_EGGS("spawn_eggs", "Spawn Eggs"),
     JB_FISHING_PLUS("jb_fishing_plus", "JB Fishing +"),
     TCG("tcg", "TCG");
 

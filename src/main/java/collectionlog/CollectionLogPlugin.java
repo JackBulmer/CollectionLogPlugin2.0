@@ -24,6 +24,7 @@ import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.PistonListener;
 import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.PlayerDropItemListener;
+import collectionlog.listeners.MobHeadDropListener;
 import collectionlog.milestones.MilestoneManager;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
@@ -136,6 +137,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new ItemPickupListener(this), this);
             getServer().getPluginManager().registerEvents(new ContainerListener(this), this);
             getServer().getPluginManager().registerEvents(new EntityDeathListener(this), this);
+            getServer().getPluginManager().registerEvents(new MobHeadDropListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerFishListener(this), this);
             getServer().getPluginManager().registerEvents(new CraftItemListener(this), this);
             getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);

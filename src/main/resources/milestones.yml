@@ -41,6 +41,18 @@ collections:
     tags:
       - colorful
 
+  mob_heads:
+    perks:
+      - craftable_spawners
+    tags:
+      - head_hunter
+
+  spawn_eggs:
+    perks:
+      - extra_heart
+    tags:
+      - egg_collector
+
 # Sub-collection milestones
 sub_collections:
   wood:
