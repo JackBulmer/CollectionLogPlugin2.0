@@ -111,6 +111,34 @@ public class CollectionMatcher {
         }
     }
 
+    /**
+     * Find collection matches for an enchantment by key and level.
+     * Checks both the exact "key:level" signature and just the "key" signature.
+     */
+    public List<CollectionMatch> findMatchesForEnchantment(String enchantmentKey, int level) {
+        List<CollectionMatch> matches = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+
+        String leveledSignature = enchantmentKey + ":" + level;
+        addMatchesForSignature(leveledSignature, matches, seen);
+        addMatchesForSignature(enchantmentKey, matches, seen);
+
+        return matches;
+    }
+
+    private void addMatchesForSignature(String signature, List<CollectionMatch> matches, Set<String> seen) {
+        List<CollectionDefinition> collections = collectionsBySignature.get(signature);
+        if (collections == null || collections.isEmpty()) {
+            return;
+        }
+        for (CollectionDefinition collection : collections) {
+            String key = collection.getId() + "|" + signature;
+            if (seen.add(key)) {
+                matches.add(new CollectionMatch(collection, signature));
+            }
+        }
+    }
+
     private void indexMobHeadsCollection() {
         if (mobHeadsCollection == null) {
             return;
