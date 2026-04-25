@@ -6,6 +6,7 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.milestones.MilestoneManager;
 import collectionlog.models.PlayerCollectionProgress;
+import collectionlog.utils.MissingItemsReportGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -14,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,6 +52,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 case "collection" -> handleCollectionCommand(sender, args);
                 case "item" -> handleItemCommand(sender, args);
                 case "reload" -> handleReload(sender);
+                case "missing-items" -> handleMissingItems(sender);
                 default -> {
                     sendHelp(sender);
                     yield true;
@@ -231,6 +234,22 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleMissingItems(CommandSender sender) {
+        sender.sendMessage("§eGenerating missing items report, please wait...");
+        MissingItemsReportGenerator generator = new MissingItemsReportGenerator(
+                plugin,
+                plugin.getCollectionLoader(),
+                plugin.getSpecialCollectionLoader()
+        );
+        File report = generator.generate();
+        if (report != null) {
+            sender.sendMessage("§a✅ Missing items report generated: " + report.getName());
+        } else {
+            sender.sendMessage("§cFailed to generate missing items report. Check server logs for details.");
+        }
+        return true;
+    }
+
     private CollectionDefinition findCollectionByQuery(String query) {
         String normalizedQuery = normalizeIdentifier(query);
         for (CollectionDefinition collection : getAllCollections().values()) {
@@ -304,6 +323,8 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7  - Remove item from all collections");
         sender.sendMessage("§e/cl reload");
         sender.sendMessage("§7  - Reload milestone configuration");
+        sender.sendMessage("§e/cl missing-items");
+        sender.sendMessage("§7  - Generate missing_items.txt report of uncollected materials");
     }
 
     @Override
@@ -313,7 +334,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "reload"));
+            return filterCompletions(args[0], List.of("collection", "item", "reload", "missing-items"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
