@@ -35,6 +35,9 @@ public class BedrockBreakListener implements Listener {
     private final Map<UUID, BedrockMiningSession> activeSessions = new HashMap<>();
 
     private static final int MINING_TIME_SECONDS = 20;
+    private static final double MAX_MOVE_DISTANCE = 0.5;
+    private static final int MAX_LOOK_DISTANCE = 6;
+    private static final long LOOK_AWAY_GRACE_PERIOD_MS = 1000;
 
     public BedrockBreakListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -87,15 +90,22 @@ public class BedrockBreakListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        // Cancel mining if player moves position (getTo() can be null for look-only events)
-        if (event.getTo() == null ||
-                event.getFrom().getBlockX() != event.getTo().getBlockX() ||
-                event.getFrom().getBlockY() != event.getTo().getBlockY() ||
-                event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
+        Location to = event.getTo();
+        if (to == null) return;
 
-            UUID playerId = event.getPlayer().getUniqueId();
-            BedrockMiningSession session = activeSessions.get(playerId);
-            if (session != null) {
+        // Ignore pure rotation (no block-level movement)
+        Location from = event.getFrom();
+        if (from.getBlockX() == to.getBlockX() &&
+                from.getBlockY() == to.getBlockY() &&
+                from.getBlockZ() == to.getBlockZ()) {
+            return;
+        }
+
+        UUID playerId = event.getPlayer().getUniqueId();
+        BedrockMiningSession session = activeSessions.get(playerId);
+        if (session != null) {
+            double distanceMoved = to.distance(session.startPlayerLocation);
+            if (distanceMoved > MAX_MOVE_DISTANCE) {
                 session.cancel();
                 activeSessions.remove(playerId);
                 event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
@@ -107,7 +117,7 @@ public class BedrockBreakListener implements Listener {
         UUID playerId = player.getUniqueId();
         Location blockLoc = block.getLocation();
 
-        BedrockMiningSession session = new BedrockMiningSession(blockLoc);
+        BedrockMiningSession session = new BedrockMiningSession(blockLoc, player.getLocation());
         activeSessions.put(playerId, session);
 
         BukkitRunnable runnable = new BukkitRunnable() {
@@ -136,13 +146,36 @@ public class BedrockBreakListener implements Listener {
                     return;
                 }
 
+                // Cancel if player moved too far from starting position
+                double distanceMoved = player.getLocation().distance(session.startPlayerLocation);
+                if (distanceMoved > MAX_MOVE_DISTANCE) {
+                    activeSessions.remove(playerId);
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
+                    cancel();
+                    return;
+                }
+
+                // Check if player is looking at the bedrock block
+                Block targetBlock = player.getTargetBlockExact(MAX_LOOK_DISTANCE);
+                if (targetBlock != null && targetBlock.equals(block)) {
+                    session.lastLookAtTime = System.currentTimeMillis();
+                } else {
+                    long timeSinceLastLook = System.currentTimeMillis() - session.lastLookAtTime;
+                    if (timeSinceLastLook > LOOK_AWAY_GRACE_PERIOD_MS) {
+                        activeSessions.remove(playerId);
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
+                        cancel();
+                        return;
+                    }
+                }
+
                 secondsElapsed++;
 
                 int progressBars = secondsElapsed;
                 int remainingBars = MINING_TIME_SECONDS - secondsElapsed;
 
                 StringBuilder progressDisplay = new StringBuilder();
-                progressDisplay.append("§6Mining Bedrock: §a");
+                progressDisplay.append("§a");
                 for (int i = 0; i < progressBars; i++) {
                     progressDisplay.append("|");
                 }
@@ -150,7 +183,6 @@ public class BedrockBreakListener implements Listener {
                 for (int i = 0; i < remainingBars; i++) {
                     progressDisplay.append("|");
                 }
-                progressDisplay.append(" §e").append(secondsElapsed).append("/").append(MINING_TIME_SECONDS).append("s");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(progressDisplay.toString()));
 
@@ -163,7 +195,7 @@ public class BedrockBreakListener implements Listener {
                     block.getWorld().dropItemNaturally(blockLoc, new ItemStack(Material.BEDROCK, 1));
 
                     player.playSound(blockLoc, Sound.BLOCK_STONE_BREAK, 1.0f, 0.8f);
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§a✔ Bedrock broken!"));
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
 
                     plugin.getLogger().info("⛏️ Player " + player.getName() + " broke bedrock");
 
@@ -208,10 +240,14 @@ public class BedrockBreakListener implements Listener {
 
     private static class BedrockMiningSession {
         Location block;
+        Location startPlayerLocation;
         BukkitTask task;
+        long lastLookAtTime;
 
-        BedrockMiningSession(Location block) {
+        BedrockMiningSession(Location block, Location playerLocation) {
             this.block = block;
+            this.startPlayerLocation = playerLocation.clone();
+            this.lastLookAtTime = System.currentTimeMillis();
         }
 
         void cancel() {
