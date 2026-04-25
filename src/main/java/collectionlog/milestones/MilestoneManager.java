@@ -189,7 +189,7 @@ public class MilestoneManager {
 
     private void showMilestoneNotifications(Player player, Milestone milestone) {
         if (milestone.getToastMessage() != null && !milestone.getToastMessage().isBlank()) {
-            showToastNotification(player, milestone.getToastMessage(), milestone.getType());
+            showToastNotification(player, milestone.getToastMessage(), milestone.getType(), milestone);
         }
 
         if (milestone.getType() == MilestoneType.COLLECTION) {
@@ -206,10 +206,10 @@ public class MilestoneManager {
         plugin.getLogger().info(player.getName() + " completed milestone: " + milestone.getName());
     }
 
-    private void showToastNotification(Player player, String message, MilestoneType type) {
+    private void showToastNotification(Player player, String message, MilestoneType type, Milestone milestone) {
         final NamespacedKey key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
         try {
-            Material icon = type == MilestoneType.COLLECTION ? Material.DIAMOND : Material.EXPERIENCE_BOTTLE;
+            Material icon = getIconForMilestone(milestone, type);
             String frame = type == MilestoneType.COLLECTION ? "challenge" : "task";
 
             JsonObject json = new JsonObject();
@@ -270,6 +270,26 @@ public class MilestoneManager {
             Bukkit.getUnsafe().removeAdvancement(key);
             player.sendMessage("§6§l✦ " + message);
         }
+    }
+
+    private Material getIconForMilestone(Milestone milestone, MilestoneType type) {
+        Material defaultIcon = type == MilestoneType.COLLECTION ? Material.DIAMOND : Material.EXPERIENCE_BOTTLE;
+        if (milestone == null) {
+            return defaultIcon;
+        }
+
+        String collectionName;
+        if (milestone instanceof SubCollectionMilestone subMilestone) {
+            collectionName = subMilestone.getParentCollection() + ":" + subMilestone.getSubCollection();
+        } else {
+            collectionName = milestone.getName();
+        }
+
+        Material icon = plugin.getCollectionGUI().getMaterialForCollection(collectionName);
+        if (icon == null || icon == Material.PAPER) {
+            return defaultIcon;
+        }
+        return icon;
     }
 
     public void unlockPerk(UUID playerId, String perkId) {
