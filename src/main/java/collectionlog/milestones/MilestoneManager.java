@@ -3,6 +3,8 @@ package collectionlog.milestones;
 import com.google.gson.JsonObject;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.DatabaseType;
+import collectionlog.tags.Tag;
+import collectionlog.tags.TagManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -132,8 +134,14 @@ public class MilestoneManager {
     }
 
     private void triggerMilestone(UUID playerId, String milestoneName) {
-        Milestone milestone = milestones.get(normalizeMilestoneKey(milestoneName));
-        if (milestone == null || hasCompletedMilestone(playerId, milestoneName)) {
+        String normalizedKey = normalizeMilestoneKey(milestoneName);
+        Milestone milestone = milestones.get(normalizedKey);
+        if (milestone == null) {
+            plugin.getLogger().warning("No milestone found for: '" + milestoneName + "' (normalized: '" + normalizedKey + "')");
+            plugin.getLogger().warning("Available milestones: " + milestones.keySet());
+            return;
+        }
+        if (hasCompletedMilestone(playerId, milestoneName)) {
             return;
         }
 
@@ -166,9 +174,19 @@ public class MilestoneManager {
 
         List<String> tags = milestone.getTags();
         if (tags != null && !tags.isEmpty()) {
+            TagManager tagManager = plugin.getTagManager();
             for (String tagId : tags) {
                 unlockTag(player.getUniqueId(), tagId);
-                unlockedRewards.add("§6Tag: §e" + formatDisplayName(tagId));
+
+                String tagDisplayName;
+                if (tagManager != null) {
+                    Tag tag = tagManager.getTagById(tagId);
+                    tagDisplayName = tag != null ? tag.getName() : formatDisplayName(tagId);
+                } else {
+                    tagDisplayName = formatDisplayName(tagId);
+                }
+
+                unlockedRewards.add("§6Tag: §r" + tagDisplayName);
             }
         }
 
