@@ -22,7 +22,7 @@ public class StrafeManager {
     private final Map<UUID, Long> fallDamageProtection = new HashMap<>();
 
     private static final int COOLDOWN_SECONDS = 5;
-    private static final String PROGRESS_BAR = "||||||||||||||||||||";
+    private static final String PROGRESS_BAR = "||||||||||";
     private static final long FALL_DAMAGE_PROTECTION_MS = 3000; // 3 seconds
 
     public StrafeManager(CollectionLogPlugin plugin) {

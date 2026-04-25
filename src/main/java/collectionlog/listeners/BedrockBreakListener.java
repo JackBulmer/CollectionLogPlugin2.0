@@ -15,7 +15,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -35,7 +34,6 @@ public class BedrockBreakListener implements Listener {
     private final Map<UUID, BedrockMiningSession> activeSessions = new HashMap<>();
 
     private static final int MINING_TIME_SECONDS = 20;
-    private static final double MAX_MOVE_DISTANCE = 0.5;
     private static final int MAX_LOOK_DISTANCE = 6;
     private static final long LOOK_AWAY_GRACE_PERIOD_MS = 1000;
 
@@ -88,36 +86,11 @@ public class BedrockBreakListener implements Listener {
         startMining(player, block, tool);
     }
 
-    @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        Location to = event.getTo();
-        if (to == null) return;
-
-        // Ignore pure rotation (no block-level movement)
-        Location from = event.getFrom();
-        if (from.getBlockX() == to.getBlockX() &&
-                from.getBlockY() == to.getBlockY() &&
-                from.getBlockZ() == to.getBlockZ()) {
-            return;
-        }
-
-        UUID playerId = event.getPlayer().getUniqueId();
-        BedrockMiningSession session = activeSessions.get(playerId);
-        if (session != null) {
-            double distanceMoved = to.distance(session.startPlayerLocation);
-            if (distanceMoved > MAX_MOVE_DISTANCE) {
-                session.cancel();
-                activeSessions.remove(playerId);
-                event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
-            }
-        }
-    }
-
     private void startMining(Player player, Block block, ItemStack tool) {
         UUID playerId = player.getUniqueId();
         Location blockLoc = block.getLocation();
 
-        BedrockMiningSession session = new BedrockMiningSession(blockLoc, player.getLocation());
+        BedrockMiningSession session = new BedrockMiningSession(blockLoc);
         activeSessions.put(playerId, session);
 
         BukkitRunnable runnable = new BukkitRunnable() {
@@ -140,15 +113,6 @@ public class BedrockBreakListener implements Listener {
 
                 ItemStack currentTool = player.getInventory().getItemInMainHand();
                 if (currentTool == null || currentTool.getType() != Material.NETHERITE_PICKAXE) {
-                    activeSessions.remove(playerId);
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
-                    cancel();
-                    return;
-                }
-
-                // Cancel if player moved too far from starting position
-                double distanceMoved = player.getLocation().distance(session.startPlayerLocation);
-                if (distanceMoved > MAX_MOVE_DISTANCE) {
                     activeSessions.remove(playerId);
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
                     cancel();
@@ -240,13 +204,11 @@ public class BedrockBreakListener implements Listener {
 
     private static class BedrockMiningSession {
         Location block;
-        Location startPlayerLocation;
         BukkitTask task;
         long lastLookAtTime;
 
-        BedrockMiningSession(Location block, Location playerLocation) {
+        BedrockMiningSession(Location block) {
             this.block = block;
-            this.startPlayerLocation = playerLocation.clone();
             this.lastLookAtTime = System.currentTimeMillis();
         }
 
