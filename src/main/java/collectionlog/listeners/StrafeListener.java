@@ -140,7 +140,7 @@ public class StrafeListener implements Listener {
         Long timeInAir = airborneTime.get(playerId);
         if (timeInAir != null) {
             long duration = System.currentTimeMillis() - timeInAir;
-            if (duration > 2000) {
+            if (duration > 1000) {
                 return; // Been in air too long
             }
         }
