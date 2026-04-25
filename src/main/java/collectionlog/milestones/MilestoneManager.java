@@ -67,10 +67,12 @@ public class MilestoneManager {
 
                 List<String> perks = config.getStringList(path + ".perks");
                 List<String> tags = config.getStringList(path + ".tags");
-                String toastMessage = config.getString(path + ".toast_message", collectionName + " Complete!");
+                String displayName = capitalizeCollectionName(collectionName);
+                String toastMessage = config.getString(path + ".toast_message",
+                        displayName + " Collection Complete!");
                 String announcementMessage = config.getString(
                         path + ".announcement_message",
-                        "{player} has completed the " + collectionName + " collection!"
+                        "{player} has completed the " + displayName + " Collection!"
                 );
 
                 Milestone milestone = new Milestone(
@@ -100,7 +102,9 @@ public class MilestoneManager {
 
                     int xpReward = config.getInt(path + ".xp", 0);
                     List<String> itemRewards = config.getStringList(path + ".items");
-                    String toastMessage = config.getString(path + ".toast_message", subCollection + " Complete!");
+                    String displayName = capitalizeCollectionName(subCollection);
+                    String toastMessage = config.getString(path + ".toast_message",
+                            displayName + " Complete!");
 
                     SubCollectionMilestone milestone = new SubCollectionMilestone(
                             fullName,
@@ -152,14 +156,20 @@ public class MilestoneManager {
     private void awardCollectionRewards(Player player, Milestone milestone) {
         List<String> unlockedRewards = new ArrayList<>();
 
-        for (String perkId : milestone.getPerks()) {
-            unlockPerk(player.getUniqueId(), perkId);
-            unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+        List<String> perks = milestone.getPerks();
+        if (perks != null && !perks.isEmpty()) {
+            for (String perkId : perks) {
+                unlockPerk(player.getUniqueId(), perkId);
+                unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+            }
         }
 
-        for (String tagId : milestone.getTags()) {
-            unlockTag(player.getUniqueId(), tagId);
-            unlockedRewards.add("§6Tag: §e" + formatDisplayName(tagId));
+        List<String> tags = milestone.getTags();
+        if (tags != null && !tags.isEmpty()) {
+            for (String tagId : tags) {
+                unlockTag(player.getUniqueId(), tagId);
+                unlockedRewards.add("§6Tag: §e" + formatDisplayName(tagId));
+            }
         }
 
         if (!unlockedRewards.isEmpty()) {
@@ -552,5 +562,26 @@ public class MilestoneManager {
             }
         }
         return builder.toString();
+    }
+
+    private String capitalizeCollectionName(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
+        }
+        String[] words = name.trim().toLowerCase(Locale.ROOT).split("\\s+");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) {
+                result.append(word.substring(1));
+            }
+        }
+        return result.toString();
     }
 }
