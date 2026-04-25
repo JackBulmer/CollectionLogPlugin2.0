@@ -12,7 +12,12 @@ public class SubCollectionMilestone extends Milestone {
 
     public SubCollectionMilestone(String name, String parentCollection, String subCollection,
                                   int xpReward, List<String> itemRewards, String toastMessage) {
-        super(name, MilestoneType.SUB_COLLECTION, Collections.emptyList(), Collections.emptyList(), toastMessage, "");
+        super(name, MilestoneType.SUB_COLLECTION,
+                Collections.emptyList(),  // perks
+                Collections.emptyList(),  // prefixTags
+                Collections.emptyList(),  // suffixTags
+                toastMessage,            // toastMessage
+                "");
         this.parentCollection = parentCollection;
         this.subCollection = subCollection;
         this.xpReward = xpReward;
