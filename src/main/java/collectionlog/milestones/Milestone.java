@@ -8,16 +8,19 @@ public class Milestone {
     private final String name;
     private final MilestoneType type;
     private final List<String> perks;
-    private final List<String> tags;
+    private final List<String> prefixTags;
+    private final List<String> suffixTags;
     private final String toastMessage;
     private final String announcementMessage;
 
-    public Milestone(String name, MilestoneType type, List<String> perks, List<String> tags,
+    public Milestone(String name, MilestoneType type, List<String> perks,
+                     List<String> prefixTags, List<String> suffixTags,
                      String toastMessage, String announcementMessage) {
         this.name = name;
         this.type = type;
         this.perks = perks == null ? List.of() : new ArrayList<>(perks);
-        this.tags = tags == null ? List.of() : new ArrayList<>(tags);
+        this.prefixTags = prefixTags == null ? List.of() : new ArrayList<>(prefixTags);
+        this.suffixTags = suffixTags == null ? List.of() : new ArrayList<>(suffixTags);
         this.toastMessage = toastMessage;
         this.announcementMessage = announcementMessage;
     }
@@ -34,8 +37,12 @@ public class Milestone {
         return Collections.unmodifiableList(perks);
     }
 
-    public List<String> getTags() {
-        return Collections.unmodifiableList(tags);
+    public List<String> getPrefixTags() {
+        return Collections.unmodifiableList(prefixTags);
+    }
+
+    public List<String> getSuffixTags() {
+        return Collections.unmodifiableList(suffixTags);
     }
 
     public String getToastMessage() {

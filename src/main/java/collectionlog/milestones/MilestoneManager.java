@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.DatabaseType;
 import collectionlog.tags.Tag;
-import collectionlog.tags.TagManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -41,6 +40,8 @@ public class MilestoneManager {
     private final Set<UUID> loadedPerks;
     private final Set<UUID> loadedCompletedMilestones;
     private final ConcurrentMap<UUID, Object> playerLoadLocks;
+    private List<String> globalPrefixTags;
+    private List<String> globalSuffixTags;
 
     public MilestoneManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -50,8 +51,11 @@ public class MilestoneManager {
         this.loadedPerks = ConcurrentHashMap.newKeySet();
         this.loadedCompletedMilestones = ConcurrentHashMap.newKeySet();
         this.playerLoadLocks = new ConcurrentHashMap<>();
+        this.globalPrefixTags = new ArrayList<>();
+        this.globalSuffixTags = new ArrayList<>();
 
         loadMilestones();
+        validateMilestones();
     }
 
     private void loadMilestones() {
@@ -62,13 +66,18 @@ public class MilestoneManager {
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(milestonesFile);
 
+        // Load global (always-available) tags
+        globalPrefixTags = new ArrayList<>(config.getStringList("global_tags.prefix"));
+        globalSuffixTags = new ArrayList<>(config.getStringList("global_tags.suffix"));
+
         ConfigurationSection collectionSection = config.getConfigurationSection("collections");
         if (collectionSection != null) {
             for (String collectionName : collectionSection.getKeys(false)) {
                 String path = "collections." + collectionName;
 
                 List<String> perks = config.getStringList(path + ".perks");
-                List<String> tags = config.getStringList(path + ".tags");
+                List<String> prefixTags = config.getStringList(path + ".tags.prefix");
+                List<String> suffixTags = config.getStringList(path + ".tags.suffix");
                 String displayName = capitalizeCollectionName(collectionName);
                 String toastMessage = config.getString(path + ".toast_message",
                         displayName + " Collection Complete!");
@@ -81,7 +90,8 @@ public class MilestoneManager {
                         collectionName,
                         MilestoneType.COLLECTION,
                         perks,
-                        tags,
+                        prefixTags,
+                        suffixTags,
                         toastMessage,
                         announcementMessage
                 );
@@ -123,6 +133,85 @@ public class MilestoneManager {
         }
 
         plugin.getLogger().info("Loaded " + milestones.size() + " milestones");
+    }
+
+    /**
+     * Validates that every collection defined in collections.json has a corresponding
+     * milestone in milestones.yml, and warns about any mismatches on startup.
+     */
+    private void validateMilestones() {
+        if (plugin.getCollectionLoader() == null) {
+            return;
+        }
+
+        Set<String> collectionIds = new HashSet<>();
+        try {
+            collectionIds.addAll(plugin.getCollectionLoader().getCollections().keySet());
+            if (plugin.getSpecialCollectionLoader() != null) {
+                collectionIds.addAll(plugin.getSpecialCollectionLoader().getSpecialCollections().keySet());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("[Milestone Validation] Could not read collection definitions: " + e.getMessage());
+            return;
+        }
+
+        int missingMilestones = 0;
+        for (String collectionId : collectionIds) {
+            if (!milestones.containsKey(normalizeMilestoneKey(collectionId))) {
+                plugin.getLogger().warning("[Milestone Validation] Collection '" + collectionId
+                        + "' has no entry in milestones.yml – completion messages will not be sent.");
+                missingMilestones++;
+            }
+        }
+
+        int orphanMilestones = 0;
+        for (Map.Entry<String, Milestone> entry : milestones.entrySet()) {
+            if (entry.getValue() instanceof SubCollectionMilestone) {
+                continue;
+            }
+            if (!collectionIds.contains(entry.getKey())) {
+                plugin.getLogger().warning("[Milestone Validation] milestones.yml entry '" + entry.getKey()
+                        + "' has no corresponding collection in collections.json.");
+                orphanMilestones++;
+            }
+        }
+
+        if (missingMilestones == 0 && orphanMilestones == 0) {
+            plugin.getLogger().info("[Milestone Validation] All collections and milestones match. ✓");
+        }
+    }
+
+    /**
+     * Returns all Tag objects built from milestones.yml (collection-specific and global).
+     * This is the single source of truth for all available tags.
+     */
+    public List<Tag> getAllTags() {
+        List<Tag> tags = new ArrayList<>();
+
+        // Global tags (no collection requirement)
+        for (String displayName : globalPrefixTags) {
+            tags.add(new Tag(displayName, true, null));
+        }
+        for (String displayName : globalSuffixTags) {
+            tags.add(new Tag(displayName, false, null));
+        }
+
+        // Collection-specific tags
+        for (Map.Entry<String, Milestone> entry : milestones.entrySet()) {
+            Milestone milestone = entry.getValue();
+            if (milestone instanceof SubCollectionMilestone) {
+                continue;
+            }
+            String collectionName = entry.getKey();
+            for (String displayName : milestone.getPrefixTags()) {
+                tags.add(new Tag(displayName, true, collectionName));
+            }
+            for (String displayName : milestone.getSuffixTags()) {
+                tags.add(new Tag(displayName, false, collectionName));
+            }
+        }
+
+        return tags;
     }
 
     public void checkCollectionCompletion(UUID playerId, String collectionName) {
@@ -172,22 +261,14 @@ public class MilestoneManager {
             }
         }
 
-        List<String> tags = milestone.getTags();
-        if (tags != null && !tags.isEmpty()) {
-            TagManager tagManager = plugin.getTagManager();
-            for (String tagId : tags) {
-                unlockTag(player.getUniqueId(), tagId);
+        for (String tagDisplayName : milestone.getPrefixTags()) {
+            unlockTag(player.getUniqueId(), tagDisplayName);
+            unlockedRewards.add("§6Tag: §r" + tagDisplayName);
+        }
 
-                String tagDisplayName;
-                if (tagManager != null) {
-                    Tag tag = tagManager.getTagById(tagId);
-                    tagDisplayName = tag != null ? tag.getName() : formatDisplayName(tagId);
-                } else {
-                    tagDisplayName = formatDisplayName(tagId);
-                }
-
-                unlockedRewards.add("§6Tag: §r" + tagDisplayName);
-            }
+        for (String tagDisplayName : milestone.getSuffixTags()) {
+            unlockTag(player.getUniqueId(), tagDisplayName);
+            unlockedRewards.add("§6Tag: §r" + tagDisplayName);
         }
 
         if (!unlockedRewards.isEmpty()) {
@@ -436,7 +517,10 @@ public class MilestoneManager {
 
     public void reload() {
         milestones.clear();
+        globalPrefixTags = new ArrayList<>();
+        globalSuffixTags = new ArrayList<>();
         loadMilestones();
+        validateMilestones();
     }
 
     private void revokeMilestoneRewards(UUID playerId, Milestone milestone) {
@@ -447,8 +531,11 @@ public class MilestoneManager {
             removePerkFromDatabase(playerId, perkId);
         }
 
-        for (String tagId : milestone.getTags()) {
-            removeTagFromDatabase(playerId, tagId);
+        for (String tagDisplayName : milestone.getPrefixTags()) {
+            removeTagFromDatabase(playerId, tagDisplayName);
+        }
+        for (String tagDisplayName : milestone.getSuffixTags()) {
+            removeTagFromDatabase(playerId, tagDisplayName);
         }
     }
 

@@ -5,87 +5,38 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
  * Manages all available tags and player tag selections.
+ * Tag definitions are loaded from milestones.yml via MilestoneManager and are the
+ * single source of truth – no tags are hardcoded here.
  */
 public class TagManager {
     private final CollectionLogPlugin plugin;
     private final PlayerCollectionDAO playerCollectionDAO;
-    private final List<Tag> allTags;
+    private List<Tag> allTags;
 
     public TagManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
         this.playerCollectionDAO = plugin.getPlayerCollectionDAO();
-        this.allTags = initializeTags();
+        this.allTags = loadTagsFromMilestones();
     }
 
-    private List<Tag> initializeTags() {
-        List<Tag> tags = new ArrayList<>();
-
-        // Prefix tags
-        tags.add(new Tag("§6Miner§r ", true, "ores"));
-        tags.add(new Tag("§2Lumberjack§r ", true, "wood"));
-        tags.add(new Tag("§cStoner§r ", true, "redstone"));
-        tags.add(new Tag("§nGypsy§r ", true, "copper"));
-        tags.add(new Tag("§2Environmentalist§r ", true, "nature"));
-        tags.add(new Tag("§4Hunter§r ", true, "mob drops"));
-        tags.add(new Tag("§7Platinum Artist§r ", true, "music discs"));
-        tags.add(new Tag("§4D§ce§6c§eo§2r§aa§bt§9o§dr§5", true, "terracotta"));
-        tags.add(new Tag("§bShatterproof§r ", true, "glass"));
-        tags.add(new Tag("§6Shepherd§r ", true, "wool"));
-
-        // Suffix tags
-        tags.add(new Tag(" §bis Collecting§r", false, null));
-        tags.add(new Tag(" §jis Handy§r", false, "utilities"));
-        tags.add(new Tag(" §dIs getting head§r", false, "heads"));
-        tags.add(new Tag(" §0is Dying§r", false, "dyes"));
-        tags.add(new Tag(" §4Got Banned§r", false, "banners"));
-        tags.add(new Tag(" §7The Armourer§r", false, "armour"));
-        tags.add(new Tag(" §7The Tool§r", false, "weapons and tools"));
-
-        return tags;
+    /**
+     * Loads all tag definitions from MilestoneManager (which reads milestones.yml).
+     */
+    private List<Tag> loadTagsFromMilestones() {
+        if (plugin.getMilestoneManager() == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(plugin.getMilestoneManager().getAllTags());
     }
 
     public List<Tag> getAllTags() {
         return new ArrayList<>(allTags);
-    }
-
-    /**
-     * Get a tag by its milestone ID. Matches first by stripping color codes from the tag name,
-     * then falls back to matching by required collection name.
-     *
-     * @param tagId the tag identifier used in milestones.yml (e.g. "lumberjack")
-     * @return the matching Tag, or null if not found
-     */
-    public Tag getTagById(String tagId) {
-        if (tagId == null) {
-            return null;
-        }
-
-        String normalized = tagId.toLowerCase(Locale.ROOT).trim();
-
-        for (Tag tag : allTags) {
-            // Strip §-based color codes and compare with tag name
-            String strippedName = tag.getName()
-                    .replaceAll("(?i)§[0-9a-fk-or]", "")
-                    .toLowerCase(Locale.ROOT)
-                    .trim();
-            if (strippedName.equals(normalized)) {
-                return tag;
-            }
-
-            // Fallback: compare with the required collection name
-            if (tag.hasRequirement() && tag.getRequiredCollection().equalsIgnoreCase(normalized)) {
-                return tag;
-            }
-        }
-
-        return null;
     }
 
     /**
