@@ -39,3 +39,17 @@ messages:
 
   server-announcement:
     format: "§6{player}§r completed §e{collection} Collection§r!"
+
+# Mob drop settings
+mob-drops:
+  # Chance for spawn eggs to drop (1 in X kills)
+  spawn-egg-chance: 10
+
+  # Chance for mob heads to drop (1 in X kills)
+  mob-head-chance: 7
+
+  # Enable/disable mob head drops
+  mob-heads-enabled: true
+
+  # Enable/disable spawn egg drops
+  spawn-eggs-enabled: true

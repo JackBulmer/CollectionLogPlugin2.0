@@ -20,6 +20,10 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>hdb-repo</id>
+            <url>https://raw.githubusercontent.com/arcaniax-Development/HeadDatabase-API/main/repo/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -28,6 +32,14 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.21.11-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HeadDatabase API -->
+        <dependency>
+            <groupId>me.arcaniax</groupId>
+            <artifactId>HDB-API</artifactId>
+            <version>1.4</version>
             <scope>provided</scope>
         </dependency>
 
