@@ -706,7 +706,7 @@ public class CollectionGUI implements Listener {
         return normalize(value).replace(" ", "");
     }
 
-    private Material getMaterialForCollection(String collectionName) {
+    public Material getMaterialForCollection(String collectionName) {
         String normalized = normalize(collectionName);
         if (normalized.contains(":")) {
             String[] parts = normalized.split(":", 2);
