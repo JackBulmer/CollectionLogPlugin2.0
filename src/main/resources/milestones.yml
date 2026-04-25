@@ -72,7 +72,7 @@ collections:
     perks: []
     tags:
       prefix:
-        - "§4D§ce§6c§eo§2r§aa§bt§9o§dr§5"
+        - "§4D§ce§6c§eo§2r§aa§bt§9o§dr§5r§r "
       suffix: []
 
   glass:
@@ -163,6 +163,115 @@ collections:
   spawn_eggs:
     perks:
       - extra_heart
+    tags:
+      prefix: []
+      suffix: []
+
+  # Additional collections from validation warnings
+  concrete:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  ancient cities:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  candles:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  tcg:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  nether:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  buckets:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  trial chambers:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  jb_fishing_plus:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  enchantments:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  potion ingredients:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  food:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  ocean:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  sherds:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  potions:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  stones:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  beds:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  horns:
+    perks: []
+    tags:
+      prefix: []
+      suffix: []
+
+  armour_trims:
+    perks: []
     tags:
       prefix: []
       suffix: []
