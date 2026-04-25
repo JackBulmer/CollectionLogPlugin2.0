@@ -21,6 +21,11 @@ commands:
     usage: /cldb <info|migrate|backup>
     permission: collectionlog.admin
 
+  tags:
+    description: Open the tags selection GUI
+    usage: /tags
+    aliases: [tag]
+
 permissions:
   collectionlog.use:
     description: Use collection log features
