@@ -431,6 +431,102 @@ public class PlayerCollectionDAO {
         });
     }
 
+    /**
+     * Get player's prefix tag from player_tag_selections
+     */
+    public CompletableFuture<String> getPlayerPrefix(UUID playerUUID) {
+        return asyncTaskManager.runAsync(() -> {
+            String sql = "SELECT prefix FROM player_tag_selections WHERE player_uuid = ?";
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, playerUUID.toString());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        String prefix = rs.getString("prefix");
+                        return prefix != null ? prefix : "";
+                    }
+                }
+                return "";
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to get player prefix: " + e.getMessage());
+                return "";
+            }
+        });
+    }
+
+    /**
+     * Get player's suffix tag from player_tag_selections
+     */
+    public CompletableFuture<String> getPlayerSuffix(UUID playerUUID) {
+        return asyncTaskManager.runAsync(() -> {
+            String sql = "SELECT suffix FROM player_tag_selections WHERE player_uuid = ?";
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, playerUUID.toString());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        String suffix = rs.getString("suffix");
+                        return suffix != null ? suffix : "";
+                    }
+                }
+                return "";
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to get player suffix: " + e.getMessage());
+                return "";
+            }
+        });
+    }
+
+    /**
+     * Set player's prefix tag in player_tag_selections (upsert)
+     */
+    public CompletableFuture<Void> setPlayerPrefix(UUID playerUUID, String prefix) {
+        return asyncTaskManager.runAsync(() -> {
+            String sql;
+            if (databaseManager.getDatabaseType() == DatabaseType.MYSQL) {
+                sql = "INSERT INTO player_tag_selections (player_uuid, prefix, suffix) VALUES (?, ?, '') "
+                        + "ON DUPLICATE KEY UPDATE prefix = VALUES(prefix)";
+            } else {
+                sql = "INSERT INTO player_tag_selections (player_uuid, prefix, suffix) VALUES (?, ?, '') "
+                        + "ON CONFLICT(player_uuid) DO UPDATE SET prefix = excluded.prefix";
+            }
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, playerUUID.toString());
+                stmt.setString(2, prefix);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to set player prefix: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Set player's suffix tag in player_tag_selections (upsert)
+     */
+    public CompletableFuture<Void> setPlayerSuffix(UUID playerUUID, String suffix) {
+        return asyncTaskManager.runAsync(() -> {
+            String sql;
+            if (databaseManager.getDatabaseType() == DatabaseType.MYSQL) {
+                sql = "INSERT INTO player_tag_selections (player_uuid, prefix, suffix) VALUES (?, '', ?) "
+                        + "ON DUPLICATE KEY UPDATE suffix = VALUES(suffix)";
+            } else {
+                sql = "INSERT INTO player_tag_selections (player_uuid, prefix, suffix) VALUES (?, '', ?) "
+                        + "ON CONFLICT(player_uuid) DO UPDATE SET suffix = excluded.suffix";
+            }
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, playerUUID.toString());
+                stmt.setString(2, suffix);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to set player suffix: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
     private String insertIgnore(String table, String columnsAndValues) {
         if (databaseManager.getDatabaseType() == DatabaseType.MYSQL) {
             return "INSERT IGNORE INTO " + table + " " + columnsAndValues;

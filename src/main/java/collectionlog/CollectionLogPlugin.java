@@ -6,6 +6,7 @@ import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
 import collectionlog.commands.LogsCommand;
+import collectionlog.commands.TagsCommand;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
@@ -13,6 +14,7 @@ import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.gui.CollectionGUI;
+import collectionlog.gui.TagsGUI;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -29,6 +31,7 @@ import collectionlog.listeners.PistonListener;
 import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.BedrockBreakListener;
 import collectionlog.listeners.PlayerDropItemListener;
+import collectionlog.listeners.PlayerJoinListener;
 import collectionlog.listeners.SilkTouchObtainableListener;
 import collectionlog.listeners.SmithingTableListener;
 import collectionlog.listeners.StonecutterListener;
@@ -37,6 +40,7 @@ import collectionlog.listeners.VillagerTradingListener;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.managers.StrafeManager;
 import collectionlog.milestones.MilestoneManager;
+import collectionlog.tags.TagManager;
 import collectionlog.utils.CollectionMatcher;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,6 +65,8 @@ public class CollectionLogPlugin extends JavaPlugin {
     private CollectionMatcher collectionMatcher;
     private CollectionGUI collectionGUI;
     private StrafeManager strafeManager;
+    private TagManager tagManager;
+    private TagsGUI tagsGUI;
 
     @Override
     public void onEnable() {
@@ -138,6 +144,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             itemTrackingManager = new ItemTrackingManager(this);
             containerTrackingManager = new ContainerTrackingManager(this, containerItemDAO, asyncTaskManager);
             strafeManager = new StrafeManager(this);
+            tagManager = new TagManager(this);
+            tagsGUI = new TagsGUI(this, tagManager);
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -163,6 +171,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new SilkTouchObtainableListener(this), this);
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
+            getServer().getPluginManager().registerEvents(tagsGUI, this);
+            getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
             getLogger().info("✅ Listeners registered");
 
             PluginCommand logsCommand = getCommand("logs");
@@ -177,6 +187,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 AdminCommands executor = new AdminCommands(this);
                 adminCommand.setExecutor(executor);
                 adminCommand.setTabCompleter(executor);
+            }
+
+            PluginCommand tagsCommand = getCommand("tags");
+            if (tagsCommand != null) {
+                tagsCommand.setExecutor(new TagsCommand(this));
+            } else {
+                getLogger().warning("Command 'tags' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -272,5 +289,13 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public StrafeManager getStrafeManager() {
         return strafeManager;
+    }
+
+    public TagManager getTagManager() {
+        return tagManager;
+    }
+
+    public TagsGUI getTagsGUI() {
+        return tagsGUI;
     }
 }

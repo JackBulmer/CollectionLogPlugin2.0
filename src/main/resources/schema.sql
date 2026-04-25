@@ -143,3 +143,12 @@ CREATE TABLE IF NOT EXISTS player_tags (
 );
 
 CREATE INDEX IF NOT EXISTS idx_player_tags_uuid ON player_tags(player_uuid);
+
+-- Player selected prefix/suffix tags
+CREATE TABLE IF NOT EXISTS player_tag_selections (
+    player_uuid CHAR(36) PRIMARY KEY,
+    prefix TEXT NOT NULL DEFAULT '',
+    suffix TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_tag_selections_uuid ON player_tag_selections(player_uuid);
