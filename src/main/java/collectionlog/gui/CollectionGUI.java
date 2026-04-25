@@ -44,9 +44,9 @@ public class CollectionGUI implements Listener {
 
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 48;
-    private static final int SLOT_MAIN_STATS = 49;
+    private static final int SLOT_MAIN_STATS = 48;
     private static final int SLOT_MAIN_CLOSE = 50;
-    private static final int SLOT_FILTER = 51;
+    private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
     private static final int SLOT_INFO = 49;
     private static final int BACK_ICON_CUSTOM_MODEL_DATA = 24001;
