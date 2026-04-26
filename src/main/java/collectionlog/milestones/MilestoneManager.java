@@ -218,6 +218,7 @@ public class MilestoneManager {
     }
 
     public void checkCollectionCompletion(UUID playerId, String collectionName) {
+        plugin.getLogger().info("Checking collection completion for player " + playerId + ", collection: " + collectionName);
         triggerMilestone(playerId, collectionName);
     }
 
@@ -413,6 +414,7 @@ public class MilestoneManager {
         ensurePerksLoaded(playerId);
         playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(perkId);
         savePerkToDatabase(playerId, perkId);
+        plugin.getLogger().info("Unlocked perk '" + perkId + "' for player " + playerId);
         // Ensure toggle state is loaded so perk checks work immediately without a relog
         plugin.getPerkManager().loadPlayerToggles(playerId);
     }
