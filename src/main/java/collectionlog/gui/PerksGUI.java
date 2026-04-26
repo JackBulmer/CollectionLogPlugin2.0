@@ -47,7 +47,8 @@ public class PerksGUI implements Listener {
     // Bottom row (row 5)
     private static final int SLOT_PREV        = 45;
     private static final int SLOT_TAGS        = 47;
-    private static final int SLOT_POTION_PAGE = 49;
+    private static final int SLOT_POTION_PAGE = 48;
+    private static final int SLOT_CLOSE       = 49;
     private static final int SLOT_FILTER      = 50;
     private static final int SLOT_NEXT        = 53;
 
@@ -143,6 +144,9 @@ public class PerksGUI implements Listener {
                     List.of("§7Click to view potion-effect perks.")));
         }
 
+        // Close button
+        inv.setItem(SLOT_CLOSE, createCloseButton());
+
         // Filter toggle
         inv.setItem(SLOT_FILTER, createFilterButton(showUnlockedOnly));
 
@@ -210,6 +214,11 @@ public class PerksGUI implements Listener {
             } else {
                 openPotionPage(player, 0, showUnlockedOnly);
             }
+            return;
+        }
+
+        if (slot == SLOT_CLOSE) {
+            player.closeInventory();
             return;
         }
 
@@ -346,6 +355,17 @@ public class PerksGUI implements Listener {
             if (lore != null) {
                 meta.setLore(lore);
             }
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack createCloseButton() {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
+            meta.setDisplayName("§cClose");
             item.setItemMeta(meta);
         }
         return item;
