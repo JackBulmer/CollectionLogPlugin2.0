@@ -32,7 +32,7 @@ public class ExtraHeartsManager {
         UUID playerId = player.getUniqueId();
         int extraHeartCount = getExtraHeartCount(playerId);
 
-        AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute == null) {
             return;
         }
@@ -84,7 +84,7 @@ public class ExtraHeartsManager {
      * Used when all extra_heart milestones are revoked.
      */
     public void removeExtraHearts(Player player) {
-        AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute == null) {
             return;
         }
