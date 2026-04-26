@@ -417,6 +417,7 @@
 
     "resin": [
       "RESIN_CLUMP",
+      "RESIN_BRICK",
       "RESIN_BLOCK",
       "RESIN_BRICKS",
       "CHISELED_RESIN_BRICKS",
@@ -798,6 +799,7 @@
       "PODZOL",
       "ROOTED_DIRT",
       "GRASS_BLOCK",
+      "DIRT_PATH",
       "MYCELIUM",
       "CLAY",
       "CLAY_BALL"

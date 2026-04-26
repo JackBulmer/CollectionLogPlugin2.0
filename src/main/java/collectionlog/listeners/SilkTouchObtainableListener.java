@@ -29,7 +29,8 @@ public class SilkTouchObtainableListener implements Listener {
      */
     private static final Set<Material> SILK_TOUCH_OBTAINABLE = new HashSet<>(Set.of(
             Material.BUDDING_AMETHYST,
-            Material.REINFORCED_DEEPSLATE
+            Material.REINFORCED_DEEPSLATE,
+            Material.DIRT_PATH
     ));
 
     public SilkTouchObtainableListener(CollectionLogPlugin plugin) {
