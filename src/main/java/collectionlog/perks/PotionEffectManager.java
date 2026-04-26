@@ -23,10 +23,9 @@ public class PotionEffectManager implements Listener {
 
     /**
      * Duration used for all perk-applied effects.
-     * Using {@link Integer#MAX_VALUE} makes effects effectively infinite and also
-     * serves as a marker that lets us identify effects applied by this system.
+     * Uses the Bukkit API constant for truly infinite potion effects.
      */
-    private static final int INFINITE = Integer.MAX_VALUE;
+    private static final int INFINITE = PotionEffect.INFINITE_DURATION;
 
     /** Maps perk ID → the potion effect type it applies (excludes bad omen). */
     private static final Map<String, PotionEffectType> EFFECT_PERKS = Map.of(
@@ -146,14 +145,9 @@ public class PotionEffectManager implements Listener {
     }
 
     /**
-     * Removes the given effect from the player only if it was applied by this
-     * system (identified by its {@link #INFINITE} duration).  Player-obtained
-     * effects with finite durations are left untouched.
+     * Removes the given effect from the player, regardless of its current duration.
      */
     private void removeOurEffect(Player player, PotionEffectType type) {
-        PotionEffect current = player.getPotionEffect(type);
-        if (current != null && current.getDuration() == INFINITE) {
-            player.removePotionEffect(type);
-        }
+        player.removePotionEffect(type);
     }
 }
