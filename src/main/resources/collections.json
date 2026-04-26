@@ -446,6 +446,7 @@
       "COPPER_CHESTPLATE",
       "COPPER_LEGGINGS",
       "COPPER_BOOTS",
+      "COPPER_HORSE_ARMOR",
       "COPPER_NAUTILUS_ARMOR"
     ],
     "iron armour": [
@@ -765,6 +766,8 @@
     "COOKED_CHICKEN",
     "CHICKEN",
     "EGG",
+    "BLUE_EGG",
+    "BROWN_EGG",
     "COOKED_MUTTON",
     "MUTTON",
     "COOKED_RABBIT",
@@ -829,7 +832,8 @@
       "FLOWERING_AZALEA",
       "WILDFLOWERS",
       "CACTUS_FLOWER",
-      "CLOSED_EYEBLOSSOM"
+      "CLOSED_EYEBLOSSOM",
+      "OPEN_EYEBLOSSOM"
     ],
 
     "foliage": [
@@ -842,6 +846,7 @@
       "MOSS_CARPET",
       "PALE_MOSS_BLOCK",
       "PALE_MOSS_CARPET",
+      "PALE_HANGING_MOSS",
       "VINE",
       "FLOWERING_AZALEA_LEAVES",
       "AZALEA_LEAVES",
@@ -873,7 +878,8 @@
       "MANGROVE_PROPAGULE",
       "BUSH",
       "SHORT_DRY_GRASS",
-      "TALL_DRY_GRASS"
+      "TALL_DRY_GRASS",
+      "FIREFLY_BUSH"
     ],
 
     "mushrooms": [
