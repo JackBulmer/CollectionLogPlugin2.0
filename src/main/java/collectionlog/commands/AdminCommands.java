@@ -547,6 +547,21 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
         if (args.length >= 4 && args[0].equalsIgnoreCase("collection")) {
             String query = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+
+            if (query.contains(":")) {
+                String[] parts = query.split(":", 2);
+                String parentQuery = parts[0].trim();
+                CollectionDefinition parent = findCollectionByQuery(parentQuery);
+                if (parent != null && !parent.getSubCollections().isEmpty()) {
+                    List<String> suggestions = new ArrayList<>();
+                    for (SubCollectionDefinition sub : parent.getSubCollections()) {
+                        suggestions.add(parent.getName() + ":" + sub.getName());
+                    }
+                    return filterCompletions(query, suggestions);
+                }
+                return List.of();
+            }
+
             Set<String> collectionNames = new LinkedHashSet<>();
             for (CollectionDefinition collection : getAllCollections().values()) {
                 collectionNames.add(collection.getName());
