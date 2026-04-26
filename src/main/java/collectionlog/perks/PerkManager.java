@@ -46,9 +46,7 @@ public class PerkManager {
             // No collection requirement – always available to all players
             return true;
         }
-        boolean result = plugin.getMilestoneManager().hasPerk(playerId, perkId);
-        plugin.getLogger().info("Perk check: player=" + playerId + ", perk=" + perkId + ", unlocked=" + result);
-        return result;
+        return plugin.getMilestoneManager().hasPerk(playerId, perkId);
     }
 
     /**

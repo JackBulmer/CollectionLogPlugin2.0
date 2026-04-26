@@ -218,7 +218,6 @@ public class MilestoneManager {
     }
 
     public void checkCollectionCompletion(UUID playerId, String collectionName) {
-        plugin.getLogger().info("Checking collection completion for player " + playerId + ", collection: " + collectionName);
         triggerMilestone(playerId, collectionName);
     }
 
@@ -258,9 +257,7 @@ public class MilestoneManager {
         List<String> unlockedRewards = new ArrayList<>();
 
         List<String> perks = milestone.getPerks();
-        plugin.getLogger().info("[PERK DEBUG] awardCollectionRewards: milestone=" + milestone.getName() + ", perks count=" + (perks == null ? "null" : perks.size()));
         if (perks != null && !perks.isEmpty()) {
-            plugin.getLogger().info("[PERK DEBUG] Perks to unlock: " + perks);
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
@@ -413,12 +410,9 @@ public class MilestoneManager {
     }
 
     public void unlockPerk(UUID playerId, String perkId) {
-        plugin.getLogger().info("[PERK DEBUG] unlockPerk called: player=" + playerId + ", perk=" + perkId);
         ensurePerksLoaded(playerId);
-        boolean wasAdded = playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(perkId);
-        plugin.getLogger().info("[PERK DEBUG] Added to cache: " + wasAdded + " (false = already existed)");
+        playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(perkId);
         savePerkToDatabase(playerId, perkId);
-        plugin.getLogger().info("[PERK DEBUG] Saving to database and loading toggle state");
         // Ensure toggle state is loaded so perk checks work immediately without a relog
         plugin.getPerkManager().loadPlayerToggles(playerId);
     }
