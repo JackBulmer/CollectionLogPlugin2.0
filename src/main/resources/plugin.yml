@@ -34,7 +34,6 @@ commands:
   craft:
     description: Opens a virtual crafting table
     usage: /craft
-    permission: collectionlog.craft
 
 permissions:
   collectionlog.use:
