@@ -26,8 +26,7 @@ collections:
       suffix: []
 
   ores:
-    perks:
-      - vein_miner
+    perks: []
     tags:
       prefix:
         - "§6Miner§r "
@@ -76,7 +75,8 @@ collections:
       suffix: []
 
   glass:
-    perks: []
+    perks:
+      - instant_glass_smelting
     tags:
       prefix:
         - "§bShatterproof§r "
@@ -90,7 +90,8 @@ collections:
       suffix: []
 
   utilities:
-    perks: []
+    perks:
+      - craft_command
     tags:
       prefix: []
       suffix:
@@ -98,7 +99,7 @@ collections:
 
   dyes:
     perks:
-      - dye_swap
+      - infinite_dyes
     tags:
       prefix: []
       suffix:
@@ -119,7 +120,8 @@ collections:
         - " §7The Armourer§r"
 
   weapons and tools:
-    perks: []
+    perks:
+      - shorter_strafe_cooldown
     tags:
       prefix: []
       suffix:
@@ -127,21 +129,22 @@ collections:
 
   end:
     perks:
-      - double_ender_chest
+      - end_teleportation
+      - permanent_slow_falling
     tags:
       prefix: []
       suffix: []
 
   shulker:
     perks:
-      - shulker_access
+      - openable_shulkers
     tags:
       prefix: []
       suffix: []
 
   sniffer:
     perks:
-      - sniffer_flowers
+      - double_sniffer_flowers
     tags:
       prefix: []
       suffix: []
@@ -155,34 +158,36 @@ collections:
         - " §dIs getting head§r"
 
   spawn_eggs:
-    perks:
-      - extra_heart
+    perks: []
     tags:
       prefix: []
       suffix: []
 
   happy ghast:
     perks:
-      - faster_ghast
+      - fast_ghast_riding
     tags:
       prefix: []
       suffix: []
 
   # Additional collections from validation warnings
   concrete:
-    perks: []
+    perks:
+      - craftable_concrete
     tags:
       prefix: []
       suffix: []
 
   ancient cities:
-    perks: []
+    perks:
+      - extra_heart
     tags:
       prefix: []
       suffix: []
 
   candles:
-    perks: []
+    perks:
+      - glowing
     tags:
       prefix: []
       suffix: []
@@ -194,13 +199,15 @@ collections:
       suffix: []
 
   nether:
-    perks: []
+    perks:
+      - permanent_fire_resistance
     tags:
       prefix: []
       suffix: []
 
   buckets:
-    perks: []
+    perks:
+      - infinite_lava_bucket
     tags:
       prefix: []
       suffix: []
@@ -211,56 +218,72 @@ collections:
       prefix: []
       suffix: []
 
+  trails:
+    perks:
+      - permanent_bad_omen
+    tags:
+      prefix: []
+      suffix: []
+
   jb_fishing_plus:
-    perks: []
+    perks:
+      - permanent_dolphins_grace
     tags:
       prefix: []
       suffix: []
 
   enchantments:
-    perks: []
+    perks:
+      - extra_heart
     tags:
       prefix: []
       suffix: []
 
   potion ingredients:
-    perks: []
+    perks:
+      - quicker_potion_brewing
     tags:
       prefix: []
       suffix: []
 
   food:
-    perks: []
+    perks:
+      - cheaper_golden_apples
     tags:
       prefix: []
       suffix: []
 
   ocean:
-    perks: []
+    perks:
+      - permanent_water_breathing
     tags:
       prefix: []
       suffix: []
 
   sherds:
-    perks: []
+    perks:
+      - extra_heart
     tags:
       prefix: []
       suffix: []
 
   potions:
-    perks: []
+    perks:
+      - extra_heart
     tags:
       prefix: []
       suffix: []
 
   stones:
-    perks: []
+    perks:
+      - tunnel_miner
     tags:
       prefix: []
       suffix: []
 
   beds:
-    perks: []
+    perks:
+      - toggle_phantoms
     tags:
       prefix: []
       suffix: []
@@ -298,10 +321,22 @@ sub_collections:
   ores:
     ore blocks:
       xp: 150
+      perks:
+        - vein_miner
       items:
         - "DIAMOND:2"
 
     ore materials:
       xp: 150
+      perks:
+        - permanent_night_vision
       items:
         - "DIAMOND:2"
+
+    hoes:
+      xp: 100
+      perks:
+        - harvest_and_replant
+      items:
+        - "DIAMOND:1"
+

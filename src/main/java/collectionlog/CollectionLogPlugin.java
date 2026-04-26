@@ -6,6 +6,7 @@ import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
 import collectionlog.commands.LogsCommand;
+import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
@@ -14,7 +15,9 @@ import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.gui.CollectionGUI;
+import collectionlog.gui.PerksGUI;
 import collectionlog.gui.TagsGUI;
+import collectionlog.perks.PerkManager;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -67,6 +70,8 @@ public class CollectionLogPlugin extends JavaPlugin {
     private StrafeManager strafeManager;
     private TagManager tagManager;
     private TagsGUI tagsGUI;
+    private PerkManager perkManager;
+    private PerksGUI perksGUI;
 
     @Override
     public void onEnable() {
@@ -146,6 +151,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             strafeManager = new StrafeManager(this);
             tagManager = new TagManager(this);
             tagsGUI = new TagsGUI(this, tagManager);
+            perkManager = new PerkManager(this);
+            perksGUI = new PerksGUI(this, perkManager, tagManager);
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -172,6 +179,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
+            getServer().getPluginManager().registerEvents(perksGUI, this);
             getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
             getLogger().info("✅ Listeners registered");
 
@@ -194,6 +202,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 tagsCommand.setExecutor(new TagsCommand(this));
             } else {
                 getLogger().warning("Command 'tags' not found in plugin.yml!");
+            }
+
+            PluginCommand perksCommand = getCommand("perks");
+            if (perksCommand != null) {
+                perksCommand.setExecutor(new PerksCommand(this));
+            } else {
+                getLogger().warning("Command 'perks' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -297,5 +312,13 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public TagsGUI getTagsGUI() {
         return tagsGUI;
+    }
+
+    public PerkManager getPerkManager() {
+        return perkManager;
+    }
+
+    public PerksGUI getPerksGUI() {
+        return perksGUI;
     }
 }

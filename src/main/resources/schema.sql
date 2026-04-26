@@ -152,3 +152,13 @@ CREATE TABLE IF NOT EXISTS player_tag_selections (
 );
 
 CREATE INDEX IF NOT EXISTS idx_player_tag_selections_uuid ON player_tag_selections(player_uuid);
+
+-- Perk toggle states (enabled/disabled for unlocked perks)
+CREATE TABLE IF NOT EXISTS player_perk_toggles (
+    player_uuid CHAR(36) NOT NULL,
+    perk_id VARCHAR(64) NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (player_uuid, perk_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_perk_toggles_uuid ON player_perk_toggles(player_uuid);

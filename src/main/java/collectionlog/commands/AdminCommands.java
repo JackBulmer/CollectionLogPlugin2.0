@@ -6,6 +6,9 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.milestones.MilestoneManager;
 import collectionlog.models.PlayerCollectionProgress;
+import collectionlog.perks.Perk;
+import collectionlog.perks.PerkManager;
+import collectionlog.perks.PerkRegistry;
 import collectionlog.utils.MissingItemsReportGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -51,6 +54,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "collection" -> handleCollectionCommand(sender, args);
                 case "item" -> handleItemCommand(sender, args);
+                case "perk" -> handlePerkCommand(sender, args);
                 case "reload" -> handleReload(sender);
                 case "missing-items" -> handleMissingItems(sender);
                 default -> {
@@ -311,6 +315,84 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 .replaceAll("_+", "_");
     }
 
+    // ── Perk admin commands ───────────────────────────────────────────────────
+
+    private boolean handlePerkCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /cl perk <unlock|revoke|toggle|enable|disable> <player> <perk_id>");
+            return true;
+        }
+
+        String action = args[1].toLowerCase(Locale.ROOT);
+
+        if (args.length < 4) {
+            sender.sendMessage("§cUsage: /cl perk " + action + " <player> <perk_id>");
+            return true;
+        }
+
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            sender.sendMessage("§cPlayer not found or not online: " + args[2]);
+            return true;
+        }
+
+        String perkId = args[3].toLowerCase(Locale.ROOT);
+        Perk perk = PerkRegistry.getPerk(perkId);
+        if (perk == null) {
+            sender.sendMessage("§cUnknown perk: §e" + perkId);
+            sender.sendMessage("§7Valid perks: " + String.join(", ",
+                    PerkRegistry.getAllPerks().stream().map(Perk::getId).toList()));
+            return true;
+        }
+
+        PerkManager perkManager = plugin.getPerkManager();
+
+        switch (action) {
+            case "unlock" -> {
+                perkManager.unlockPerk(target.getUniqueId(), perkId);
+                sender.sendMessage("§aUnlocked perk §e" + perk.getName() + " §afor §e" + target.getName());
+                target.sendMessage("§a✦ Perk unlocked: §e" + perk.getName());
+            }
+            case "revoke" -> {
+                perkManager.revokePerk(target.getUniqueId(), perkId);
+                sender.sendMessage("§eRevoked perk §c" + perk.getName() + " §efrom §c" + target.getName());
+                target.sendMessage("§c✦ Perk revoked: §e" + perk.getName());
+            }
+            case "toggle" -> {
+                if (!perk.isToggleable()) {
+                    sender.sendMessage("§cPerk §e" + perk.getName() + " §cis not toggleable.");
+                    return true;
+                }
+                if (!perkManager.hasUnlocked(target.getUniqueId(), perkId)) {
+                    sender.sendMessage("§c" + target.getName() + " does not have perk §e" + perk.getName() + " §cunlocked.");
+                    return true;
+                }
+                boolean newState = perkManager.togglePerk(target.getUniqueId(), perkId);
+                sender.sendMessage("§aPerk §e" + perk.getName() + " §afor §e" + target.getName()
+                        + " §ais now §" + (newState ? "a" : "c") + (newState ? "enabled" : "disabled") + "§a.");
+            }
+            case "enable" -> {
+                if (!perk.isToggleable()) {
+                    sender.sendMessage("§cPerk §e" + perk.getName() + " §cis not toggleable.");
+                    return true;
+                }
+                perkManager.setEnabled(target.getUniqueId(), perkId, true);
+                sender.sendMessage("§aEnabled perk §e" + perk.getName() + " §afor §e" + target.getName());
+            }
+            case "disable" -> {
+                if (!perk.isToggleable()) {
+                    sender.sendMessage("§cPerk §e" + perk.getName() + " §cis not toggleable.");
+                    return true;
+                }
+                perkManager.setEnabled(target.getUniqueId(), perkId, false);
+                sender.sendMessage("§eDisabled perk §e" + perk.getName() + " §efor §e" + target.getName());
+            }
+            default -> sender.sendMessage("§cUnknown perk action: " + action
+                    + ". Use unlock, revoke, toggle, enable, or disable.");
+        }
+        return true;
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("§6§l=== Collection Log Admin Commands ===");
         sender.sendMessage("§e/cl collection complete <player> <collection>");
@@ -321,6 +403,12 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7  - Add item to all collections it appears in");
         sender.sendMessage("§e/cl item remove <player> <item_id>");
         sender.sendMessage("§7  - Remove item from all collections");
+        sender.sendMessage("§e/cl perk unlock <player> <perk_id>");
+        sender.sendMessage("§7  - Manually unlock a perk for a player");
+        sender.sendMessage("§e/cl perk revoke <player> <perk_id>");
+        sender.sendMessage("§7  - Manually revoke a perk from a player");
+        sender.sendMessage("§e/cl perk toggle <player> <perk_id>");
+        sender.sendMessage("§7  - Toggle a perk on/off for a player");
         sender.sendMessage("§e/cl reload");
         sender.sendMessage("§7  - Reload milestone configuration");
         sender.sendMessage("§e/cl missing-items");
@@ -334,7 +422,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "reload", "missing-items"));
+            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
@@ -343,6 +431,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
         if (args.length == 2 && args[0].equalsIgnoreCase("item")) {
             return filterCompletions(args[1], List.of("add", "remove"));
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("perk")) {
+            return filterCompletions(args[1], List.of("unlock", "revoke", "toggle", "enable", "disable"));
         }
 
         if (args.length == 3) {
@@ -369,6 +461,13 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 itemIds.addAll(collection.getItems());
             }
             return filterCompletions(args[3], new ArrayList<>(itemIds));
+        }
+
+        if (args.length == 4 && args[0].equalsIgnoreCase("perk")) {
+            List<String> perkIds = PerkRegistry.getAllPerks().stream()
+                    .map(Perk::getId)
+                    .collect(java.util.stream.Collectors.toList());
+            return filterCompletions(args[3], perkIds);
         }
 
         return List.of();
