@@ -21,6 +21,7 @@ import collectionlog.gui.TagsGUI;
 import collectionlog.perks.PerkManager;
 import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.perks.PotionEffectManager;
+import collectionlog.perks.ExtraHeartsManager;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -75,6 +76,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private TagsGUI tagsGUI;
     private PerkManager perkManager;
     private PotionEffectManager potionEffectManager;
+    private ExtraHeartsManager extraHeartsManager;
     private PerksGUI perksGUI;
 
     @Override
@@ -157,6 +159,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             tagsGUI = new TagsGUI(this, tagManager);
             perkManager = new PerkManager(this);
             potionEffectManager = new PotionEffectManager(this);
+            extraHeartsManager = new ExtraHeartsManager(this);
             perksGUI = new PerksGUI(this, perkManager, tagManager);
             getLogger().info("✅ Managers initialized");
 
@@ -334,6 +337,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public PotionEffectManager getPotionEffectManager() {
         return potionEffectManager;
+    }
+
+    public ExtraHeartsManager getExtraHeartsManager() {
+        return extraHeartsManager;
     }
 
     public PerksGUI getPerksGUI() {
