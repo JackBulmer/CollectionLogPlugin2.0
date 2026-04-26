@@ -2,6 +2,7 @@ package collectionlog.commands;
 
 import collectionlog.CollectionLogPlugin;
 import collectionlog.collections.CollectionDefinition;
+import collectionlog.collections.SubCollectionDefinition;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.milestones.MilestoneManager;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,7 +74,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
     private boolean handleCollectionCommand(CommandSender sender, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage("§cUsage: /cl collection <complete|reset> <player> <collection>");
+            sender.sendMessage("§cUsage: /cl collection <complete|reset> <player> <collection[:subcollection]>");
             return true;
         }
 
@@ -83,7 +85,12 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String collectionQuery = String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length));
+        String collectionQuery = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+
+        if (collectionQuery.contains(":")) {
+            return handleSubCollectionCommand(sender, target, collectionQuery, action);
+        }
+
         CollectionDefinition collection = findCollectionByQuery(collectionQuery);
         if (collection == null) {
             sender.sendMessage("§cCollection not found: " + collectionQuery);
@@ -93,6 +100,43 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         return switch (action) {
             case "complete" -> completeCollection(sender, target, collection);
             case "reset" -> resetCollection(sender, target, collection);
+            default -> {
+                sender.sendMessage("§cInvalid action. Use 'complete' or 'reset'.");
+                yield true;
+            }
+        };
+    }
+
+    private boolean handleSubCollectionCommand(CommandSender sender, Player target, String query, String action) {
+        String[] parts = query.split(":", 2);
+        if (parts.length != 2) {
+            sender.sendMessage("§cInvalid format. Use: <collection>:<subcollection>");
+            return true;
+        }
+
+        String parentName = parts[0].trim();
+        String subName = parts[1].trim();
+
+        CollectionDefinition parent = findCollectionByQuery(parentName);
+        if (parent == null) {
+            sender.sendMessage("§cParent collection not found: " + parentName);
+            return true;
+        }
+
+        SubCollectionDefinition sub = parent.getSubCollections().stream()
+                .filter(s -> normalizeIdentifier(s.getName()).equals(normalizeIdentifier(subName))
+                        || normalizeIdentifier(s.getId()).equals(normalizeIdentifier(subName)))
+                .findFirst()
+                .orElse(null);
+
+        if (sub == null) {
+            sender.sendMessage("§cSub-collection '" + subName + "' not found in '" + parent.getName() + "'");
+            return true;
+        }
+
+        return switch (action) {
+            case "complete" -> completeSubCollection(sender, target, parent, sub);
+            case "reset" -> resetSubCollection(sender, target, parent, sub);
             default -> {
                 sender.sendMessage("§cInvalid action. Use 'complete' or 'reset'.");
                 yield true;
@@ -114,10 +158,60 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
         if (milestoneManager != null) {
             milestoneManager.checkCollectionCompletion(target.getUniqueId(), collection.getId());
+
+            for (SubCollectionDefinition sub : collection.getSubCollections()) {
+                milestoneManager.checkSubCollectionCompletion(
+                        target.getUniqueId(),
+                        collection.getId(),
+                        sub.getName()
+                );
+            }
         }
 
         sender.sendMessage("§aMarked collection '" + collection.getName() + "' as complete for " + target.getName());
         target.sendMessage("§a§lCollection completed by admin: " + collection.getName());
+        return true;
+    }
+
+    private boolean completeSubCollection(CommandSender sender, Player target,
+                                         CollectionDefinition parent, SubCollectionDefinition sub) {
+        ProgressTrackingManager pm = plugin.getProgressTrackingManager();
+        MilestoneManager mm = plugin.getMilestoneManager();
+
+        if (pm == null) {
+            sender.sendMessage("§cProgress tracking is unavailable.");
+            return true;
+        }
+
+        for (String signature : sub.getItems()) {
+            joinFuture(pm.trackItemCollection(target, parent, signature, true));
+        }
+
+        if (mm != null) {
+            mm.checkSubCollectionCompletion(target.getUniqueId(), parent.getId(), sub.getName());
+        }
+
+        sender.sendMessage("§aCompleted '" + parent.getName() + " › " + sub.getName() + "' for " + target.getName());
+        return true;
+    }
+
+    private boolean resetSubCollection(CommandSender sender, Player target,
+                                      CollectionDefinition parent, SubCollectionDefinition sub) {
+        PlayerCollectionDAO dao = plugin.getPlayerCollectionDAO();
+        MilestoneManager mm = plugin.getMilestoneManager();
+        UUID playerId = target.getUniqueId();
+
+        for (String signature : sub.getItems()) {
+            joinFuture(dao.removeCollectedItem(playerId, parent.getId(), signature));
+        }
+        joinFuture(dao.updateProgress(playerId, parent.getId()));
+
+        if (mm != null) {
+            String key = parent.getId() + ":" + sub.getName();
+            mm.revokeCollectionMilestone(playerId, key);
+        }
+
+        sender.sendMessage("§aReset '" + parent.getName() + " › " + sub.getName() + "' for " + target.getName());
         return true;
     }
 
@@ -399,8 +493,12 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§6§l=== Collection Log Admin Commands ===");
         sender.sendMessage("§e/cl collection complete <player> <collection>");
         sender.sendMessage("§7  - Mark collection as complete and award perks");
+        sender.sendMessage("§e/cl collection complete <player> <collection>:<subcollection>");
+        sender.sendMessage("§7  - Mark a specific sub-collection as complete");
         sender.sendMessage("§e/cl collection reset <player> <collection>");
         sender.sendMessage("§7  - Reset collection and revoke perks");
+        sender.sendMessage("§e/cl collection reset <player> <collection>:<subcollection>");
+        sender.sendMessage("§7  - Reset a specific sub-collection");
         sender.sendMessage("§e/cl item add <player> <item_id>");
         sender.sendMessage("§7  - Add item to all collections it appears in");
         sender.sendMessage("§e/cl item remove <player> <item_id>");
@@ -448,7 +546,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length >= 4 && args[0].equalsIgnoreCase("collection")) {
-            String query = String.join(" ", java.util.Arrays.copyOfRange(args, 3, args.length));
+            String query = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
             Set<String> collectionNames = new LinkedHashSet<>();
             for (CollectionDefinition collection : getAllCollections().values()) {
                 collectionNames.add(collection.getName());

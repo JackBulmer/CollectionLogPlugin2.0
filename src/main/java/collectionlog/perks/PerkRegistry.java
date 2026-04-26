@@ -146,7 +146,7 @@ public final class PerkRegistry {
 
         register("permanent_bad_omen", "Permanent Bad Omen IV",
                 List.of("§7Permanently applies the Bad Omen IV effect."),
-                Material.OMINOUS_BOTTLE, "trials", true, true, true);
+                Material.OMINOUS_BOTTLE, "trial_chambers", true, true, true);
     }
 
     private static void register(String id, String name, List<String> description,
