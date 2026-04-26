@@ -2,6 +2,7 @@ package collectionlog.perks;
 
 import collectionlog.CollectionLogPlugin;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,14 +25,21 @@ public class PhantomTogglePerk implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPhantomSpawn(CreatureSpawnEvent event) {
+
         if (event.getEntityType() != EntityType.PHANTOM) return;
         if (event.getSpawnReason() != SpawnReason.NATURAL) return;
 
         Location loc = event.getLocation();
-        for (Player player : loc.getNearbyPlayers(64)) {
-            if (perkManager.isActive(player, "toggle_phantoms")) {
-                event.setCancelled(true);
-                return;
+        World world = loc.getWorld();
+        if (world == null) return;
+
+        for (Player player : world.getPlayers()) {
+            if (player.getLocation().distance(loc) <= 64) {
+                if (perkManager.hasUnlocked(player.getUniqueId(), "toggle_phantoms")
+                        && perkManager.isEnabled(player.getUniqueId(), "toggle_phantoms")) {
+                    event.setCancelled(true);
+                    return;
+                }
             }
         }
     }
