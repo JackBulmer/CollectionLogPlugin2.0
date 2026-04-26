@@ -91,12 +91,6 @@ public final class PerkRegistry {
                         "§7Auto-disables after 5 minutes of inactivity."),
                 Material.IRON_PICKAXE, "stones", true, false, true);
 
-        register("permanent_bad_omen", "Permanent Bad Omen",
-                List.of("§7Apply Bad Omen IV to yourself on demand.",
-                        "§7Automatically restored after raids and omen events.",
-                        "§7Auto-disables after 5 minutes of inactivity."),
-                Material.OMINOUS_BOTTLE, "trails", true, false, true);
-
         register("craft_command", "Craft Command",
                 List.of("§7Use §e/craft §7to open a portable crafting",
                         "§7table. Respects crafting collection logic."),
@@ -109,7 +103,7 @@ public final class PerkRegistry {
 
         register("strafe", "Strafe",
                 List.of("§7Toggle the strafe ability on or off."),
-                Material.WIND_CHARGE, "weapons and tools", true, false, true);
+                Material.WIND_CHARGE, null, true, false, true);
 
         register("tree_capitator", "Tree Capitator",
                 List.of("§7Break the bottom log of a tree to fell",
@@ -149,6 +143,10 @@ public final class PerkRegistry {
         register("permanent_night_vision", "Permanent Night Vision",
                 List.of("§7Permanently applies the Night Vision effect."),
                 Material.GOLDEN_CARROT, "ores:ore materials", true, true, true);
+
+        register("permanent_bad_omen", "Permanent Bad Omen IV",
+                List.of("§7Permanently applies the Bad Omen IV effect."),
+                Material.OMINOUS_BOTTLE, "trials", true, true, true);
     }
 
     private static void register(String id, String name, List<String> description,

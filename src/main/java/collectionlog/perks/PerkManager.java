@@ -41,6 +41,11 @@ public class PerkManager {
 
     /** Returns true if the player has the given perk unlocked. */
     public boolean hasUnlocked(UUID playerId, String perkId) {
+        Perk perk = PerkRegistry.getPerk(perkId);
+        if (perk != null && perk.getRequiredCollection() == null) {
+            // No collection requirement – always available to all players
+            return true;
+        }
         return plugin.getMilestoneManager().hasPerk(playerId, perkId);
     }
 
