@@ -213,7 +213,8 @@ collections:
       suffix: []
 
   trial chambers:
-    perks: []
+    perks:
+      - extra_heart
     tags:
       prefix: []
       suffix: []

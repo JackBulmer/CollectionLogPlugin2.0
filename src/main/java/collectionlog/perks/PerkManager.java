@@ -72,6 +72,11 @@ public class PerkManager {
             disabled.remove(perkId);
         }
         deleteToggleFromDatabase(playerId, perkId);
+
+        // Update extra hearts if this is an extra_heart perk
+        if ("extra_heart".equals(perkId)) {
+            plugin.getExtraHeartsManager().updateExtraHearts(playerId);
+        }
     }
 
     // ─── Toggle state ─────────────────────────────────────────────────────────

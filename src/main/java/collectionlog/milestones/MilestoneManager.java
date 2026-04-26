@@ -419,6 +419,11 @@ public class MilestoneManager {
         savePerkToDatabase(playerId, perkId);
         // Ensure toggle state is loaded so perk checks work immediately without a relog
         plugin.getPerkManager().loadPlayerToggles(playerId);
+
+        // Apply extra heart if this perk is extra_heart
+        if ("extra_heart".equals(perkId)) {
+            plugin.getExtraHeartsManager().updateExtraHearts(playerId);
+        }
     }
 
     public boolean hasPerk(UUID playerId, String perkId) {
@@ -429,6 +434,20 @@ public class MilestoneManager {
     public Set<String> getPlayerPerks(UUID playerId) {
         ensurePerksLoaded(playerId);
         return new HashSet<>(playerUnlockedPerks.getOrDefault(playerId, Collections.emptySet()));
+    }
+
+    /**
+     * Counts how many milestones that award the {@code extra_heart} perk
+     * the given player has completed. Used by {@link collectionlog.perks.ExtraHeartsManager}
+     * to determine the correct number of bonus health points to apply.
+     */
+    public int countExtraHeartMilestones(UUID playerId) {
+        ensureCompletedMilestonesLoaded(playerId);
+        Set<String> completed = playerCompletedMilestones.getOrDefault(playerId, Collections.emptySet());
+        return (int) milestones.values().stream()
+                .filter(m -> m.getPerks().contains("extra_heart"))
+                .filter(m -> completed.contains(normalizeMilestoneKey(m.getName())))
+                .count();
     }
 
     /**
@@ -522,6 +541,11 @@ public class MilestoneManager {
 
         revokeMilestoneRewards(playerId, milestone);
         removeCompletedMilestone(playerId, collectionName);
+
+        // Update extra hearts if this milestone awarded the extra_heart perk
+        if (milestone.getPerks().contains("extra_heart")) {
+            plugin.getExtraHeartsManager().updateExtraHearts(playerId);
+        }
     }
 
     public void revokeCollectionMilestones(UUID playerId, String collectionName) {

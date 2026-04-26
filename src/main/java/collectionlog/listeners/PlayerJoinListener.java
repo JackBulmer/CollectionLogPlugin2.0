@@ -33,6 +33,9 @@ public class PlayerJoinListener implements Listener {
         // Apply permanent potion effects for all active potion-effect perks
         plugin.getPotionEffectManager().applyPermanentEffects(player);
 
+        // Apply extra hearts based on completed extra_heart perk milestones
+        plugin.getExtraHeartsManager().applyExtraHearts(player);
+
         tagManager.getPlayerPrefix(playerId).thenAccept(prefix ->
                 tagManager.getPlayerSuffix(playerId).thenAccept(suffix -> {
                     String displayName = prefix + player.getName() + suffix;
