@@ -161,6 +161,13 @@ collections:
       prefix: []
       suffix: []
 
+  happy ghast:
+    perks:
+      - faster_ghast
+    tags:
+      prefix: []
+      suffix: []
+
   # Additional collections from validation warnings
   concrete:
     perks: []
