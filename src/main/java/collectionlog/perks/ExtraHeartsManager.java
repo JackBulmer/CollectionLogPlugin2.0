@@ -1,7 +1,6 @@
 package collectionlog.perks;
 
 import collectionlog.CollectionLogPlugin;
-import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
@@ -16,12 +15,12 @@ import java.util.UUID;
  */
 public class ExtraHeartsManager {
 
+    private static final String MODIFIER_NAME = "collectionlog.extra_hearts";
+
     private final CollectionLogPlugin plugin;
-    private final NamespacedKey modifierKey;
 
     public ExtraHeartsManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
-        this.modifierKey = new NamespacedKey(plugin, "extra_hearts");
     }
 
     /**
@@ -39,13 +38,13 @@ public class ExtraHeartsManager {
 
         // Remove existing modifier if present
         attribute.getModifiers().stream()
-                .filter(mod -> mod.getKey().equals(modifierKey))
+                .filter(mod -> MODIFIER_NAME.equals(mod.getName()))
                 .forEach(attribute::removeModifier);
 
         // Add new modifier if player has extra hearts
         if (extraHeartCount > 0) {
             AttributeModifier modifier = new AttributeModifier(
-                    modifierKey,
+                    MODIFIER_NAME,
                     extraHeartCount * 2, // Each extra_heart perk = +2 health points (1 heart)
                     AttributeModifier.Operation.ADD_NUMBER
             );
@@ -89,7 +88,7 @@ public class ExtraHeartsManager {
         }
 
         attribute.getModifiers().stream()
-                .filter(mod -> mod.getKey().equals(modifierKey))
+                .filter(mod -> MODIFIER_NAME.equals(mod.getName()))
                 .forEach(attribute::removeModifier);
 
         // Adjust health if now over max
