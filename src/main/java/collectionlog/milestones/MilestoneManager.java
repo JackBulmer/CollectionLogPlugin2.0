@@ -413,6 +413,8 @@ public class MilestoneManager {
         ensurePerksLoaded(playerId);
         playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(perkId);
         savePerkToDatabase(playerId, perkId);
+        // Ensure toggle state is loaded so perk checks work immediately without a relog
+        plugin.getPerkManager().loadPlayerToggles(playerId);
     }
 
     public boolean hasPerk(UUID playerId, String perkId) {
