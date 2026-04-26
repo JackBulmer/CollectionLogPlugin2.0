@@ -30,7 +30,7 @@ public class ExtraHeartsManager {
      */
     public void applyExtraHearts(Player player) {
         UUID playerId = player.getUniqueId();
-        int extraHeartCount = getExtraHeartCount(playerId);
+        int extraHeartCount = Math.min(getExtraHeartCount(playerId), 4);
 
         AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute == null) {
