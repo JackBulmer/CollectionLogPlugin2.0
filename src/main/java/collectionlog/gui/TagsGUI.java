@@ -36,8 +36,10 @@ public class TagsGUI implements Listener {
     private static final int INVENTORY_SIZE = 54;
     private static final int PAGE_SIZE = 45;
     private static final int SLOT_PREV = 45;
+    private static final int SLOT_BACK = 48;
     private static final int SLOT_FILTER = 49;
     private static final int SLOT_NEXT = 53;
+    private static final int BACK_ICON_CUSTOM_MODEL_DATA = 24001;
 
     public TagsGUI(CollectionLogPlugin plugin, TagManager tagManager) {
         this.plugin = plugin;
@@ -45,12 +47,23 @@ public class TagsGUI implements Listener {
     }
 
     public void openTagsGUI(Player player) {
-        openTagsGUI(player, 0, false);
+        openTagsGUI(player, 0, false, false);
+    }
+
+    /** Opens the Tags GUI with a back button that returns to the Perks GUI. */
+    public void openTagsGUIFromPerks(Player player) {
+        openTagsGUI(player, 0, false, true);
     }
 
     private void openTagsGUI(Player player, int page, boolean showUnlockedOnly) {
+        TagsGUIState existing = guiStates.get(player.getUniqueId());
+        boolean fromPerks = existing != null && existing.fromPerks;
+        openTagsGUI(player, page, showUnlockedOnly, fromPerks);
+    }
+
+    private void openTagsGUI(Player player, int page, boolean showUnlockedOnly, boolean fromPerks) {
         UUID playerId = player.getUniqueId();
-        guiStates.put(playerId, new TagsGUIState(page, showUnlockedOnly));
+        guiStates.put(playerId, new TagsGUIState(page, showUnlockedOnly, fromPerks));
 
         CompletableFuture<List<String>> completedFuture = tagManager.getCompletedCollections(playerId);
         CompletableFuture<String> prefixFuture = tagManager.getPlayerPrefix(playerId);
@@ -69,7 +82,7 @@ public class TagsGUI implements Listener {
             int clampedPage = Math.max(0, Math.min(page, totalPages - 1));
 
             // Update state with clamped page
-            guiStates.put(playerId, new TagsGUIState(clampedPage, showUnlockedOnly));
+            guiStates.put(playerId, new TagsGUIState(clampedPage, showUnlockedOnly, fromPerks));
 
             int startIndex = clampedPage * PAGE_SIZE;
             int endIndex = Math.min(startIndex + PAGE_SIZE, tagsToShow.size());
@@ -93,6 +106,10 @@ public class TagsGUI implements Listener {
                 inv.setItem(SLOT_NEXT, createNavigationButton("§6Next Page ▶"));
             }
             inv.setItem(SLOT_FILTER, createFilterButton(showUnlockedOnly));
+
+            if (fromPerks) {
+                inv.setItem(SLOT_BACK, createBackButton("§cBack to Perks"));
+            }
 
             // Inventory must be opened on the main thread
             plugin.getServer().getScheduler().runTask(plugin, () -> {
@@ -141,6 +158,17 @@ public class TagsGUI implements Listener {
         ItemStack button = new ItemStack(Material.ARROW);
         ItemMeta meta = button.getItemMeta();
         if (meta != null) {
+            meta.setDisplayName(name);
+            button.setItemMeta(meta);
+        }
+        return button;
+    }
+
+    private ItemStack createBackButton(String name) {
+        ItemStack button = new ItemStack(Material.PAPER);
+        ItemMeta meta = button.getItemMeta();
+        if (meta != null) {
+            meta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
             meta.setDisplayName(name);
             button.setItemMeta(meta);
         }
@@ -207,6 +235,11 @@ public class TagsGUI implements Listener {
 
         if (slot == SLOT_FILTER) {
             openTagsGUI(player, 0, !state.showUnlockedOnly);
+            return;
+        }
+
+        if (slot == SLOT_BACK && state.fromPerks) {
+            plugin.getPerksGUI().openMainPage(player);
             return;
         }
 
@@ -295,10 +328,12 @@ public class TagsGUI implements Listener {
     private static class TagsGUIState {
         int page;
         boolean showUnlockedOnly;
+        boolean fromPerks;
 
-        TagsGUIState(int page, boolean showUnlockedOnly) {
+        TagsGUIState(int page, boolean showUnlockedOnly, boolean fromPerks) {
             this.page = page;
             this.showUnlockedOnly = showUnlockedOnly;
+            this.fromPerks = fromPerks;
         }
     }
 }
