@@ -1,6 +1,7 @@
 package collectionlog.perks;
 
 import collectionlog.CollectionLogPlugin;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
@@ -10,18 +11,17 @@ import java.util.UUID;
 
 /**
  * Manages the extra hearts system for players who complete collections.
- * Each "extra_heart" perk milestone adds 1 health point (0.5 hearts) to the player's max health.
- * Up to 5 collections can award this perk, for a maximum of +2.5 hearts (5 health points).
+ * Each "extra_heart" perk adds 2 health points (1 full heart) to the player's max health.
+ * Maximum: 4 extra hearts (8 health points).
  */
 public class ExtraHeartsManager {
 
-    private static final String MODIFIER_NAME = "collectionlog.extra_hearts";
-    private static final UUID MODIFIER_UUID = UUID.fromString("a3d7c2f1-84e6-4b5a-9c08-f1e2d3a4b5c6");
-
     private final CollectionLogPlugin plugin;
+    private final NamespacedKey modifierKey;
 
     public ExtraHeartsManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
+        this.modifierKey = new NamespacedKey(plugin, "extra_hearts");
     }
 
     /**
@@ -30,7 +30,7 @@ public class ExtraHeartsManager {
      */
     public void applyExtraHearts(Player player) {
         UUID playerId = player.getUniqueId();
-        int extraHeartCount = getExtraHeartCount(playerId);
+        int extraHeartCount = Math.min(getExtraHeartCount(playerId), 4);
 
         AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute == null) {
@@ -39,15 +39,14 @@ public class ExtraHeartsManager {
 
         // Remove existing modifier if present
         attribute.getModifiers().stream()
-                .filter(mod -> MODIFIER_UUID.equals(mod.getUniqueId()))
+                .filter(mod -> mod.getKey().equals(modifierKey))
                 .forEach(attribute::removeModifier);
 
         // Add new modifier if player has extra hearts
         if (extraHeartCount > 0) {
             AttributeModifier modifier = new AttributeModifier(
-                    MODIFIER_UUID,
-                    MODIFIER_NAME,
-                    extraHeartCount, // Each extra_heart milestone = +1 health point (0.5 hearts)
+                    modifierKey,
+                    extraHeartCount * 2, // Each extra_heart perk = +2 health points (1 heart)
                     AttributeModifier.Operation.ADD_NUMBER
             );
             attribute.addModifier(modifier);
@@ -90,7 +89,7 @@ public class ExtraHeartsManager {
         }
 
         attribute.getModifiers().stream()
-                .filter(mod -> MODIFIER_UUID.equals(mod.getUniqueId()))
+                .filter(mod -> mod.getKey().equals(modifierKey))
                 .forEach(attribute::removeModifier);
 
         // Adjust health if now over max
