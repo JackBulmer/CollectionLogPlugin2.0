@@ -280,6 +280,11 @@ public class PerksGUI implements Listener {
                 ? "§a✦ " + perk.getName() + " §aenabled."
                 : "§7✦ " + perk.getName() + " §7disabled.");
 
+        // Apply or remove the effect immediately for potion-effect perks
+        if (perk.isPotionEffect()) {
+            plugin.getPotionEffectManager().onPerkToggled(player, perkId, newState);
+        }
+
         // Refresh the current page
         if (isPotionPage) {
             openPotionPage(player, page, showUnlockedOnly);

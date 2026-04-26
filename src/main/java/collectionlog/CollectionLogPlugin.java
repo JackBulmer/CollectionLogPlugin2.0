@@ -20,6 +20,7 @@ import collectionlog.gui.PerksGUI;
 import collectionlog.gui.TagsGUI;
 import collectionlog.perks.PerkManager;
 import collectionlog.perks.PhantomTogglePerk;
+import collectionlog.perks.PotionEffectManager;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -73,6 +74,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private TagManager tagManager;
     private TagsGUI tagsGUI;
     private PerkManager perkManager;
+    private PotionEffectManager potionEffectManager;
     private PerksGUI perksGUI;
 
     @Override
@@ -154,6 +156,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             tagManager = new TagManager(this);
             tagsGUI = new TagsGUI(this, tagManager);
             perkManager = new PerkManager(this);
+            potionEffectManager = new PotionEffectManager(this);
             perksGUI = new PerksGUI(this, perkManager, tagManager);
             getLogger().info("✅ Managers initialized");
 
@@ -180,6 +183,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new SilkTouchObtainableListener(this), this);
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(new PhantomTogglePerk(this), this);
+            getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
             getServer().getPluginManager().registerEvents(perksGUI, this);
@@ -326,6 +330,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public PerkManager getPerkManager() {
         return perkManager;
+    }
+
+    public PotionEffectManager getPotionEffectManager() {
+        return potionEffectManager;
     }
 
     public PerksGUI getPerksGUI() {

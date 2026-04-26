@@ -262,6 +262,8 @@ public class MilestoneManager {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
             }
+            // Apply any newly-unlocked potion-effect perks immediately
+            plugin.getPotionEffectManager().applyPermanentEffects(player);
         }
 
         for (String tagDisplayName : milestone.getPrefixTags()) {
@@ -295,6 +297,8 @@ public class MilestoneManager {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
             }
+            // Apply any newly-unlocked potion-effect perks immediately
+            plugin.getPotionEffectManager().applyPermanentEffects(player);
             if (!unlockedRewards.isEmpty()) {
                 player.sendMessage("§a§l✦ Sub-Collection Rewards ✦");
                 for (String reward : unlockedRewards) {
