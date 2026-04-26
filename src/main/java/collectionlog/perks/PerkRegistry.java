@@ -122,7 +122,7 @@ public final class PerkRegistry {
                 List.of("§7Harvesting crops with a hoe collects all",
                         "§7fully grown crops within 4 blocks and replants.",
                         "§7Respects the Double Sniffer Flowers perk."),
-                Material.DIAMOND_HOE, "ores:hoes", true, false);
+                Material.DIAMOND_HOE, "weapons and tools:hoes", true, false);
 
         // ── Potion-effect perks ───────────────────────────────────────────────
 

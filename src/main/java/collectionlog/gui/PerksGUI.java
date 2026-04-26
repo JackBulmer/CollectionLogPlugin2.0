@@ -23,9 +23,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * GUI for viewing and toggling player perks.
@@ -364,7 +364,7 @@ public class PerksGUI implements Listener {
                 if (word.isEmpty()) continue;
                 if (sb.length() > 0 && !sb.toString().endsWith("› ")) sb.append(' ');
                 sb.append(Character.toUpperCase(word.charAt(0)));
-                if (word.length() > 1) sb.append(word.substring(1).toLowerCase(java.util.Locale.ROOT));
+                if (word.length() > 1) sb.append(word.substring(1).toLowerCase(Locale.ROOT));
             }
         }
         return sb.toString();

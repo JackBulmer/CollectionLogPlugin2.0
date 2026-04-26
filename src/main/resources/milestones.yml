@@ -333,6 +333,7 @@ sub_collections:
       items:
         - "DIAMOND:2"
 
+  weapons and tools:
     hoes:
       xp: 100
       perks:

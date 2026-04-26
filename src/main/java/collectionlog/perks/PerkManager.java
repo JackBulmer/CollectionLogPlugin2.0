@@ -156,7 +156,8 @@ public class PerkManager {
     }
 
     private void loadTogglesFromDatabase(UUID playerId) {
-        if (loadedToggles.contains(playerId)) {
+        if (!loadedToggles.add(playerId)) {
+            // Another thread already loaded (or is loading) toggles for this player
             return;
         }
         Set<String> disabled = ConcurrentHashMap.newKeySet();

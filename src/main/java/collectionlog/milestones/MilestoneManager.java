@@ -289,7 +289,7 @@ public class MilestoneManager {
         }
 
         List<String> perks = milestone.getPerks();
-        if (perks != null && !perks.isEmpty()) {
+        if (!perks.isEmpty()) {
             List<String> unlockedRewards = new ArrayList<>();
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);

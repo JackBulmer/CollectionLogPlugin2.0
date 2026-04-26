@@ -368,8 +368,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 boolean newState = perkManager.togglePerk(target.getUniqueId(), perkId);
+                String stateColour = newState ? "§a" : "§c";
+                String stateWord   = newState ? "enabled" : "disabled";
                 sender.sendMessage("§aPerk §e" + perk.getName() + " §afor §e" + target.getName()
-                        + " §ais now §" + (newState ? "a" : "c") + (newState ? "enabled" : "disabled") + "§a.");
+                        + " §ais now " + stateColour + stateWord + "§a.");
             }
             case "enable" -> {
                 if (!perk.isToggleable()) {
