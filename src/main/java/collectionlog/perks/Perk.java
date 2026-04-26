@@ -19,9 +19,12 @@ public class Perk {
     private final String requiredCollection;
     private final boolean toggleable;
     private final boolean potionEffect;
+    /** Whether this perk should appear in the /perks GUI. Automatic/passive perks are excluded. */
+    private final boolean showInGui;
 
     public Perk(String id, String name, List<String> description, Material icon,
-                String requiredCollection, boolean toggleable, boolean potionEffect) {
+                String requiredCollection, boolean toggleable, boolean potionEffect,
+                boolean showInGui) {
         this.id = id;
         this.name = name;
         this.description = description != null ? List.copyOf(description) : List.of();
@@ -29,6 +32,7 @@ public class Perk {
         this.requiredCollection = requiredCollection;
         this.toggleable = toggleable;
         this.potionEffect = potionEffect;
+        this.showInGui = showInGui;
     }
 
     public String getId() {
@@ -60,5 +64,10 @@ public class Perk {
     /** Whether this perk applies a persistent potion effect. */
     public boolean isPotionEffect() {
         return potionEffect;
+    }
+
+    /** Whether this perk should be shown in the /perks GUI. */
+    public boolean isShowInGui() {
+        return showInGui;
     }
 }

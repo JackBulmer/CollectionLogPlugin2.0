@@ -19,6 +19,8 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +50,9 @@ public class PerksGUI implements Listener {
     private static final int SLOT_POTION_PAGE = 49;
     private static final int SLOT_FILTER      = 50;
     private static final int SLOT_NEXT        = 53;
+
+    private static final int BACK_ICON_CUSTOM_MODEL_DATA   = 24001;
+    private static final int FILTER_ICON_CUSTOM_MODEL_DATA = 100001;
 
     private static final String TITLE_MAIN   = ChatColor.DARK_PURPLE + "✦ Perks";
     private static final String TITLE_POTION = ChatColor.DARK_AQUA   + "✦ Potion Effects";
@@ -131,7 +136,7 @@ public class PerksGUI implements Listener {
 
         // Potion / back button
         if (isPotionPage) {
-            inv.setItem(SLOT_POTION_PAGE, createButton(Material.ARROW, "§a◀ Back to Perks", null));
+            inv.setItem(SLOT_POTION_PAGE, createBackButton("§c◀ Back to Perks"));
         } else {
             inv.setItem(SLOT_POTION_PAGE, createButton(Material.POTION,
                     "§bPotion Effects",
@@ -195,7 +200,7 @@ public class PerksGUI implements Listener {
         }
 
         if (slot == SLOT_TAGS) {
-            plugin.getTagsGUI().openTagsGUI(player);
+            plugin.getTagsGUI().openTagsGUIFromPerks(player);
             return;
         }
 
@@ -280,7 +285,20 @@ public class PerksGUI implements Listener {
         boolean unlocked = perkManager.hasUnlocked(playerId, perk.getId());
         boolean enabled  = unlocked && perkManager.isEnabled(playerId, perk.getId());
 
-        ItemStack item = new ItemStack(perk.getIcon());
+        // Use potion item with appropriate type for potion-effect perks
+        ItemStack item;
+        PotionType potionType = getPotionTypeForPerk(perk.getId());
+        if (potionType != null) {
+            item = new ItemStack(Material.POTION);
+            PotionMeta pm = (PotionMeta) item.getItemMeta();
+            if (pm != null) {
+                pm.setBasePotionType(potionType);
+                item.setItemMeta(pm);
+            }
+        } else {
+            item = new ItemStack(perk.getIcon());
+        }
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return item;
@@ -333,10 +351,40 @@ public class PerksGUI implements Listener {
         return item;
     }
 
+    private ItemStack createBackButton(String name) {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setCustomModelData(BACK_ICON_CUSTOM_MODEL_DATA);
+            meta.setDisplayName(name);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
     private ItemStack createFilterButton(boolean showUnlockedOnly) {
-        Material mat = showUnlockedOnly ? Material.PAPER : Material.HOPPER;
-        String label = showUnlockedOnly ? "§eShowing: §aUnlocked Only" : "§eShowing: §fAll Perks";
-        return createButton(mat, label, List.of("§7Click to toggle perk filter"));
+        ItemStack item = new ItemStack(showUnlockedOnly ? Material.PAPER : Material.HOPPER);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            if (showUnlockedOnly) {
+                meta.setCustomModelData(FILTER_ICON_CUSTOM_MODEL_DATA);
+            }
+            meta.setDisplayName(showUnlockedOnly ? "§eShowing: §aUnlocked Only" : "§eShowing: §fAll Perks");
+            meta.setLore(List.of("§7Click to toggle perk filter"));
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private PotionType getPotionTypeForPerk(String perkId) {
+        // permanent_dolphins_grace uses HEART_OF_THE_SEA because no vanilla Dolphin's Grace potion exists
+        return switch (perkId) {
+            case "permanent_fire_resistance" -> PotionType.FIRE_RESISTANCE;
+            case "permanent_water_breathing" -> PotionType.WATER_BREATHING;
+            case "permanent_night_vision"    -> PotionType.NIGHT_VISION;
+            case "permanent_slow_falling"    -> PotionType.SLOW_FALLING;
+            default -> null;
+        };
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
