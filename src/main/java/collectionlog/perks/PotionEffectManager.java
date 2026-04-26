@@ -145,9 +145,14 @@ public class PotionEffectManager implements Listener {
     }
 
     /**
-     * Removes the given effect from the player, regardless of its current duration.
+     * Removes the given effect from the player only if it was applied by this
+     * system (identified by its {@link #INFINITE} duration). Player-obtained
+     * effects with finite durations are left untouched.
      */
     private void removeOurEffect(Player player, PotionEffectType type) {
-        player.removePotionEffect(type);
+        PotionEffect current = player.getPotionEffect(type);
+        if (current != null && current.getDuration() == INFINITE) {
+            player.removePotionEffect(type);
+        }
     }
 }
