@@ -31,6 +31,11 @@ commands:
     usage: /perks
     aliases: [perk]
 
+  craft:
+    description: Opens a virtual crafting table
+    usage: /craft
+    permission: collectionlog.craft
+
 permissions:
   collectionlog.use:
     description: Use collection log features
@@ -38,3 +43,6 @@ permissions:
   collectionlog.admin:
     description: Administrative commands
     default: op
+  collectionlog.craft:
+    description: Use the /craft command (granted when Utilities collection is complete)
+    default: false

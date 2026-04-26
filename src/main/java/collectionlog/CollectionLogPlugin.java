@@ -5,6 +5,7 @@ import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
+import collectionlog.commands.CraftCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
@@ -18,6 +19,7 @@ import collectionlog.gui.CollectionGUI;
 import collectionlog.gui.PerksGUI;
 import collectionlog.gui.TagsGUI;
 import collectionlog.perks.PerkManager;
+import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -177,6 +179,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new BedrockBreakListener(this), this);
             getServer().getPluginManager().registerEvents(new SilkTouchObtainableListener(this), this);
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
+            getServer().getPluginManager().registerEvents(new PhantomTogglePerk(this), this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
             getServer().getPluginManager().registerEvents(perksGUI, this);
@@ -209,6 +212,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 perksCommand.setExecutor(new PerksCommand(this));
             } else {
                 getLogger().warning("Command 'perks' not found in plugin.yml!");
+            }
+
+            PluginCommand craftCommand = getCommand("craft");
+            if (craftCommand != null) {
+                craftCommand.setExecutor(new CraftCommand(this));
+            } else {
+                getLogger().warning("Command 'craft' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
