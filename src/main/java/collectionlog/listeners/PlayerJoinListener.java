@@ -27,6 +27,9 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
 
+        // Pre-load perk toggle state so perk checks on the main thread are fast
+        plugin.getPerkManager().loadPlayerToggles(playerId);
+
         tagManager.getPlayerPrefix(playerId).thenAccept(prefix ->
                 tagManager.getPlayerSuffix(playerId).thenAccept(suffix -> {
                     String displayName = prefix + player.getName() + suffix;

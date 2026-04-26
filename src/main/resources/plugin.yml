@@ -26,6 +26,11 @@ commands:
     usage: /tags
     aliases: [tag]
 
+  perks:
+    description: Open the perks management GUI
+    usage: /perks
+    aliases: [perk]
+
 permissions:
   collectionlog.use:
     description: Use collection log features

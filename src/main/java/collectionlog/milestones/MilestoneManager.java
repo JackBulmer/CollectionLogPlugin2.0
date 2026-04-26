@@ -115,6 +115,7 @@ public class MilestoneManager {
 
                     int xpReward = config.getInt(path + ".xp", 0);
                     List<String> itemRewards = config.getStringList(path + ".items");
+                    List<String> subPerks = config.getStringList(path + ".perks");
                     String displayName = capitalizeCollectionName(subCollection);
                     String toastMessage = config.getString(path + ".toast_message",
                             displayName + " Complete!");
@@ -125,6 +126,7 @@ public class MilestoneManager {
                             subCollection,
                             xpReward,
                             itemRewards,
+                            subPerks,
                             toastMessage
                     );
 
@@ -285,6 +287,21 @@ public class MilestoneManager {
             player.giveExp(milestone.getXpReward());
             player.sendMessage("§a+ " + milestone.getXpReward() + " XP");
         }
+
+        List<String> perks = milestone.getPerks();
+        if (!perks.isEmpty()) {
+            List<String> unlockedRewards = new ArrayList<>();
+            for (String perkId : perks) {
+                unlockPerk(player.getUniqueId(), perkId);
+                unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+            }
+            if (!unlockedRewards.isEmpty()) {
+                player.sendMessage("§a§l✦ Sub-Collection Rewards ✦");
+                for (String reward : unlockedRewards) {
+                    player.sendMessage("  " + reward);
+                }
+            }
+        }
     }
 
     private void showMilestoneNotifications(Player player, Milestone milestone) {
@@ -408,6 +425,18 @@ public class MilestoneManager {
         return new HashSet<>(playerUnlockedPerks.getOrDefault(playerId, Collections.emptySet()));
     }
 
+    /**
+     * Removes a single perk from the player's unlocked set and deletes it
+     * from the database. Used by {@link collectionlog.perks.PerkManager} for
+     * admin-triggered individual revokes.
+     */
+    public void revokePerk(UUID playerId, String perkId) {
+        ensurePerksLoaded(playerId);
+        Set<String> perks = playerUnlockedPerks.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet());
+        perks.remove(perkId);
+        removePerkFromDatabase(playerId, perkId);
+    }
+
     private void unlockTag(UUID playerId, String tagId) {
         plugin.getAsyncTaskManager().runAsync(() -> {
             String sql = insertIgnore("player_tags", "(player_uuid, tag_id, unlocked_at) VALUES (?, ?, ?)");
@@ -512,6 +541,11 @@ public class MilestoneManager {
 
         completed.removeAll(toRemove);
         for (String milestoneName : toRemove) {
+            // Also revoke any perks granted by the sub-collection milestone
+            Milestone subMilestone = milestones.get(milestoneName);
+            if (subMilestone != null) {
+                revokeMilestoneRewards(playerId, subMilestone);
+            }
             removeCompletedMilestoneFromDatabase(playerId, milestoneName);
         }
     }
