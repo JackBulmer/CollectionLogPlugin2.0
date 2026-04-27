@@ -16,6 +16,12 @@ import java.util.UUID;
 public class ExtraHeartsManager {
 
     private static final String MODIFIER_NAME = "collectionlog.extra_hearts";
+    /** Maximum number of extra hearts (4 hearts = 8 HP). */
+    private static final int MAX_EXTRA_HEARTS = 4;
+    /** Health points added per extra heart (1 heart = 2 HP). */
+    private static final double HEALTH_PER_HEART = 2.0;
+    /** Maximum total health bonus from extra hearts. */
+    private static final double MAX_EXTRA_HEART_HEALTH = MAX_EXTRA_HEARTS * HEALTH_PER_HEART;
 
     private final CollectionLogPlugin plugin;
 
@@ -29,7 +35,7 @@ public class ExtraHeartsManager {
      */
     public void applyExtraHearts(Player player) {
         UUID playerId = player.getUniqueId();
-        int extraHeartCount = Math.min(getExtraHeartCount(playerId), 4);
+        int extraHeartCount = Math.min(getExtraHeartCount(playerId), MAX_EXTRA_HEARTS);
 
         plugin.getLogger().info("[DEBUG] applyExtraHearts called for " + player.getName() + ", count: " + extraHeartCount);
 
@@ -42,10 +48,32 @@ public class ExtraHeartsManager {
         plugin.getLogger().info("[DEBUG] Current max health: " + attribute.getValue());
         plugin.getLogger().info("[DEBUG] Current modifiers: " + attribute.getModifiers().size());
 
-        // Remove existing modifier if present
+        // Log all modifier details to diagnose the issue
+        for (AttributeModifier mod : attribute.getModifiers()) {
+            plugin.getLogger().info("[DEBUG] Found modifier - Name: '" + mod.getName() + "', Amount: " + mod.getAmount() + ", Operation: " + mod.getOperation());
+        }
+
+        // Remove existing modifier if present - try multiple matching strategies
         long removedCount = attribute.getModifiers().stream()
-                .filter(mod -> MODIFIER_NAME.equals(mod.getName()))
-                .peek(mod -> plugin.getLogger().info("[DEBUG] Removing modifier: " + mod.getName() + " with value: " + mod.getAmount()))
+                .filter(mod -> {
+                    // Match by name (case-insensitive for safety)
+                    boolean nameMatch = MODIFIER_NAME.equalsIgnoreCase(mod.getName());
+                    // Fallback: match ADD_NUMBER modifiers with an even amount in [2, 8]
+                    // (1-4 extra hearts = 2-8 HP) whose name contains "heart"
+                    boolean amountMatch = mod.getOperation() == AttributeModifier.Operation.ADD_NUMBER
+                        && mod.getAmount() > 0
+                        && mod.getAmount() <= MAX_EXTRA_HEART_HEALTH
+                        && mod.getAmount() % HEALTH_PER_HEART == 0;
+                    boolean isFallbackMatch = amountMatch
+                        && mod.getName() != null
+                        && mod.getName().toLowerCase().contains("heart");
+
+                    boolean shouldRemove = nameMatch || isFallbackMatch;
+                    if (shouldRemove) {
+                        plugin.getLogger().info("[DEBUG] Removing modifier: " + mod.getName() + " with value: " + mod.getAmount());
+                    }
+                    return shouldRemove;
+                })
                 .peek(attribute::removeModifier)
                 .count();
 
@@ -53,11 +81,11 @@ public class ExtraHeartsManager {
 
         // Add new modifier if player has extra hearts
         if (extraHeartCount > 0) {
-            double healthToAdd = extraHeartCount * 2;
+            double healthToAdd = extraHeartCount * HEALTH_PER_HEART;
             plugin.getLogger().info("[DEBUG] Adding modifier with value: " + healthToAdd);
             AttributeModifier modifier = new AttributeModifier(
                     MODIFIER_NAME,
-                    healthToAdd, // Each extra_heart perk = +2 health points (1 heart)
+                    healthToAdd,
                     AttributeModifier.Operation.ADD_NUMBER
             );
             attribute.addModifier(modifier);
@@ -107,7 +135,17 @@ public class ExtraHeartsManager {
         }
 
         attribute.getModifiers().stream()
-                .filter(mod -> MODIFIER_NAME.equals(mod.getName()))
+                .filter(mod -> {
+                    boolean nameMatch = MODIFIER_NAME.equalsIgnoreCase(mod.getName());
+                    boolean amountMatch = mod.getOperation() == AttributeModifier.Operation.ADD_NUMBER
+                        && mod.getAmount() > 0
+                        && mod.getAmount() <= MAX_EXTRA_HEART_HEALTH
+                        && mod.getAmount() % HEALTH_PER_HEART == 0;
+                    boolean isFallbackMatch = amountMatch
+                        && mod.getName() != null
+                        && mod.getName().toLowerCase().contains("heart");
+                    return nameMatch || isFallbackMatch;
+                })
                 .forEach(attribute::removeModifier);
 
         // Adjust health if now over max
