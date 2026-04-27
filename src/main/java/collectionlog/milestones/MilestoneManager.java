@@ -2,6 +2,7 @@ package collectionlog.milestones;
 
 import com.google.gson.JsonObject;
 import collectionlog.CollectionLogPlugin;
+import collectionlog.crafting.CustomRecipeManager;
 import collectionlog.database.DatabaseType;
 import collectionlog.tags.Tag;
 import org.bukkit.Bukkit;
@@ -282,6 +283,11 @@ public class MilestoneManager {
                 player.sendMessage("  " + reward);
             }
         }
+
+        // Discover any custom recipes unlocked by this collection
+        if (plugin.getCustomRecipeManager() != null) {
+            plugin.getCustomRecipeManager().discoverRecipesForPlayer(player);
+        }
     }
 
     private void awardSubCollectionRewards(Player player, SubCollectionMilestone milestone) {
@@ -305,6 +311,11 @@ public class MilestoneManager {
                     player.sendMessage("  " + reward);
                 }
             }
+        }
+
+        // Discover any custom recipes unlocked by this sub-collection
+        if (plugin.getCustomRecipeManager() != null) {
+            plugin.getCustomRecipeManager().discoverRecipesForPlayer(player);
         }
     }
 
@@ -478,7 +489,7 @@ public class MilestoneManager {
         });
     }
 
-    private boolean hasCompletedMilestone(UUID playerId, String milestoneName) {
+    public boolean hasCompletedMilestone(UUID playerId, String milestoneName) {
         ensureCompletedMilestonesLoaded(playerId);
         String normalizedMilestone = normalizeMilestoneKey(milestoneName);
         return playerCompletedMilestones
@@ -545,6 +556,14 @@ public class MilestoneManager {
         // Update extra hearts if this milestone awarded the extra_heart perk
         if (milestone.getPerks().contains("extra_heart")) {
             plugin.getExtraHeartsManager().updateExtraHearts(playerId);
+        }
+
+        // Undiscover any custom recipes that were locked behind this collection
+        if (plugin.getCustomRecipeManager() != null) {
+            Player onlinePlayer = plugin.getServer().getPlayer(playerId);
+            if (onlinePlayer != null) {
+                plugin.getCustomRecipeManager().undiscoverRecipesForPlayer(onlinePlayer, collectionName);
+            }
         }
     }
 
