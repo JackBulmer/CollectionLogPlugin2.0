@@ -129,12 +129,16 @@ public class StrafeListener implements Listener {
 
         event.setCancelled(true);
 
+        // Check if strafe perk is enabled
+        UUID playerId = player.getUniqueId();
+        if (!plugin.getPerkManager().isActive(playerId, "strafe")) {
+            return; // Strafe perk is disabled
+        }
+
         // Check cooldown
         if (!strafeManager.canStrafe(player)) {
             return;
         }
-
-        UUID playerId = player.getUniqueId();
 
         // Can't strafe if in air for more than 2 seconds
         Long timeInAir = airborneTime.get(playerId);
