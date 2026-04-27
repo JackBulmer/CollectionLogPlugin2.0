@@ -570,13 +570,23 @@ public class MilestoneManager {
         }
 
         completed.removeAll(toRemove);
+        boolean removedExtraHeart = false;
         for (String milestoneName : toRemove) {
             // Also revoke any perks granted by the sub-collection milestone
             Milestone subMilestone = milestones.get(milestoneName);
             if (subMilestone != null) {
                 revokeMilestoneRewards(playerId, subMilestone);
+                // Track if any extra_heart perks were removed
+                if (subMilestone.getPerks().contains("extra_heart")) {
+                    removedExtraHeart = true;
+                }
             }
             removeCompletedMilestoneFromDatabase(playerId, milestoneName);
+        }
+
+        // Update extra hearts if any were removed
+        if (removedExtraHeart) {
+            plugin.getExtraHeartsManager().updateExtraHearts(playerId);
         }
     }
 
