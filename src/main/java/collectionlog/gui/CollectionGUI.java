@@ -849,6 +849,7 @@ public class CollectionGUI implements Listener {
             case "horns" -> Material.GOAT_HORN;
             case "tcg" -> Material.PAPER;
             case "spawn eggs" -> Material.ZOMBIE_SPAWN_EGG;
+            case "happy ghast" -> Material.DRIED_GHAST;
             default -> Material.PAPER;
         };
     }
