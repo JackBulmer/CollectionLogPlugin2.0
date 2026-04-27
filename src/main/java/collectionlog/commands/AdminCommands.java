@@ -328,7 +328,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         if (milestoneManager != null) {
             milestoneManager.reload();
         }
-        sender.sendMessage("§aReloaded milestones configuration.");
+        if (plugin.getCustomRecipeManager() != null) {
+            plugin.getCustomRecipeManager().loadRecipes();
+        }
+        sender.sendMessage("§aReloaded milestones and custom recipes configuration.");
         return true;
     }
 

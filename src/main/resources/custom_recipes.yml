@@ -1,0 +1,75 @@
+# Custom crafting recipes unlocked by completing collections
+# Each recipe is locked behind a specific collection completion
+#
+# Recipe Types:
+#   - shaped: Pattern-based crafting (e.g., golden apple pattern)
+#   - shapeless: Order doesn't matter (e.g., netherite ingot)
+#
+# Ingredient Format:
+#   - "MATERIAL" - exact material
+#   - "MATERIAL:*" - any variant (e.g., any color concrete powder)
+#   - "MATERIAL:COUNT" - specific amount for shapeless recipes
+#
+# Result Format:
+#   - material: "MATERIAL" - exact output
+#   - material: "MATERIAL:MATCH" - match color from input (for concrete)
+#
+# Return Items:
+#   - Items given back after crafting (e.g., bucket from water bucket)
+
+recipes:
+  cheaper_golden_apples:
+    collection_required: "food"
+    type: "shaped"
+    shape:
+      - " G "
+      - "GAG"
+      - " G "
+    ingredients:
+      G: "GOLD_INGOT"
+      A: "APPLE"
+    result:
+      material: "GOLDEN_APPLE"
+      amount: 1
+
+  craftable_concrete:
+    collection_required: "concrete"
+    type: "shaped"
+    shape:
+      - "CCC"
+      - "CWC"
+      - "CCC"
+    ingredients:
+      C: "CONCRETE_POWDER:*"
+      W: "WATER_BUCKET"
+    result:
+      material: "CONCRETE:MATCH"
+      amount: 8
+    return_items:
+      - material: "BUCKET"
+        amount: 1
+
+  craftable_spawners:
+    collection_required: "mob_heads"
+    type: "shaped"
+    shape:
+      - "INI"
+      - "IDI"
+      - "INI"
+    ingredients:
+      I: "IRON_BARS"
+      N: "NETHERITE_INGOT"
+      D: "DISPENSER"
+    result:
+      material: "SPAWNER"
+      amount: 1
+
+  cheaper_netherite:
+    collection_required: "nether"
+    type: "shapeless"
+    ingredients:
+      - "GOLD_INGOT:2"
+      - "NETHERITE_SCRAP:2"
+    result:
+      material: "NETHERITE_INGOT"
+      amount: 1

@@ -27,6 +27,8 @@ import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
 import collectionlog.listeners.BucketListener;
 import collectionlog.listeners.ContainerListener;
+import collectionlog.crafting.CustomCraftingListener;
+import collectionlog.crafting.CustomRecipeManager;
 import collectionlog.listeners.CraftItemListener;
 import collectionlog.listeners.EnchantmentTableListener;
 import collectionlog.listeners.EntityDeathListener;
@@ -78,6 +80,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private PotionEffectManager potionEffectManager;
     private ExtraHeartsManager extraHeartsManager;
     private PerksGUI perksGUI;
+    private CustomRecipeManager customRecipeManager;
 
     @Override
     public void onEnable() {
@@ -161,6 +164,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             potionEffectManager = new PotionEffectManager(this);
             extraHeartsManager = new ExtraHeartsManager(this);
             perksGUI = new PerksGUI(this, perkManager, tagManager);
+            customRecipeManager = new CustomRecipeManager(this);
+            customRecipeManager.loadRecipes();
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -191,6 +196,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(tagsGUI, this);
             getServer().getPluginManager().registerEvents(perksGUI, this);
             getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+            getServer().getPluginManager().registerEvents(new CustomCraftingListener(this), this);
             getLogger().info("✅ Listeners registered");
 
             PluginCommand logsCommand = getCommand("logs");
@@ -345,5 +351,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public PerksGUI getPerksGUI() {
         return perksGUI;
+    }
+
+    public CustomRecipeManager getCustomRecipeManager() {
+        return customRecipeManager;
     }
 }

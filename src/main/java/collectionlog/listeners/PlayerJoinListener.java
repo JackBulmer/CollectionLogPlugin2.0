@@ -36,6 +36,11 @@ public class PlayerJoinListener implements Listener {
         // Apply extra hearts based on completed extra_heart perk milestones
         plugin.getExtraHeartsManager().applyExtraHearts(player);
 
+        // Sync custom recipe discovery with completed collections
+        if (plugin.getCustomRecipeManager() != null) {
+            plugin.getCustomRecipeManager().discoverRecipesForPlayer(player);
+        }
+
         tagManager.getPlayerPrefix(playerId).thenAccept(prefix ->
                 tagManager.getPlayerSuffix(playerId).thenAccept(suffix -> {
                     String displayName = prefix + player.getName() + suffix;
