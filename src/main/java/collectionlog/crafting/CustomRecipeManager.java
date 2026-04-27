@@ -112,7 +112,18 @@ public class CustomRecipeManager {
         List<CustomRecipe.ReturnItem> returnItems = new ArrayList<>();
         for (Map<?, ?> entry : section.getMapList("return_items")) {
             String matStr = (String) entry.get("material");
-            int amt = entry.containsKey("amount") ? ((Number) entry.get("amount")).intValue() : 1;
+            Object amountObj = entry.get("amount");
+            int amt = 1;
+            if (amountObj instanceof Number number) {
+                amt = number.intValue();
+            } else if (amountObj != null) {
+                try {
+                    amt = Integer.parseInt(amountObj.toString());
+                } catch (NumberFormatException e) {
+                    plugin.getLogger().warning("Invalid return item amount '" + amountObj
+                            + "' in recipe: " + id + ", defaulting to 1");
+                }
+            }
             Material mat = Material.getMaterial(matStr != null ? matStr : "");
             if (mat == null) {
                 plugin.getLogger().warning("Invalid return item material '" + matStr + "' in recipe: " + id);
@@ -233,6 +244,7 @@ public class CustomRecipeManager {
     private List<Material> getWildcardMaterials(String baseType, String recipeId) {
         List<Material> materials = new ArrayList<>();
 
+        // Add new wildcard types here as needed (e.g., WOOL, TERRACOTTA, STAINED_GLASS)
         if ("CONCRETE_POWDER".equals(baseType)) {
             for (DyeColor color : DyeColor.values()) {
                 Material mat = Material.getMaterial(color.name() + "_CONCRETE_POWDER");
