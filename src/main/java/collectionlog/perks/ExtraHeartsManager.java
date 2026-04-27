@@ -31,28 +31,47 @@ public class ExtraHeartsManager {
         UUID playerId = player.getUniqueId();
         int extraHeartCount = Math.min(getExtraHeartCount(playerId), 4);
 
+        plugin.getLogger().info("[DEBUG] applyExtraHearts called for " + player.getName() + ", count: " + extraHeartCount);
+
         AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
         if (attribute == null) {
+            plugin.getLogger().warning("[DEBUG] MAX_HEALTH attribute is null for " + player.getName());
             return;
         }
 
+        plugin.getLogger().info("[DEBUG] Current max health: " + attribute.getValue());
+        plugin.getLogger().info("[DEBUG] Current modifiers: " + attribute.getModifiers().size());
+
         // Remove existing modifier if present
-        attribute.getModifiers().stream()
+        long removedCount = attribute.getModifiers().stream()
                 .filter(mod -> MODIFIER_NAME.equals(mod.getName()))
-                .forEach(attribute::removeModifier);
+                .peek(mod -> plugin.getLogger().info("[DEBUG] Removing modifier: " + mod.getName() + " with value: " + mod.getAmount()))
+                .peek(attribute::removeModifier)
+                .count();
+
+        plugin.getLogger().info("[DEBUG] Removed " + removedCount + " modifiers");
 
         // Add new modifier if player has extra hearts
         if (extraHeartCount > 0) {
+            double healthToAdd = extraHeartCount * 2;
+            plugin.getLogger().info("[DEBUG] Adding modifier with value: " + healthToAdd);
             AttributeModifier modifier = new AttributeModifier(
                     MODIFIER_NAME,
-                    extraHeartCount * 2, // Each extra_heart perk = +2 health points (1 heart)
+                    healthToAdd, // Each extra_heart perk = +2 health points (1 heart)
                     AttributeModifier.Operation.ADD_NUMBER
             );
             attribute.addModifier(modifier);
+            plugin.getLogger().info("[DEBUG] Modifier added successfully");
+        } else {
+            plugin.getLogger().info("[DEBUG] No extra hearts to add");
         }
+
+        plugin.getLogger().info("[DEBUG] New max health: " + attribute.getValue());
+        plugin.getLogger().info("[DEBUG] Current health: " + player.getHealth());
 
         // Adjust health downward if now over max
         if (player.getHealth() > attribute.getValue()) {
+            plugin.getLogger().info("[DEBUG] Adjusting health down from " + player.getHealth() + " to " + attribute.getValue());
             player.setHealth(attribute.getValue());
         }
     }

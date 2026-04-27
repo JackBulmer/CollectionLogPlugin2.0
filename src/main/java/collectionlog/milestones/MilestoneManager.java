@@ -444,10 +444,18 @@ public class MilestoneManager {
     public int countExtraHeartMilestones(UUID playerId) {
         ensureCompletedMilestonesLoaded(playerId);
         Set<String> completed = playerCompletedMilestones.getOrDefault(playerId, Collections.emptySet());
-        return (int) milestones.values().stream()
+
+        plugin.getLogger().info("[DEBUG] countExtraHeartMilestones for " + playerId);
+        plugin.getLogger().info("[DEBUG] Completed milestones: " + completed);
+
+        int count = (int) milestones.values().stream()
                 .filter(m -> m.getPerks().contains("extra_heart"))
+                .peek(m -> plugin.getLogger().info("[DEBUG] Checking milestone: " + m.getName() + ", completed: " + completed.contains(normalizeMilestoneKey(m.getName()))))
                 .filter(m -> completed.contains(normalizeMilestoneKey(m.getName())))
                 .count();
+
+        plugin.getLogger().info("[DEBUG] Total extra_heart milestones completed: " + count);
+        return count;
     }
 
     /**
@@ -539,12 +547,25 @@ public class MilestoneManager {
             return;
         }
 
+        plugin.getLogger().info("[DEBUG] Revoking milestone: " + collectionName + " for player: " + playerId);
+        plugin.getLogger().info("[DEBUG] Milestone contains extra_heart: " + milestone.getPerks().contains("extra_heart"));
+
         revokeMilestoneRewards(playerId, milestone);
         removeCompletedMilestone(playerId, collectionName);
 
         // Update extra hearts if this milestone awarded the extra_heart perk
         if (milestone.getPerks().contains("extra_heart")) {
+            int countAfter = countExtraHeartMilestones(playerId);
+            plugin.getLogger().info("[DEBUG] Extra heart milestones count after removal: " + countAfter);
+
+            Player player = plugin.getServer().getPlayer(playerId);
+            if (player != null) {
+                plugin.getLogger().info("[DEBUG] Player online, updating extra hearts");
+            } else {
+                plugin.getLogger().info("[DEBUG] Player offline, extra hearts update will be skipped by updateExtraHearts");
+            }
             plugin.getExtraHeartsManager().updateExtraHearts(playerId);
+            plugin.getLogger().info("[DEBUG] Extra hearts update called");
         }
     }
 
