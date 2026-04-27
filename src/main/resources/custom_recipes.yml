@@ -45,9 +45,7 @@ recipes:
     result:
       material: "CONCRETE:MATCH"
       amount: 8
-    return_items:
-      - material: "BUCKET"
-        amount: 1
+    # No return_items needed - vanilla Minecraft automatically converts water bucket to bucket
 
   craftable_spawners:
     collection_required: "mob_heads"
