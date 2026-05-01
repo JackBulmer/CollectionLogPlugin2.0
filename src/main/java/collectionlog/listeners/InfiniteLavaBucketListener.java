@@ -3,6 +3,7 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.perks.InfiniteLavaBucket;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,31 +26,44 @@ public class InfiniteLavaBucketListener implements Listener {
 
     /**
      * Prevents infinite lava bucket from being consumed when placing lava.
-     * The bucket should remain as a lava bucket, not turn into an empty bucket.
+     * Cancels the event and manually places lava to keep the bucket.
      */
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        Player player = event.getPlayer();
         ItemStack bucket = event.getItemStack();
 
+        // Check if this is an infinite lava bucket
         if (!infiniteLavaBucket.isInfiniteLavaBucket(bucket)) {
             return;
         }
 
-        Player player = event.getPlayer();
+        // Cancel the event to prevent vanilla bucket consumption
+        event.setCancelled(true);
 
-        // Allow the lava to be placed (event continues)
-        // But restore the infinite lava bucket after vanilla converts it to an empty bucket
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            ItemStack mainHand = player.getInventory().getItemInMainHand();
-            ItemStack offHand = player.getInventory().getItemInOffHand();
+        // Manually place the lava block
+        Block clickedBlock = event.getBlockClicked();
+        Block placementBlock = clickedBlock.getRelative(event.getBlockFace());
 
-            // Check which hand had the bucket and restore it
-            if (mainHand.getType() == Material.BUCKET) {
-                player.getInventory().setItemInMainHand(infiniteLavaBucket.createItem());
-            } else if (offHand.getType() == Material.BUCKET) {
-                player.getInventory().setItemInOffHand(infiniteLavaBucket.createItem());
-            }
-        });
+        // Check if we can place lava here (not solid, not protected, etc.)
+        if (placementBlock.getType() != Material.AIR &&
+                placementBlock.getType() != Material.CAVE_AIR &&
+                placementBlock.getType() != Material.VOID_AIR &&
+                !placementBlock.isLiquid()) {
+            // Cannot place lava here
+            return;
+        }
+
+        // Place the lava
+        if (!placementBlock.canPlace(Material.LAVA.createBlockData())) {
+            return;
+        }
+        placementBlock.setType(Material.LAVA);
+
+        // Play sound effect (same as vanilla bucket emptying)
+        player.playSound(placementBlock.getLocation(), Sound.ITEM_BUCKET_EMPTY_LAVA, 1.0f, 1.0f);
+
+        // Infinite lava bucket stays in hand - no item changes needed!
     }
 
     /**
