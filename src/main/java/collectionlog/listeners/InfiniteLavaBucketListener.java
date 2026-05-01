@@ -58,7 +58,7 @@ public class InfiniteLavaBucketListener implements Listener {
         }
 
         // Don't place lava if clicking on an interactable block (unless sneaking)
-        if (!player.isSneaking() && clickedBlock.isInteractable()) {
+        if (!player.isSneaking() && isInteractableBlock(clickedBlock.getType())) {
             return;
         }
 
@@ -86,6 +86,39 @@ public class InfiniteLavaBucketListener implements Listener {
     }
 
     /**
+     * Checks if a block is interactable (would normally consume the right-click).
+     */
+    private boolean isInteractableBlock(Material material) {
+        return switch (material) {
+            case CRAFTING_TABLE, FURNACE, BLAST_FURNACE, SMOKER,
+                 CHEST, TRAPPED_CHEST, ENDER_CHEST, BARREL,
+                 DISPENSER, DROPPER, HOPPER,
+                 ENCHANTING_TABLE, ANVIL, CHIPPED_ANVIL, DAMAGED_ANVIL,
+                 BREWING_STAND, STONECUTTER, LOOM, CARTOGRAPHY_TABLE,
+                 SMITHING_TABLE, GRINDSTONE, LECTERN, COMPOSTER,
+                 BELL, RESPAWN_ANCHOR, LODESTONE,
+                 LEVER, STONE_BUTTON, OAK_BUTTON, SPRUCE_BUTTON,
+                 BIRCH_BUTTON, JUNGLE_BUTTON, ACACIA_BUTTON, DARK_OAK_BUTTON,
+                 CRIMSON_BUTTON, WARPED_BUTTON, POLISHED_BLACKSTONE_BUTTON,
+                 OAK_DOOR, SPRUCE_DOOR, BIRCH_DOOR, JUNGLE_DOOR, ACACIA_DOOR,
+                 DARK_OAK_DOOR, CRIMSON_DOOR, WARPED_DOOR, IRON_DOOR,
+                 OAK_TRAPDOOR, SPRUCE_TRAPDOOR, BIRCH_TRAPDOOR, JUNGLE_TRAPDOOR,
+                 ACACIA_TRAPDOOR, DARK_OAK_TRAPDOOR, CRIMSON_TRAPDOOR, WARPED_TRAPDOOR,
+                 IRON_TRAPDOOR, OAK_FENCE_GATE, SPRUCE_FENCE_GATE, BIRCH_FENCE_GATE,
+                 JUNGLE_FENCE_GATE, ACACIA_FENCE_GATE, DARK_OAK_FENCE_GATE,
+                 CRIMSON_FENCE_GATE, WARPED_FENCE_GATE,
+                 REPEATER, COMPARATOR, DAYLIGHT_DETECTOR,
+                 NOTE_BLOCK, JUKEBOX, CAKE, DRAGON_EGG,
+                 SHULKER_BOX, WHITE_SHULKER_BOX, ORANGE_SHULKER_BOX, MAGENTA_SHULKER_BOX,
+                 LIGHT_BLUE_SHULKER_BOX, YELLOW_SHULKER_BOX, LIME_SHULKER_BOX,
+                 PINK_SHULKER_BOX, GRAY_SHULKER_BOX, LIGHT_GRAY_SHULKER_BOX,
+                 CYAN_SHULKER_BOX, PURPLE_SHULKER_BOX, BLUE_SHULKER_BOX,
+                 BROWN_SHULKER_BOX, GREEN_SHULKER_BOX, RED_SHULKER_BOX, BLACK_SHULKER_BOX -> true;
+            default -> false;
+        };
+    }
+
+    /**
      * Checks if lava can be placed at the target location.
      */
     private boolean canPlaceLava(Block block) {
@@ -100,8 +133,35 @@ public class InfiniteLavaBucketListener implements Listener {
             return true;
         }
 
-        // Can replace naturally replaceable blocks (tall grass, flowers, snow layers, etc.)
-        return block.isReplaceable();
+        // Can replace replaceable blocks like grass, flowers, snow, etc.
+        return isReplaceableBlock(type);
+    }
+
+    /**
+     * Checks if a block can be replaced when placing lava.
+     */
+    private boolean isReplaceableBlock(Material material) {
+        return switch (material) {
+            case GRASS, TALL_GRASS, FERN, LARGE_FERN,
+                 DEAD_BUSH, SEAGRASS, TALL_SEAGRASS, KELP, KELP_PLANT,
+                 DANDELION, POPPY, BLUE_ORCHID, ALLIUM, AZURE_BLUET,
+                 RED_TULIP, ORANGE_TULIP, WHITE_TULIP, PINK_TULIP,
+                 OXEYE_DAISY, CORNFLOWER, LILY_OF_THE_VALLEY, WITHER_ROSE,
+                 SUNFLOWER, LILAC, ROSE_BUSH, PEONY,
+                 TORCH, WALL_TORCH, SOUL_TORCH, SOUL_WALL_TORCH,
+                 REDSTONE_TORCH, REDSTONE_WALL_TORCH,
+                 SNOW, VINE, GLOW_LICHEN, HANGING_ROOTS,
+                 FIRE, SOUL_FIRE,
+                 WHEAT, CARROTS, POTATOES, BEETROOTS,
+                 NETHER_WART, SWEET_BERRY_BUSH, CAVE_VINES, CAVE_VINES_PLANT,
+                 SUGAR_CANE, BAMBOO, BAMBOO_SAPLING,
+                 MUSHROOM_STEM, BROWN_MUSHROOM, RED_MUSHROOM,
+                 CRIMSON_FUNGUS, WARPED_FUNGUS, CRIMSON_ROOTS, WARPED_ROOTS,
+                 NETHER_SPROUTS, TWISTING_VINES, TWISTING_VINES_PLANT,
+                 WEEPING_VINES, WEEPING_VINES_PLANT,
+                 COBWEB, TRIPWIRE -> true;
+            default -> false;
+        };
     }
 
     /**
