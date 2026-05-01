@@ -59,6 +59,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 case "perk" -> handlePerkCommand(sender, args);
                 case "reload" -> handleReload(sender);
                 case "missing-items" -> handleMissingItems(sender);
+                case "givelava" -> handleGiveLava(sender, args);
                 default -> {
                     sendHelp(sender);
                     yield true;
@@ -492,6 +493,24 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleGiveLava(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /cl givelava <player>");
+            return true;
+        }
+
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            sender.sendMessage("§cPlayer not found or not online: " + args[1]);
+            return true;
+        }
+
+        target.getInventory().addItem(plugin.getInfiniteLavaBucket().createItem());
+        sender.sendMessage("§aGave infinite lava bucket to §e" + target.getName());
+        target.sendMessage("§6✦ §eYou received: §6§lInfinite Lava Bucket");
+        return true;
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("§6§l=== Collection Log Admin Commands ===");
         sender.sendMessage("§e/cl collection complete <player> <collection>");
@@ -516,6 +535,8 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7  - Reload milestone configuration");
         sender.sendMessage("§e/cl missing-items");
         sender.sendMessage("§7  - Generate missing_items.txt report of uncollected materials");
+        sender.sendMessage("§e/cl givelava <player>");
+        sender.sendMessage("§7  - Give an infinite lava bucket to a player");
     }
 
     @Override
@@ -525,7 +546,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items"));
+            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
@@ -538,6 +559,14 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
         if (args.length == 2 && args[0].equalsIgnoreCase("perk")) {
             return filterCompletions(args[1], List.of("unlock", "revoke", "toggle", "enable", "disable"));
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("givelava")) {
+            List<String> players = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                players.add(player.getName());
+            }
+            return filterCompletions(args[1], players);
         }
 
         if (args.length == 3) {

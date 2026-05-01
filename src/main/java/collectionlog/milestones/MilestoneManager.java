@@ -262,6 +262,12 @@ public class MilestoneManager {
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+
+                // Special handling for infinite_lava_bucket - give the physical item
+                if ("infinite_lava_bucket".equals(perkId) && plugin.getInfiniteLavaBucket() != null) {
+                    player.getInventory().addItem(plugin.getInfiniteLavaBucket().createItem());
+                    player.sendMessage("§6✦ §eYou received: §6§lInfinite Lava Bucket");
+                }
             }
             // Apply any newly-unlocked potion-effect perks immediately
             plugin.getPotionEffectManager().applyPermanentEffects(player);
