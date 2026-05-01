@@ -18,10 +18,12 @@ import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.gui.CollectionGUI;
 import collectionlog.gui.PerksGUI;
 import collectionlog.gui.TagsGUI;
+import collectionlog.perks.InfiniteLavaBucket;
 import collectionlog.perks.PerkManager;
 import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
+import collectionlog.listeners.InfiniteLavaBucketListener;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -81,6 +83,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private ExtraHeartsManager extraHeartsManager;
     private PerksGUI perksGUI;
     private CustomRecipeManager customRecipeManager;
+    private InfiniteLavaBucket infiniteLavaBucket;
 
     @Override
     public void onEnable() {
@@ -166,6 +169,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             perksGUI = new PerksGUI(this, perkManager, tagManager);
             customRecipeManager = new CustomRecipeManager(this);
             customRecipeManager.loadRecipes();
+            infiniteLavaBucket = new InfiniteLavaBucket(this);
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -191,6 +195,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new SilkTouchObtainableListener(this), this);
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(new PhantomTogglePerk(this), this);
+            getServer().getPluginManager().registerEvents(new InfiniteLavaBucketListener(this), this);
             getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
@@ -355,5 +360,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CustomRecipeManager getCustomRecipeManager() {
         return customRecipeManager;
+    }
+
+    public InfiniteLavaBucket getInfiniteLavaBucket() {
+        return infiniteLavaBucket;
     }
 }
