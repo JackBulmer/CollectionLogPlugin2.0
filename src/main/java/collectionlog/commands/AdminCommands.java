@@ -325,14 +325,26 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleReload(CommandSender sender) {
+        sender.sendMessage("§eReloading plugin configuration...");
+
+        // Reload config.yml
+        plugin.reloadConfig();
+        sender.sendMessage("§a✓ Reloaded config.yml");
+
+        // Reload milestones
         MilestoneManager milestoneManager = plugin.getMilestoneManager();
         if (milestoneManager != null) {
             milestoneManager.reload();
+            sender.sendMessage("§a✓ Reloaded milestones.yml");
         }
+
+        // Reload custom recipes
         if (plugin.getCustomRecipeManager() != null) {
             plugin.getCustomRecipeManager().loadRecipes();
+            sender.sendMessage("§a✓ Reloaded custom recipes");
         }
-        sender.sendMessage("§aReloaded milestones and custom recipes configuration.");
+
+        sender.sendMessage("§a§l✓ Reload complete!");
         return true;
     }
 
@@ -532,7 +544,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§e/cl perk toggle <player> <perk_id>");
         sender.sendMessage("§7  - Toggle a perk on/off for a player");
         sender.sendMessage("§e/cl reload");
-        sender.sendMessage("§7  - Reload milestone configuration");
+        sender.sendMessage("§7  - Reload config.yml, milestones, and custom recipes");
         sender.sendMessage("§e/cl missing-items");
         sender.sendMessage("§7  - Generate missing_items.txt report of uncollected materials");
         sender.sendMessage("§e/cl givelava <player>");
