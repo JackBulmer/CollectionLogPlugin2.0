@@ -13,6 +13,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 
 import java.util.UUID;
 
@@ -86,8 +89,22 @@ public class InstantGlassSmeltingListener implements Listener {
 
         // Convert sand to glass
         event.setDropItems(false);
-        // No XP reward for smelting (as per requirements).
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.GLASS, 1));
+
+        // Play flame particles and sound effect
+        Location loc = block.getLocation().add(0.5, 0.5, 0.5);
+
+        // Main flame burst
+        block.getWorld().spawnParticle(Particle.FLAME, loc, 50, 0.4, 0.4, 0.4, 0.03);
+
+        // Smoke cloud
+        block.getWorld().spawnParticle(Particle.SMOKE, loc, 20, 0.3, 0.3, 0.3, 0.05);
+
+        // Lava drips (looks like molten glass)
+        block.getWorld().spawnParticle(Particle.LAVA, loc, 10, 0.3, 0.3, 0.3, 0.0);
+
+        // Sound
+        block.getWorld().playSound(loc, Sound.BLOCK_FIRE_EXTINGUISH, 1.0f, 1.5f);
     }
 
     /**
