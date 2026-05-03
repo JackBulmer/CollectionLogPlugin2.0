@@ -41,6 +41,11 @@ public class PlayerJoinListener implements Listener {
             plugin.getCustomRecipeManager().discoverRecipesForPlayer(player);
         }
 
+        // Load and apply saved glowing preferences
+        if (plugin.getGlowingManager() != null) {
+            plugin.getGlowingManager().loadPlayerData(playerId);
+        }
+
         tagManager.getPlayerPrefix(playerId).thenAccept(prefix ->
                 tagManager.getPlayerSuffix(playerId).thenAccept(suffix -> {
                     String displayName = prefix + player.getName() + suffix;

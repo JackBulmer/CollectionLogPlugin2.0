@@ -35,6 +35,15 @@ commands:
     description: Opens a virtual crafting table
     usage: /craft
 
+  glowing:
+    description: Manage your glow colour (Glowing perk)
+    usage: /glowing [on|off|<color>]
+    aliases: [glow]
+
+  dye:
+    description: Open the Infinite Dyes GUI (Infinite Dyes perk)
+    usage: /dye
+
 permissions:
   collectionlog.use:
     description: Use collection log features
