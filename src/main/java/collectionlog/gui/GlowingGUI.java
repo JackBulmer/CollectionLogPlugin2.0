@@ -232,6 +232,8 @@ public class GlowingGUI implements Listener {
     }
 
     private String colorChatCode(DyeColor color) {
+        // Note: ChatColor has limited options – PINK and MAGENTA share §d (light purple)
+        // since Minecraft's chat colour palette does not have a distinct pink code.
         return switch (color) {
             case WHITE      -> "§f";
             case ORANGE     -> "§6";
@@ -239,7 +241,7 @@ public class GlowingGUI implements Listener {
             case LIGHT_BLUE -> "§b";
             case YELLOW     -> "§e";
             case LIME       -> "§a";
-            case PINK       -> "§d";
+            case PINK       -> "§d"; // no distinct pink in legacy chat colours
             case GRAY       -> "§8";
             case LIGHT_GRAY -> "§7";
             case CYAN       -> "§3";

@@ -169,7 +169,7 @@ public class GlowingManager implements Listener {
                 stmt.setString(1, playerId.toString());
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        boolean enabled = rs.getBoolean("enabled");
+                        boolean enabled = rs.getInt("enabled") == 1;
                         String color = rs.getString("color");
                         playerColors.put(playerId, color);
                         playerGlowEnabled.put(playerId, enabled);
@@ -250,13 +250,13 @@ public class GlowingManager implements Listener {
             case LIGHT_BLUE -> ChatColor.AQUA;
             case YELLOW -> ChatColor.YELLOW;
             case LIME -> ChatColor.GREEN;
-            case PINK -> ChatColor.LIGHT_PURPLE;
+            case PINK -> ChatColor.LIGHT_PURPLE; // No distinct pink in ChatColor; closest is light purple
             case GRAY -> ChatColor.DARK_GRAY;
             case LIGHT_GRAY -> ChatColor.GRAY;
             case CYAN -> ChatColor.DARK_AQUA;
             case PURPLE -> ChatColor.DARK_PURPLE;
             case BLUE -> ChatColor.BLUE;
-            case BROWN -> ChatColor.GOLD;
+            case BROWN -> ChatColor.DARK_RED; // Differentiated from ORANGE (GOLD)
             case GREEN -> ChatColor.DARK_GREEN;
             case RED -> ChatColor.RED;
             case BLACK -> ChatColor.BLACK;

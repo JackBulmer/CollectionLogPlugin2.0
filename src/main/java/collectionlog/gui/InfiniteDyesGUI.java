@@ -300,7 +300,7 @@ public class InfiniteDyesGUI implements Listener {
 
         if (isSelected) {
             meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }
         item.setItemMeta(meta);
         return item;
@@ -384,6 +384,8 @@ public class InfiniteDyesGUI implements Listener {
     }
 
     private String colorChatCode(DyeColor color) {
+        // Note: ChatColor has limited options – PINK and MAGENTA share §d (light purple)
+        // since Minecraft's chat colour palette does not have a distinct pink code.
         return switch (color) {
             case WHITE      -> "§f";
             case ORANGE     -> "§6";
@@ -391,7 +393,7 @@ public class InfiniteDyesGUI implements Listener {
             case LIGHT_BLUE -> "§b";
             case YELLOW     -> "§e";
             case LIME       -> "§a";
-            case PINK       -> "§d";
+            case PINK       -> "§d"; // no distinct pink in legacy chat colours
             case GRAY       -> "§8";
             case LIGHT_GRAY -> "§7";
             case CYAN       -> "§3";
