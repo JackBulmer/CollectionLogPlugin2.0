@@ -142,7 +142,7 @@ public class InfiniteLavaBucketListener implements Listener {
      */
     private boolean isReplaceableBlock(Material material) {
         return switch (material) {
-            case GRASS, TALL_GRASS, FERN, LARGE_FERN,
+            case SHORT_GRASS, TALL_GRASS, FERN, LARGE_FERN,
                  DEAD_BUSH, SEAGRASS, TALL_SEAGRASS, KELP, KELP_PLANT,
                  DANDELION, POPPY, BLUE_ORCHID, ALLIUM, AZURE_BLUET,
                  RED_TULIP, ORANGE_TULIP, WHITE_TULIP, PINK_TULIP,

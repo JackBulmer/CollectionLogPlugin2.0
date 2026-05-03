@@ -86,9 +86,6 @@ public class InstantGlassSmeltingListener implements Listener {
 
         // Convert sand to glass
         event.setDropItems(false);
-        // Explicitly apply 1 durability to the shovel (respects Unbreaking enchantment
-        // and handles tool breakage).  setDropItems(false) does not trigger this automatically.
-        tool.damage(1, player);
         // No XP reward for smelting (as per requirements).
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.GLASS, 1));
     }
