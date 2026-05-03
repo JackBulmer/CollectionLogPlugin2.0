@@ -51,6 +51,11 @@ commands:
     usage: /instantglass
     aliases: [iglass, glasssmelt]
 
+  veinminer:
+    description: Toggle the Vein Miner perk
+    usage: /veinminer
+    aliases: [vm, vmine]
+
 permissions:
   collectionlog.use:
     description: Use collection log features
