@@ -27,9 +27,15 @@ import java.util.UUID;
  * GUI for choosing a glow colour (Glowing perk).
  *
  * <p>Layout (54 slots):
+ * <pre>
+ * Row 1 (0-8):   T T T T T T T T T
+ * Row 2 (9-17):  · T T T T T T T ·
+ * Row 3-5:       · · · · · · · · ·
+ * Row 6 (45-53): B · · · O · · · ·
+ * </pre>
  * <ul>
- *   <li>Slots 1–16 (0-indexed): Coloured leather tunics representing each dye colour</li>
- *   <li>Slot 49: Barrier to turn glowing off</li>
+ *   <li>Slots 0–8, 10–16: Coloured leather tunics (16 colours)</li>
+ *   <li>Slot 49: On/Off toggle button</li>
  *   <li>Slot 45: Back button (only shown when opened from the Perks GUI)</li>
  * </ul>
  */
@@ -37,10 +43,10 @@ public class GlowingGUI implements Listener {
 
     // ── Slots ─────────────────────────────────────────────────────────────────
     private static final int INVENTORY_SIZE = 54;
-    private static final int SLOT_COLORS_START = 1;
-    private static final int SLOT_COLORS_END   = 16;
-    private static final int SLOT_BARRIER      = 49;
-    private static final int SLOT_BACK         = 45;
+    // Row 1: 9 tunics (0-8), Row 2: 7 tunics (10-16) → 16 total
+    private static final int[] TUNIC_SLOTS  = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16};
+    private static final int SLOT_BARRIER   = 49;
+    private static final int SLOT_BACK      = 45;
 
     private static final int BACK_ITEM_CMD     = 24001;
 
@@ -97,16 +103,16 @@ public class GlowingGUI implements Listener {
 
         Inventory inv = Bukkit.createInventory(new GlowingGuiHolder(), INVENTORY_SIZE, "");
 
-        // Color tunic slots (1–16)
+        // Color tunic slots (rows 1-2)
         DyeColor[] colors = GlowingManager.getColorOrder();
         for (int i = 0; i < colors.length; i++) {
             DyeColor color = colors[i];
             boolean isActive = glowEnabled && color.name().equalsIgnoreCase(currentColor);
-            inv.setItem(SLOT_COLORS_START + i, createTunicItem(color, isActive));
+            inv.setItem(TUNIC_SLOTS[i], createTunicItem(color, isActive));
         }
 
-        // Barrier – off button
-        inv.setItem(SLOT_BARRIER, createBarrierItem(!glowEnabled));
+        // Barrier – on/off toggle button
+        inv.setItem(SLOT_BARRIER, createBarrierItem(glowEnabled));
 
         // Back button (only when opened from perks GUI)
         if (fromPerks) {
@@ -142,20 +148,20 @@ public class GlowingGUI implements Listener {
         GlowingManager glowingManager = plugin.getGlowingManager();
 
         // Colour tunic clicked
-        if (slot >= SLOT_COLORS_START && slot <= SLOT_COLORS_END) {
-            int colorIndex = slot - SLOT_COLORS_START;
-            DyeColor[] colors = GlowingManager.getColorOrder();
-            if (colorIndex < colors.length) {
-                DyeColor chosen = colors[colorIndex];
+        DyeColor[] colors = GlowingManager.getColorOrder();
+        for (int i = 0; i < TUNIC_SLOTS.length; i++) {
+            if (slot == TUNIC_SLOTS[i] && i < colors.length) {
+                DyeColor chosen = colors[i];
                 glowingManager.setGlowColor(playerId, chosen.name());
                 buildAndOpen(player);
+                return;
             }
-            return;
         }
 
-        // Barrier – turn off glowing
+        // Barrier – toggle glowing on/off
         if (slot == SLOT_BARRIER) {
-            glowingManager.toggleGlow(playerId, false);
+            boolean currentlyEnabled = glowingManager.isGlowEnabled(playerId);
+            glowingManager.toggleGlow(playerId, !currentlyEnabled);
             buildAndOpen(player);
             return;
         }
@@ -189,15 +195,17 @@ public class GlowingGUI implements Listener {
         return tunic;
     }
 
-    private ItemStack createBarrierItem(boolean isActive) {
+    private ItemStack createBarrierItem(boolean glowCurrentlyEnabled) {
         ItemStack item = new ItemStack(Material.BARRIER);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.setDisplayName("§cTurn Off Glowing");
-        meta.setLore(List.of("§7Click to disable the glow effect."));
-
-        if (isActive) {
+        if (glowCurrentlyEnabled) {
+            meta.setDisplayName("§c§lTurn Off Glowing");
+            meta.setLore(List.of("§7Click to disable the glow effect."));
+        } else {
+            meta.setDisplayName("§a§lTurn On Glowing");
+            meta.setLore(List.of("§7Click to enable the glow effect."));
             meta.addEnchant(Enchantment.UNBREAKING, 1, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }

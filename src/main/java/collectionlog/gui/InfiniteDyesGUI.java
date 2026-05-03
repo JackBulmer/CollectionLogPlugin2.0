@@ -29,22 +29,34 @@ import java.util.UUID;
  * GUI for the Infinite Dyes perk.
  *
  * <p>Layout (54 slots):
+ * <pre>
+ * Row 1 (0-8):   · · · G G G · · ·
+ * Row 2 (9-17):  · · · G I G · · ·
+ * Row 3 (18-26): · · · G G G · · ·
+ * Row 4 (27-35): D D D D D D D D D
+ * Row 5 (36-44): · D D D D D D D ·
+ * Row 6 (45-53): B · · · C · · · ·
+ * </pre>
  * <ul>
  *   <li>Slot 13: Input / Output slot (player-interactive)</li>
- *   <li>Slots 19–34: Dye colour buttons (16 colours)</li>
- *   <li>Slot 40: Confirm button (Paper, CMD 24112)</li>
+ *   <li>Slots 3,4,5,12,14,21,22,23: Lime glass pane border (decorative)</li>
+ *   <li>Slots 27–35, 37–43: Dye colour buttons (16 colours)</li>
+ *   <li>Slot 49: Confirm button (Paper, CMD 24112)</li>
  *   <li>Slot 45: Back button (only when opened from Perks GUI)</li>
  * </ul>
  */
 public class InfiniteDyesGUI implements Listener {
 
     // ── Slots ─────────────────────────────────────────────────────────────────
-    private static final int INVENTORY_SIZE  = 54;
-    private static final int SLOT_INPUT      = 13;
-    private static final int SLOT_DYES_START = 19;
-    private static final int SLOT_DYES_END   = 34;
-    private static final int SLOT_CONFIRM    = 40;
-    private static final int SLOT_BACK       = 45;
+    private static final int INVENTORY_SIZE = 54;
+    private static final int SLOT_INPUT     = 13;
+    private static final int SLOT_CONFIRM   = 49;
+    private static final int SLOT_BACK      = 45;
+
+    private static final int[] GLASS_PANE_SLOTS = {3, 4, 5, 12, 14, 21, 22, 23};
+    // 3×3 border around slot 13 (input): top row (3-5), middle sides (12,14), bottom row (21-23)
+    // Row 4: 9 dyes (27-35), Row 5: 7 dyes (37-43) → 16 total
+    private static final int[] DYE_SLOTS = {27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 38, 39, 40, 41, 42, 43};
 
     private static final int CONFIRM_CMD = 24112;
     private static final int BACK_CMD    = 24001;
@@ -97,19 +109,22 @@ public class InfiniteDyesGUI implements Listener {
 
         Inventory inv = Bukkit.createInventory(new InfiniteDyesHolder(), INVENTORY_SIZE, "");
 
-        // Slot 13 is the input slot – leave it empty (or preserve existing item)
-        // (Bukkit initialises all slots to null/air by default)
-
-        // Dye colour buttons (slots 19–34)
-        for (int i = 0; i < COLOR_ORDER.length; i++) {
-            DyeColor color = COLOR_ORDER[i];
-            inv.setItem(SLOT_DYES_START + i, createDyeItem(color, color == selected));
+        // Decorative lime glass pane border around input slot
+        ItemStack glassPane = createGlassPaneItem();
+        for (int slot : GLASS_PANE_SLOTS) {
+            inv.setItem(slot, glassPane);
         }
 
-        // Confirm button
+        // Dye colour buttons (rows 4-5)
+        for (int i = 0; i < COLOR_ORDER.length; i++) {
+            DyeColor color = COLOR_ORDER[i];
+            inv.setItem(DYE_SLOTS[i], createDyeItem(color, color == selected));
+        }
+
+        // Confirm button (slot 49)
         inv.setItem(SLOT_CONFIRM, createConfirmButton(selected, null));
 
-        // Back button
+        // Back button (slot 45)
         if (fromPerks) {
             inv.setItem(SLOT_BACK, createBackButton());
         }
@@ -163,23 +178,22 @@ public class InfiniteDyesGUI implements Listener {
 
         event.setCancelled(true);
 
-        // Dye colour selection (slots 19–34)
-        if (rawSlot >= SLOT_DYES_START && rawSlot <= SLOT_DYES_END) {
-            int idx = rawSlot - SLOT_DYES_START;
-            if (idx < COLOR_ORDER.length) {
-                DyeColor chosen = COLOR_ORDER[idx];
+        // Dye colour selection (rows 4-5)
+        for (int i = 0; i < DYE_SLOTS.length; i++) {
+            if (rawSlot == DYE_SLOTS[i]) {
+                DyeColor chosen = COLOR_ORDER[i];
                 selectedColors.put(id, chosen);
 
                 // Refresh dye buttons and confirm in the open inventory
                 Inventory openInv = player.getOpenInventory().getTopInventory();
-                for (int i = 0; i < COLOR_ORDER.length; i++) {
-                    openInv.setItem(SLOT_DYES_START + i,
-                            createDyeItem(COLOR_ORDER[i], COLOR_ORDER[i] == chosen));
+                for (int j = 0; j < COLOR_ORDER.length; j++) {
+                    openInv.setItem(DYE_SLOTS[j],
+                            createDyeItem(COLOR_ORDER[j], COLOR_ORDER[j] == chosen));
                 }
                 ItemStack inputItem = openInv.getItem(SLOT_INPUT);
                 openInv.setItem(SLOT_CONFIRM, createConfirmButton(chosen, inputItem));
+                return;
             }
-            return;
         }
 
         // Confirm button
@@ -287,6 +301,16 @@ public class InfiniteDyesGUI implements Listener {
     }
 
     // ── Item builders ─────────────────────────────────────────────────────────
+
+    private ItemStack createGlassPaneItem() {
+        ItemStack pane = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+        ItemMeta meta = pane.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(" ");
+            pane.setItemMeta(meta);
+        }
+        return pane;
+    }
 
     private ItemStack createDyeItem(DyeColor color, boolean isSelected) {
         int colorIndex = indexOfColor(color);
