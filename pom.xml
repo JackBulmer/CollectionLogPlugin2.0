@@ -24,6 +24,10 @@
             <id>hdb-repo</id>
             <url>https://raw.githubusercontent.com/arcaniax-Development/HeadDatabase-API/main/repo/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -62,6 +66,14 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>8.3.0</version>
+        </dependency>
+
+        <!-- GriefPrevention (soft dependency – claim protection checks) -->
+        <dependency>
+            <groupId>com.github.TechFortress</groupId>
+            <artifactId>GriefPrevention</artifactId>
+            <version>16.18</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Gson (JSON parsing for collection definitions) -->
