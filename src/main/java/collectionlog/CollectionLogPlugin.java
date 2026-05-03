@@ -6,6 +6,8 @@ import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
 import collectionlog.commands.CraftCommand;
+import collectionlog.commands.DyeCommand;
+import collectionlog.commands.GlowingCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
@@ -16,6 +18,8 @@ import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.gui.CollectionGUI;
+import collectionlog.gui.GlowingGUI;
+import collectionlog.gui.InfiniteDyesGUI;
 import collectionlog.gui.PerksGUI;
 import collectionlog.gui.TagsGUI;
 import collectionlog.perks.InfiniteLavaBucket;
@@ -49,6 +53,8 @@ import collectionlog.listeners.StonecutterListener;
 import collectionlog.listeners.StrafeListener;
 import collectionlog.listeners.VillagerTradingListener;
 import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.managers.GlowingManager;
+import collectionlog.managers.InfiniteDyesManager;
 import collectionlog.managers.StrafeManager;
 import collectionlog.milestones.MilestoneManager;
 import collectionlog.tags.TagManager;
@@ -84,6 +90,10 @@ public class CollectionLogPlugin extends JavaPlugin {
     private PerksGUI perksGUI;
     private CustomRecipeManager customRecipeManager;
     private InfiniteLavaBucket infiniteLavaBucket;
+    private GlowingManager glowingManager;
+    private GlowingGUI glowingGUI;
+    private InfiniteDyesManager infiniteDyesManager;
+    private InfiniteDyesGUI infiniteDyesGUI;
 
     @Override
     public void onEnable() {
@@ -170,6 +180,10 @@ public class CollectionLogPlugin extends JavaPlugin {
             customRecipeManager = new CustomRecipeManager(this);
             customRecipeManager.loadRecipes();
             infiniteLavaBucket = new InfiniteLavaBucket(this);
+            glowingManager = new GlowingManager(this);
+            glowingGUI = new GlowingGUI(this);
+            infiniteDyesManager = new InfiniteDyesManager();
+            infiniteDyesGUI = new InfiniteDyesGUI(this);
             getLogger().info("✅ Managers initialized");
 
             // Register listeners
@@ -200,6 +214,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
             getServer().getPluginManager().registerEvents(perksGUI, this);
+            getServer().getPluginManager().registerEvents(glowingGUI, this);
+            getServer().getPluginManager().registerEvents(infiniteDyesGUI, this);
+            getServer().getPluginManager().registerEvents(glowingManager, this);
             getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
             getServer().getPluginManager().registerEvents(new CustomCraftingListener(this), this);
             getLogger().info("✅ Listeners registered");
@@ -237,6 +254,22 @@ public class CollectionLogPlugin extends JavaPlugin {
                 craftCommand.setExecutor(new CraftCommand(this));
             } else {
                 getLogger().warning("Command 'craft' not found in plugin.yml!");
+            }
+
+            PluginCommand glowingCommand = getCommand("glowing");
+            if (glowingCommand != null) {
+                GlowingCommand glowingExecutor = new GlowingCommand(this);
+                glowingCommand.setExecutor(glowingExecutor);
+                glowingCommand.setTabCompleter(glowingExecutor);
+            } else {
+                getLogger().warning("Command 'glowing' not found in plugin.yml!");
+            }
+
+            PluginCommand dyeCommand = getCommand("dye");
+            if (dyeCommand != null) {
+                dyeCommand.setExecutor(new DyeCommand(this));
+            } else {
+                getLogger().warning("Command 'dye' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -364,5 +397,21 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public InfiniteLavaBucket getInfiniteLavaBucket() {
         return infiniteLavaBucket;
+    }
+
+    public GlowingManager getGlowingManager() {
+        return glowingManager;
+    }
+
+    public GlowingGUI getGlowingGUI() {
+        return glowingGUI;
+    }
+
+    public InfiniteDyesManager getInfiniteDyesManager() {
+        return infiniteDyesManager;
+    }
+
+    public InfiniteDyesGUI getInfiniteDyesGUI() {
+        return infiniteDyesGUI;
     }
 }

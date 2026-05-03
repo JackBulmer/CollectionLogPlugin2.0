@@ -40,6 +40,10 @@ messages:
   server-announcement:
     format: "§6{player}§r completed §e{collection} Collection§r!"
 
+# Infinite Dyes Settings
+# Track collection progress when dyeing items in the Infinite Dyes GUI
+track_dye_collection_progress: false
+
 # Mob drop settings
 mob-drops:
   # Chance for spawn eggs to drop (1 in X kills)

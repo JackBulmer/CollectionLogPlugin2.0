@@ -270,6 +270,19 @@ public class PerksGUI implements Listener {
             return;
         }
 
+        // GUI-based perks – open their dedicated sub-GUI instead of toggling
+        if (perkId.equals("glowing")) {
+            player.closeInventory();
+            plugin.getGlowingGUI().open(player, true);
+            return;
+        }
+
+        if (perkId.equals("infinite_dyes")) {
+            player.closeInventory();
+            plugin.getInfiniteDyesGUI().open(player, true);
+            return;
+        }
+
         if (!perk.isToggleable()) {
             player.sendMessage("§cThis perk cannot be toggled.");
             return;

@@ -162,3 +162,10 @@ CREATE TABLE IF NOT EXISTS player_perk_toggles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_perk_toggles_uuid ON player_perk_toggles(player_uuid);
+
+-- Player glowing preferences (Glowing perk)
+CREATE TABLE IF NOT EXISTS player_glowing (
+    player_uuid VARCHAR(36) PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    color VARCHAR(16) NOT NULL DEFAULT 'WHITE'
+);
