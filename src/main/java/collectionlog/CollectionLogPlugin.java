@@ -12,6 +12,7 @@ import collectionlog.commands.InstantGlassCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
+import collectionlog.commands.TunnelMinerCommand;
 import collectionlog.commands.VeinMinerCommand;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
@@ -31,6 +32,7 @@ import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
 import collectionlog.listeners.InfiniteLavaBucketListener;
 import collectionlog.listeners.InstantGlassSmeltingListener;
+import collectionlog.listeners.TunnelMinerListener;
 import collectionlog.listeners.VeinMinerListener;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
@@ -101,6 +103,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private InfiniteDyesGUI infiniteDyesGUI;
     private InstantGlassSmeltingListener instantGlassSmeltingListener;
     private VeinMinerListener veinMinerListener;
+    private TunnelMinerListener tunnelMinerListener;
 
     @Override
     public void onEnable() {
@@ -224,6 +227,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(instantGlassSmeltingListener, this);
             veinMinerListener = new VeinMinerListener(this);
             getServer().getPluginManager().registerEvents(veinMinerListener, this);
+            tunnelMinerListener = new TunnelMinerListener(this);
+            getServer().getPluginManager().registerEvents(tunnelMinerListener, this);
             getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
@@ -298,6 +303,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 veinMinerCommand.setExecutor(new VeinMinerCommand(this));
             } else {
                 getLogger().warning("Command 'veinminer' not found in plugin.yml!");
+            }
+
+            PluginCommand tunnelMinerCommand = getCommand("tunnelminer");
+            if (tunnelMinerCommand != null) {
+                tunnelMinerCommand.setExecutor(new TunnelMinerCommand(this));
+            } else {
+                getLogger().warning("Command 'tunnelminer' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -449,5 +461,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public VeinMinerListener getVeinMinerListener() {
         return veinMinerListener;
+    }
+
+    public TunnelMinerListener getTunnelMinerListener() {
+        return tunnelMinerListener;
     }
 }

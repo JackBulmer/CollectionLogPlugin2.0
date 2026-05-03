@@ -56,6 +56,11 @@ commands:
     usage: /veinminer
     aliases: [vm, vmine]
 
+  tunnelminer:
+    description: Toggle the Tunnel Miner perk
+    usage: /tunnelminer
+    aliases: [tunnel, tmine]
+
 permissions:
   collectionlog.use:
     description: Use collection log features
