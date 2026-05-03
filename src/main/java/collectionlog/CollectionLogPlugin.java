@@ -8,6 +8,7 @@ import collectionlog.commands.AdminCommands;
 import collectionlog.commands.CraftCommand;
 import collectionlog.commands.DyeCommand;
 import collectionlog.commands.GlowingCommand;
+import collectionlog.commands.InstantGlassCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
@@ -28,6 +29,7 @@ import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
 import collectionlog.listeners.InfiniteLavaBucketListener;
+import collectionlog.listeners.InstantGlassSmeltingListener;
 import collectionlog.listeners.BlockBreakListener;
 import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
@@ -59,6 +61,7 @@ import collectionlog.managers.StrafeManager;
 import collectionlog.milestones.MilestoneManager;
 import collectionlog.tags.TagManager;
 import collectionlog.utils.CollectionMatcher;
+import collectionlog.utils.GriefPreventionUtil;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -94,6 +97,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private GlowingGUI glowingGUI;
     private InfiniteDyesManager infiniteDyesManager;
     private InfiniteDyesGUI infiniteDyesGUI;
+    private InstantGlassSmeltingListener instantGlassSmeltingListener;
 
     @Override
     public void onEnable() {
@@ -186,6 +190,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             infiniteDyesGUI = new InfiniteDyesGUI(this);
             getLogger().info("✅ Managers initialized");
 
+            // Initialize GriefPrevention integration
+            GriefPreventionUtil.initialize(this);
+
             // Register listeners
             getServer().getPluginManager().registerEvents(new BlockPlaceListener(this), this);
             getServer().getPluginManager().registerEvents(new BlockBreakListener(this), this);
@@ -210,6 +217,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new StrafeListener(this, strafeManager), this);
             getServer().getPluginManager().registerEvents(new PhantomTogglePerk(this), this);
             getServer().getPluginManager().registerEvents(new InfiniteLavaBucketListener(this), this);
+            instantGlassSmeltingListener = new InstantGlassSmeltingListener(this);
+            getServer().getPluginManager().registerEvents(instantGlassSmeltingListener, this);
             getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
@@ -270,6 +279,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 dyeCommand.setExecutor(new DyeCommand(this));
             } else {
                 getLogger().warning("Command 'dye' not found in plugin.yml!");
+            }
+
+            PluginCommand instantGlassCommand = getCommand("instantglass");
+            if (instantGlassCommand != null) {
+                instantGlassCommand.setExecutor(new InstantGlassCommand(this));
+            } else {
+                getLogger().warning("Command 'instantglass' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -413,5 +429,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public InfiniteDyesGUI getInfiniteDyesGUI() {
         return infiniteDyesGUI;
+    }
+
+    public InstantGlassSmeltingListener getInstantGlassSmeltingListener() {
+        return instantGlassSmeltingListener;
     }
 }

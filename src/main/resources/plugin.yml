@@ -5,6 +5,8 @@ api-version: '1.21'
 author: JackBulmer
 description: Advanced collection tracking system with database backend
 
+softdepend: [GriefPrevention]
+
 commands:
   logs:
     description: Open the collection log GUI
@@ -43,6 +45,11 @@ commands:
   dye:
     description: Open the Infinite Dyes GUI (Infinite Dyes perk)
     usage: /dye
+
+  instantglass:
+    description: Toggle the Instant Glass Smelting perk
+    usage: /instantglass
+    aliases: [iglass, glasssmelt]
 
 permissions:
   collectionlog.use:
