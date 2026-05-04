@@ -112,8 +112,8 @@ public class HarvestAndReplantListener implements Listener {
             return;
         }
 
-        // Check if center block is player-placed (skip if owned)
-        if (blockOwnershipDAO.getOwner(block.getLocation()) != null) {
+        // Skip if the crop was placed by another player (allow own crops and natural crops)
+        if (isOwnedByOtherPlayer(block.getLocation(), playerId)) {
             return;
         }
 
@@ -147,7 +147,8 @@ public class HarvestAndReplantListener implements Listener {
                 if (!isFullyGrown(candidate)) {
                     continue;
                 }
-                if (blockOwnershipDAO.getOwner(candidate.getLocation()) != null) {
+                // Skip crops owned by other players; allow own crops and natural crops
+                if (isOwnedByOtherPlayer(candidate.getLocation(), player.getUniqueId())) {
                     continue;
                 }
                 if (!GriefPreventionUtil.canBreak(player, candidate.getLocation(), type)) {
@@ -279,6 +280,15 @@ public class HarvestAndReplantListener implements Listener {
                  GOLDEN_HOE, DIAMOND_HOE, NETHERITE_HOE -> true;
             default -> false;
         };
+    }
+
+    /**
+     * Returns true if the block at the given location is owned by a player other than {@code currentPlayerId}.
+     * Returns false when the block is unowned (natural crop) or owned by the current player.
+     */
+    private boolean isOwnedByOtherPlayer(Location location, UUID currentPlayerId) {
+        UUID owner = blockOwnershipDAO.getOwner(location);
+        return owner != null && !owner.equals(currentPlayerId);
     }
 
     /**
