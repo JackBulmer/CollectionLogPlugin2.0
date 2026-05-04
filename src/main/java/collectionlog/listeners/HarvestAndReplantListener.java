@@ -77,40 +77,68 @@ public class HarvestAndReplantListener implements Listener {
             return;
         }
 
+        plugin.getLogger().info("=== Crop Break Event ===");
+        plugin.getLogger().info("Player: " + player.getName());
+        plugin.getLogger().info("Block: " + blockType);
+        plugin.getLogger().info("Location: " + block.getLocation());
+
         // Creative mode players don't get perk benefits
         if (player.getGameMode() == GameMode.CREATIVE) {
+            plugin.getLogger().info("SKIP: Creative mode");
             return;
         }
 
         // Check if player has perk unlocked and enabled
         UUID playerId = player.getUniqueId();
-        if (!perkManager.hasUnlocked(playerId, PERK_ID) || !perkManager.isEnabled(playerId, PERK_ID)) {
+        if (!perkManager.hasUnlocked(playerId, PERK_ID)) {
+            plugin.getLogger().info("SKIP: Perk not unlocked");
             return;
         }
+
+        if (!perkManager.isEnabled(playerId, PERK_ID)) {
+            plugin.getLogger().info("SKIP: Perk not enabled");
+            return;
+        }
+
+        plugin.getLogger().info("Perk is unlocked and enabled");
 
         // Must use a hoe
         ItemStack tool = player.getInventory().getItemInMainHand();
         if (!isHoe(tool.getType())) {
+            plugin.getLogger().info("SKIP: Not using a hoe (using " + tool.getType() + ")");
             return;
         }
+
+        plugin.getLogger().info("Using hoe: " + tool.getType());
 
         // Check if crop is fully grown
         if (!isFullyGrown(block)) {
+            plugin.getLogger().info("SKIP: Crop not fully grown");
             return;
         }
+
+        plugin.getLogger().info("Crop is fully grown");
 
         // Check if block is player-placed (skip if owned)
         if (blockOwnershipDAO.getOwner(block.getLocation()) != null) {
+            plugin.getLogger().info("SKIP: Block is player-placed (owned)");
             return;
         }
+
+        plugin.getLogger().info("Block is not player-placed");
 
         // Check GriefPrevention permissions
         if (!GriefPreventionUtil.canBreak(player, block.getLocation(), blockType)) {
+            plugin.getLogger().info("SKIP: GriefPrevention denied");
             return;
         }
 
+        plugin.getLogger().info("GriefPrevention check passed");
+
         // CANCEL THE ENTIRE EVENT - we handle everything ourselves
         event.setCancelled(true);
+
+        plugin.getLogger().info("Event cancelled, calling harvestAndReplant");
 
         // Handle harvest and replant
         harvestAndReplant(player, block, tool);
