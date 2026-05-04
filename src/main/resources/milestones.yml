@@ -342,3 +342,52 @@ sub_collections:
       items:
         - "DIAMOND:1"
 
+  stones:
+    stone:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    cobblestone:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    stone bricks:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    granite:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    diorite:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    andesite:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    deepslate:
+      xp: 75
+      items:
+        - "EMERALD:2"
+    tuff:
+      xp: 75
+      items:
+        - "EMERALD:2"
+    sandstone:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    red sandstone:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    bricks:
+      xp: 50
+      items:
+        - "EMERALD:1"
+    resin:
+      xp: 75
+      items:
+        - "EMERALD:2"
