@@ -142,12 +142,19 @@ public class PerkManager {
     /**
      * Eagerly loads the toggle state for a player. Called when the player
      * joins so the cache is warm before any perk checks occur.
+     *
+     * <p>Loads synchronously on the calling thread to guarantee toggle state
+     * is available before {@code applyPermanentEffects} runs on the same tick.
+     * The data set is small (one row per disabled perk) so the query is fast.
+     * This is preferable to an async load because {@code ensureTogglesLoaded}
+     * would otherwise do the same synchronous load on the first GUI open,
+     * causing an unpredictable lag spike mid-gameplay instead.
      */
     public void loadPlayerToggles(UUID playerId) {
         if (loadedToggles.contains(playerId)) {
             return;
         }
-        plugin.getAsyncTaskManager().runAsync(() -> loadTogglesFromDatabase(playerId));
+        loadTogglesFromDatabase(playerId);
     }
 
     /** Removes all cached data for a player (e.g. on disconnect). */
