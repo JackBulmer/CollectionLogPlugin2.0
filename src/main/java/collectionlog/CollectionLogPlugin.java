@@ -34,6 +34,8 @@ import collectionlog.perks.ExtraHeartsManager;
 import collectionlog.listeners.HarvestAndReplantListener;
 import collectionlog.listeners.InfiniteLavaBucketListener;
 import collectionlog.listeners.InstantGlassSmeltingListener;
+import collectionlog.listeners.StructureGrowListener;
+import collectionlog.listeners.TreeCapitatorListener;
 import collectionlog.listeners.TunnelMinerListener;
 import collectionlog.listeners.VeinMinerListener;
 import collectionlog.listeners.BlockBreakListener;
@@ -107,6 +109,8 @@ public class CollectionLogPlugin extends JavaPlugin {
     private VeinMinerListener veinMinerListener;
     private TunnelMinerListener tunnelMinerListener;
     private HarvestAndReplantListener harvestAndReplantListener;
+    private TreeCapitatorListener treeCapitatorListener;
+    private StructureGrowListener structureGrowListener;
 
     @Override
     public void onEnable() {
@@ -247,6 +251,17 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(glowingManager, this);
             getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
             getServer().getPluginManager().registerEvents(new CustomCraftingListener(this), this);
+            treeCapitatorListener = new TreeCapitatorListener(this);
+            getServer().getPluginManager().registerEvents(treeCapitatorListener, this);
+            structureGrowListener = new StructureGrowListener(this);
+            getServer().getPluginManager().registerEvents(structureGrowListener, this);
+
+            // Schedule auto-disable check for Tree Capitator (every 60 seconds)
+            getServer().getScheduler().runTaskTimer(this, () -> {
+                if (treeCapitatorListener != null) {
+                    treeCapitatorListener.checkInactivity();
+                }
+            }, 1200L, 1200L);
             getLogger().info("✅ Listeners registered");
 
             PluginCommand logsCommand = getCommand("logs");
@@ -485,5 +500,13 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public HarvestAndReplantListener getHarvestAndReplantListener() {
         return harvestAndReplantListener;
+    }
+
+    public TreeCapitatorListener getTreeCapitatorListener() {
+        return treeCapitatorListener;
+    }
+
+    public StructureGrowListener getStructureGrowListener() {
+        return structureGrowListener;
     }
 }
