@@ -234,6 +234,10 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(tunnelMinerListener, this);
             harvestAndReplantListener = new HarvestAndReplantListener(this);
             getServer().getPluginManager().registerEvents(harvestAndReplantListener, this);
+
+            // Schedule cleanup task for protected crops (runs every second)
+            getServer().getScheduler().runTaskTimer(this, () ->
+                    harvestAndReplantListener.cleanupExpiredProtections(), 20L, 20L);
             getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);

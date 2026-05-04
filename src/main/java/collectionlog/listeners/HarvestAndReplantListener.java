@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Listener for the Harvest & Auto-Replant perk.
@@ -32,6 +33,9 @@ public class HarvestAndReplantListener implements Listener {
     private final CollectionLogPlugin plugin;
     private final PerkManager perkManager;
     private final BlockOwnershipDAO blockOwnershipDAO;
+
+    // Track protected crop locations with their replant timestamps (500ms immunity)
+    private final Map<Location, Long> protectedCrops = new ConcurrentHashMap<>();
 
     // Supported crop types
     private static final Set<Material> SUPPORTED_CROPS = Set.of(
@@ -63,8 +67,22 @@ public class HarvestAndReplantListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
         Block block = event.getBlock();
+
+        // FIRST: Check if this crop is protected (freshly replanted)
+        Location blockLocation = block.getLocation();
+        Long protectTime = protectedCrops.get(blockLocation);
+        if (protectTime != null) {
+            if (System.currentTimeMillis() - protectTime < 500) {
+                event.setCancelled(true);
+                return; // Silently prevent breaking
+            } else {
+                // Protection expired, remove from map
+                protectedCrops.remove(blockLocation);
+            }
+        }
+
+        Player player = event.getPlayer();
         Material blockType = block.getType();
 
         // Only process supported crops
@@ -178,6 +196,9 @@ public class HarvestAndReplantListener implements Listener {
                 }
                 seedPool.put(seedType, available - 1);
                 replantedCount++;
+
+                // Protect this crop for 500ms to prevent accidental re-breaking
+                protectedCrops.put(crop.location, System.currentTimeMillis());
             }
         }
 
@@ -258,6 +279,15 @@ public class HarvestAndReplantListener implements Listener {
                  GOLDEN_HOE, DIAMOND_HOE, NETHERITE_HOE -> true;
             default -> false;
         };
+    }
+
+    /**
+     * Clean up expired protection entries to prevent memory leaks.
+     * Called periodically by a scheduled task.
+     */
+    public void cleanupExpiredProtections() {
+        long now = System.currentTimeMillis();
+        protectedCrops.entrySet().removeIf(entry -> now - entry.getValue() > 500);
     }
 
     /**
