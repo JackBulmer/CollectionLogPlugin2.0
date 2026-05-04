@@ -212,14 +212,7 @@ collections:
       prefix: []
       suffix: []
 
-  trial chambers:
-    perks:
-      - extra_heart
-    tags:
-      prefix: []
-      suffix: []
-
-  trails:
+  trail chambers:
     perks:
       - permanent_bad_omen
     tags:
