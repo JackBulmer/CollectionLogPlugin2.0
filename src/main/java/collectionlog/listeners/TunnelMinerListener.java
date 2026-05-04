@@ -173,14 +173,6 @@ public class TunnelMinerListener implements Listener {
                 block.getWorld().dropItemNaturally(dropLoc, drop);
             }
 
-            // XP only when not using Silk Touch (vanilla behaviour)
-            if (!tool.containsEnchantment(Enchantment.SILK_TOUCH)) {
-                int xp = block.getExpDrop();
-                if (xp > 0) {
-                    block.getWorld().spawn(dropLoc, org.bukkit.entity.ExperienceOrb.class)
-                            .setExperience(xp);
-                }
-            }
         }
 
         block.setType(Material.AIR);
