@@ -8,6 +8,7 @@ import collectionlog.commands.AdminCommands;
 import collectionlog.commands.CraftCommand;
 import collectionlog.commands.DyeCommand;
 import collectionlog.commands.GlowingCommand;
+import collectionlog.commands.HarvestCommand;
 import collectionlog.commands.InstantGlassCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
@@ -30,6 +31,7 @@ import collectionlog.perks.PerkManager;
 import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
+import collectionlog.listeners.HarvestAndReplantListener;
 import collectionlog.listeners.InfiniteLavaBucketListener;
 import collectionlog.listeners.InstantGlassSmeltingListener;
 import collectionlog.listeners.TunnelMinerListener;
@@ -104,6 +106,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private InstantGlassSmeltingListener instantGlassSmeltingListener;
     private VeinMinerListener veinMinerListener;
     private TunnelMinerListener tunnelMinerListener;
+    private HarvestAndReplantListener harvestAndReplantListener;
 
     @Override
     public void onEnable() {
@@ -229,6 +232,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(veinMinerListener, this);
             tunnelMinerListener = new TunnelMinerListener(this);
             getServer().getPluginManager().registerEvents(tunnelMinerListener, this);
+            harvestAndReplantListener = new HarvestAndReplantListener(this);
+            getServer().getPluginManager().registerEvents(harvestAndReplantListener, this);
             getServer().getPluginManager().registerEvents(potionEffectManager, this);
             getServer().getPluginManager().registerEvents(collectionGUI, this);
             getServer().getPluginManager().registerEvents(tagsGUI, this);
@@ -310,6 +315,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 tunnelMinerCommand.setExecutor(new TunnelMinerCommand(this));
             } else {
                 getLogger().warning("Command 'tunnelminer' not found in plugin.yml!");
+            }
+
+            PluginCommand harvestCommand = getCommand("harvest");
+            if (harvestCommand != null) {
+                harvestCommand.setExecutor(new HarvestCommand(this));
+            } else {
+                getLogger().warning("Command 'harvest' not found in plugin.yml!");
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -465,5 +477,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public TunnelMinerListener getTunnelMinerListener() {
         return tunnelMinerListener;
+    }
+
+    public HarvestAndReplantListener getHarvestAndReplantListener() {
+        return harvestAndReplantListener;
     }
 }
