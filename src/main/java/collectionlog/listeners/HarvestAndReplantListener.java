@@ -19,12 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Listener for the Harvest & Auto-Replant perk.
@@ -37,6 +32,8 @@ public class HarvestAndReplantListener implements Listener {
     private final CollectionLogPlugin plugin;
     private final PerkManager perkManager;
     private final BlockOwnershipDAO blockOwnershipDAO;
+    // Replace the Set with a Map
+    private final Map<Location, Long> recentlyReplanted = new HashMap<>();
 
     // Supported crop types
     private static final Set<Material> SUPPORTED_CROPS = Set.of(
@@ -74,6 +71,12 @@ public class HarvestAndReplantListener implements Listener {
 
         // Only process supported crops
         if (!SUPPORTED_CROPS.contains(blockType)) {
+            return;
+        }
+
+        // Check if this block was just replanted (prevent double-processing)
+        Long replantTime = recentlyReplanted.get(block.getLocation());
+        if (replantTime != null && System.currentTimeMillis() - replantTime < 100) {
             return;
         }
 
@@ -137,6 +140,14 @@ public class HarvestAndReplantListener implements Listener {
 
         // CANCEL THE ENTIRE EVENT - we handle everything ourselves
         event.setCancelled(true);
+
+        // Mark this location with timestamp
+        recentlyReplanted.put(block.getLocation(), System.currentTimeMillis());
+
+        // Clean up old entries after 5 seconds
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            recentlyReplanted.remove(block.getLocation());
+        }, 100L);
 
         plugin.getLogger().info("Event cancelled, calling harvestAndReplant");
 
