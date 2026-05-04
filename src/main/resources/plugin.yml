@@ -61,6 +61,11 @@ commands:
     usage: /tunnelminer
     aliases: [tunnel, tmine]
 
+  harvest:
+    description: Toggle the Harvest & Auto-Replant perk
+    usage: /harvest
+    aliases: [replant, autoreplant]
+
 permissions:
   collectionlog.use:
     description: Use collection log features
