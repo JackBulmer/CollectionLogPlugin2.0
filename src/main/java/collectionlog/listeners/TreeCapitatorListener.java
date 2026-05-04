@@ -85,6 +85,56 @@ public class TreeCapitatorListener implements Listener {
             Material.FLOWERING_AZALEA_LEAVES
     );
 
+    /** Minimum leaf count to definitively classify a tree as natural. */
+    private static final int MIN_LEAVES_FOR_NATURAL_TREE = 10;
+    /**
+     * Maximum number of logs allowed on the same Y level before the pattern
+     * is considered too horizontal to be a natural tree.
+     * Natural trees rarely exceed 4 logs per level (2×2 jungle/dark oak trunks).
+     */
+    private static final int MAX_HORIZONTAL_LOGS_PER_LEVEL = 6;
+
+    /** Structure indicator blocks commonly found in villages and buildings. */
+    private static final Set<Material> STRUCTURE_BLOCKS = Set.of(
+            // Planks (all types)
+            Material.OAK_PLANKS,
+            Material.SPRUCE_PLANKS,
+            Material.BIRCH_PLANKS,
+            Material.JUNGLE_PLANKS,
+            Material.ACACIA_PLANKS,
+            Material.DARK_OAK_PLANKS,
+            Material.MANGROVE_PLANKS,
+            Material.CHERRY_PLANKS,
+            Material.PALE_OAK_PLANKS,
+            Material.CRIMSON_PLANKS,
+            Material.WARPED_PLANKS,
+            // Stone variants (village buildings)
+            Material.COBBLESTONE,
+            Material.MOSSY_COBBLESTONE,
+            Material.STONE,
+            Material.STONE_BRICKS,
+            Material.MOSSY_STONE_BRICKS,
+            Material.CRACKED_STONE_BRICKS,
+            Material.CHISELED_STONE_BRICKS,
+            // Fences
+            Material.OAK_FENCE,
+            Material.SPRUCE_FENCE,
+            Material.BIRCH_FENCE,
+            Material.JUNGLE_FENCE,
+            Material.ACACIA_FENCE,
+            Material.DARK_OAK_FENCE,
+            Material.MANGROVE_FENCE,
+            Material.CHERRY_FENCE,
+            Material.PALE_OAK_FENCE,
+            Material.CRIMSON_FENCE,
+            Material.WARPED_FENCE,
+            Material.NETHER_BRICK_FENCE,
+            // Other common structure blocks
+            Material.BRICKS,
+            Material.COBWEB,
+            Material.LADDER
+    );
+
     public TreeCapitatorListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
         this.perkManager = plugin.getPerkManager();
@@ -278,33 +328,124 @@ public class TreeCapitatorListener implements Listener {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns true if this is a natural tree.
-     * Nether trees (crimson/warped stems) are always considered natural since there
-     * are no nether structures that could be confused with them.
-     * Overworld trees must have at least one leaf block within 2 blocks of any log.
+     * Returns true if this is a natural tree using multi-layer detection.
+     *
+     * <p>Decision logic:
+     * <ul>
+     *   <li>10+ leaves → definitely natural tree</li>
+     *   <li>1-9 leaves + no structure blocks → natural tree</li>
+     *   <li>1-9 leaves + structure blocks → decorated structure</li>
+     *   <li>0 leaves + no structure blocks + vertical pattern → allow (player removed leaves)</li>
+     *   <li>0 leaves + structure blocks → structure</li>
+     *   <li>0 leaves + horizontal spread → structure</li>
+     * </ul>
      */
     private boolean isNaturalTree(Block startLog, Set<Block> logs) {
+        // Nether trees: always allow (no structure confusion)
         if (isNetherLog(startLog.getType())) {
             return true;
         }
-        return hasLeavesNearby(logs);
+
+        // Layer 1: Count nearby leaves (improved search radius)
+        int leafCount = countNearbyLeaves(logs);
+
+        // Layer 2: Check for structure blocks
+        boolean hasStructureBlocks = hasStructureBlocksAdjacent(logs);
+
+        // If 10+ leaves, definitely a natural tree
+        if (leafCount >= MIN_LEAVES_FOR_NATURAL_TREE) {
+            return true;
+        }
+
+        // If 1-9 leaves but has structure blocks, likely a decorated structure
+        if (leafCount >= 1 && hasStructureBlocks) {
+            return false;
+        }
+
+        // If 1-9 leaves and no structure blocks, natural tree
+        if (leafCount >= 1) {
+            return true;
+        }
+
+        // No leaves found — check for structure indicators
+        if (hasStructureBlocks) {
+            return false;
+        }
+
+        // No leaves, no structure blocks — check horizontal pattern
+        if (tooMuchHorizontalSpread(logs)) {
+            return false;
+        }
+
+        // No leaves but vertical pattern — allow (player removed leaves)
+        return true;
     }
 
     /**
-     * Returns true if any log in the set has a leaf block within 2 blocks.
+     * Counts unique leaf blocks within 3 blocks of any log.
+     * Increased radius from 2 to 3 blocks to catch leaves on tall/wide trees.
+     *
+     * @return number of unique leaf blocks found
      */
-    private boolean hasLeavesNearby(Set<Block> logs) {
+    private int countNearbyLeaves(Set<Block> logs) {
+        Set<Block> uniqueLeaves = new HashSet<>();
+
         for (Block log : logs) {
-            for (int x = -2; x <= 2; x++) {
-                for (int y = -2; y <= 2; y++) {
-                    for (int z = -2; z <= 2; z++) {
-                        if (LEAF_TYPES.contains(log.getRelative(x, y, z).getType())) {
+            for (int x = -3; x <= 3; x++) {
+                for (int y = -3; y <= 3; y++) {
+                    for (int z = -3; z <= 3; z++) {
+                        Block adjacent = log.getRelative(x, y, z);
+                        if (LEAF_TYPES.contains(adjacent.getType())) {
+                            uniqueLeaves.add(adjacent);
+                        }
+                    }
+                }
+            }
+        }
+
+        return uniqueLeaves.size();
+    }
+
+    /**
+     * Returns true if any log has a structure block directly adjacent (within 1 block).
+     * Structures typically have logs touching planks, cobblestone, fences, etc.
+     */
+    private boolean hasStructureBlocksAdjacent(Set<Block> logs) {
+        for (Block log : logs) {
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    for (int z = -1; z <= 1; z++) {
+                        if (x == 0 && y == 0 && z == 0) {
+                            continue;
+                        }
+                        if (STRUCTURE_BLOCKS.contains(log.getRelative(x, y, z).getType())) {
                             return true;
                         }
                     }
                 }
             }
         }
+        return false;
+    }
+
+    /**
+     * Returns true if logs are spread too horizontally (structure pattern).
+     * Natural trees grow vertically; structures often have many logs on the same Y level.
+     * More than 6 logs on any single Y level indicates a structure.
+     */
+    private boolean tooMuchHorizontalSpread(Set<Block> logs) {
+        Map<Integer, Integer> logsPerY = new HashMap<>();
+
+        for (Block log : logs) {
+            logsPerY.merge(log.getY(), 1, Integer::sum);
+        }
+
+        for (int count : logsPerY.values()) {
+            if (count > MAX_HORIZONTAL_LOGS_PER_LEVEL) {
+                return true;
+            }
+        }
+
         return false;
     }
 
