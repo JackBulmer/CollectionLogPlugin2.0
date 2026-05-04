@@ -59,6 +59,7 @@ public class TreeCapitatorListener implements Listener {
             Material.DARK_OAK_LOG,
             Material.MANGROVE_LOG,
             Material.CHERRY_LOG,
+            Material.PALE_OAK_LOG,
             Material.CRIMSON_STEM,
             Material.WARPED_STEM
     );
@@ -67,6 +68,21 @@ public class TreeCapitatorListener implements Listener {
     private static final Set<Material> NETHER_WART_BLOCKS = Set.of(
             Material.NETHER_WART_BLOCK,
             Material.WARPED_WART_BLOCK
+    );
+
+    /** Leaf types used to detect natural (overworld) trees. */
+    private static final Set<Material> LEAF_TYPES = Set.of(
+            Material.OAK_LEAVES,
+            Material.BIRCH_LEAVES,
+            Material.SPRUCE_LEAVES,
+            Material.JUNGLE_LEAVES,
+            Material.ACACIA_LEAVES,
+            Material.DARK_OAK_LEAVES,
+            Material.MANGROVE_LEAVES,
+            Material.CHERRY_LEAVES,
+            Material.PALE_OAK_LEAVES,
+            Material.AZALEA_LEAVES,
+            Material.FLOWERING_AZALEA_LEAVES
     );
 
     public TreeCapitatorListener(CollectionLogPlugin plugin) {
@@ -128,6 +144,12 @@ public class TreeCapitatorListener implements Listener {
             return; // Let vanilla break just the one log
         }
 
+        // Leaf check: overworld trees must have leaves nearby; nether trees are exempt
+        if (!isNaturalTree(block, treeLogs)) {
+            player.sendMessage("§cOnly natural trees with leaves can be felled!");
+            return;
+        }
+
         // Durability cost: 1 per DURABILITY_DIVISOR logs, minimum 1
         int durabilityCost = Math.max(1, treeLogs.size() / DURABILITY_DIVISOR);
 
@@ -155,7 +177,6 @@ public class TreeCapitatorListener implements Listener {
                           Set<Block> treeLogs, int durabilityCost) {
 
         // Break each log, dropping items with Fortune
-        int broken = 0;
         for (Block log : treeLogs) {
             if (!GriefPreventionUtil.canBreak(player, log.getLocation(), log.getType())) {
                 continue;
@@ -172,7 +193,6 @@ public class TreeCapitatorListener implements Listener {
             }
 
             log.setType(Material.AIR);
-            broken++;
         }
 
         // Remove nether wart blocks adjacent to nether trees
@@ -182,18 +202,6 @@ public class TreeCapitatorListener implements Listener {
 
         // Apply total durability cost
         damageAxe(axe, player, durabilityCost);
-
-        // Sound effect
-        player.getWorld().playSound(
-                startLog.getLocation(),
-                Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR,
-                1.0f,
-                0.8f
-        );
-
-        if (broken > 0) {
-            player.sendMessage("§7Felled §e" + broken + "§7 log" + (broken == 1 ? "" : "s") + ".");
-        }
     }
 
     /**
@@ -268,6 +276,37 @@ public class TreeCapitatorListener implements Listener {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Returns true if this is a natural tree.
+     * Nether trees (crimson/warped stems) are always considered natural since there
+     * are no nether structures that could be confused with them.
+     * Overworld trees must have at least one leaf block within 2 blocks of any log.
+     */
+    private boolean isNaturalTree(Block startLog, Set<Block> logs) {
+        if (isNetherLog(startLog.getType())) {
+            return true;
+        }
+        return hasLeavesNearby(logs);
+    }
+
+    /**
+     * Returns true if any log in the set has a leaf block within 2 blocks.
+     */
+    private boolean hasLeavesNearby(Set<Block> logs) {
+        for (Block log : logs) {
+            for (int x = -2; x <= 2; x++) {
+                for (int y = -2; y <= 2; y++) {
+                    for (int z = -2; z <= 2; z++) {
+                        if (LEAF_TYPES.contains(log.getRelative(x, y, z).getType())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Returns true if the block below is not a log (i.e. this is the bottom log).
