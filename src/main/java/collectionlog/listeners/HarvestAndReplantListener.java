@@ -109,8 +109,8 @@ public class HarvestAndReplantListener implements Listener {
             return;
         }
 
-        // Cancel the default drop behaviour and handle it ourselves
-        event.setDropItems(false);
+        // CANCEL THE ENTIRE EVENT - we handle everything ourselves
+        event.setCancelled(true);
 
         // Handle harvest and replant
         harvestAndReplant(player, block, tool);
@@ -123,48 +123,91 @@ public class HarvestAndReplantListener implements Listener {
         Material cropType = block.getType();
         Material seedType = CROP_TO_SEED.get(cropType);
 
+        plugin.getLogger().info("=== Harvest Debug ===");
+        plugin.getLogger().info("Player: " + player.getName());
+        plugin.getLogger().info("Crop Type: " + cropType);
+        plugin.getLogger().info("Seed Type: " + seedType);
+        plugin.getLogger().info("Block location: " + block.getLocation());
+
         // Get drops with Fortune enchantment applied
         Collection<ItemStack> drops = block.getDrops(tool, player);
 
-        // Set block to air first (crop is broken)
-        block.setType(Material.AIR);
+        plugin.getLogger().info("Drops received: " + drops.size() + " stacks");
+        for (ItemStack drop : drops) {
+            plugin.getLogger().info("  - " + drop.getType() + " x" + drop.getAmount());
+        }
 
-        // Try to find a seed/item to use for replanting
-        boolean replanted = false;
-        List<ItemStack> playerDrops = new ArrayList<>();
+        // Combine all drops of the seed type
+        int totalSeeds = 0;
+        List<ItemStack> otherDrops = new ArrayList<>();
 
         for (ItemStack drop : drops) {
-            if (!replanted && drop.getType() == seedType && drop.getAmount() > 0) {
-                // Use 1 seed/item for replanting.
-                // If only 1 item drops, it is fully consumed for replanting and the player
-                // receives nothing from it (e.g. Pitcher Plant: 1 pod → 0 to player).
-                // This is intentional: the replant cost is one seed/item from the harvest.
-                if (drop.getAmount() > 1) {
-                    drop.setAmount(drop.getAmount() - 1);
-                    playerDrops.add(drop);
-                }
-                // Replant the crop at age 0
-                block.setType(cropType);
-                BlockData blockData = block.getBlockData();
-                if (blockData instanceof Ageable ageable) {
-                    ageable.setAge(0);
-                    block.setBlockData(ageable);
-                }
-                replanted = true;
+            if (drop.getType() == seedType) {
+                totalSeeds += drop.getAmount();
             } else {
-                playerDrops.add(drop);
+                otherDrops.add(drop);
             }
         }
 
+        plugin.getLogger().info("Total seeds/items: " + totalSeeds);
+        plugin.getLogger().info("Other drops: " + otherDrops.size());
+
+        // Set block to air first (crop is broken)
+        block.setType(Material.AIR);
+        plugin.getLogger().info("Block set to AIR");
+
+        // Check if we have at least 1 seed/item to replant
+        boolean replanted = false;
+        if (totalSeeds > 0) {
+            plugin.getLogger().info("Attempting replant...");
+
+            // Use 1 seed/item for replanting
+            totalSeeds--;
+
+            // Replant the crop at age 0
+            block.setType(cropType);
+            plugin.getLogger().info("Block set back to: " + cropType);
+
+            BlockData blockData = block.getBlockData();
+            plugin.getLogger().info("BlockData type: " + blockData.getClass().getSimpleName());
+
+            if (blockData instanceof Ageable ageable) {
+                plugin.getLogger().info("Max age: " + ageable.getMaximumAge());
+                ageable.setAge(0);
+                block.setBlockData(ageable);
+                plugin.getLogger().info("Age set to 0 and blockData applied");
+                replanted = true;
+            } else {
+                plugin.getLogger().warning("BlockData is NOT Ageable!");
+            }
+        } else {
+            plugin.getLogger().warning("No seeds available for replanting!");
+        }
+
+        plugin.getLogger().info("Replanted: " + replanted);
+        plugin.getLogger().info("Final block type: " + block.getType());
+
+        // Check what's actually there after a tick
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            plugin.getLogger().info("Block after 1 tick: " + block.getType());
+        }, 1L);
+
         // Drop remaining items for player
         Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
-        for (ItemStack drop : playerDrops) {
+
+        // Drop remaining seeds (if any)
+        if (totalSeeds > 0) {
+            block.getWorld().dropItemNaturally(dropLoc, new ItemStack(seedType, totalSeeds));
+        }
+
+        // Drop other items (wheat, beetroot, etc.)
+        for (ItemStack drop : otherDrops) {
             block.getWorld().dropItemNaturally(dropLoc, drop);
         }
 
         // Visual and audio effects when replanted
         if (replanted) {
-            // Happy villager particles (green sparkles, used to signal successful replanting)
+            // Happy villager particles
             block.getWorld().spawnParticle(
                     Particle.HAPPY_VILLAGER,
                     block.getLocation().add(0.5, 0.5, 0.5),
@@ -181,9 +224,11 @@ public class HarvestAndReplantListener implements Listener {
                     1.0f
             );
 
-            // Hoe sweep animation (like sword sweep attack)
+            // Hoe sweep animation
             playSweepAnimation(player);
         }
+
+        plugin.getLogger().info("=== End Harvest Debug ===");
     }
 
     /**
