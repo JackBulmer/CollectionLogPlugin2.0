@@ -5,7 +5,9 @@ import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.SubCollectionDefinition;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.managers.ProgressTrackingManager;
+import collectionlog.milestones.Milestone;
 import collectionlog.milestones.MilestoneManager;
+import collectionlog.milestones.MilestoneType;
 import collectionlog.models.PlayerCollectionProgress;
 import collectionlog.perks.Perk;
 import collectionlog.perks.PerkManager;
@@ -13,6 +15,9 @@ import collectionlog.perks.PerkRegistry;
 import collectionlog.utils.MissingItemsReportGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -60,6 +65,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 case "reload" -> handleReload(sender);
                 case "missing-items" -> handleMissingItems(sender);
                 case "givelava" -> handleGiveLava(sender, args);
+                case "resethealth" -> handleResetHealth(sender, args);
                 default -> {
                     sendHelp(sender);
                     yield true;
@@ -523,6 +529,125 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleResetHealth(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /cl resethealth <player>");
+            return true;
+        }
+
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            sender.sendMessage("§cPlayer '" + args[1] + "' is not online.");
+            return true;
+        }
+
+        resetPlayerHealth(target, sender);
+        return true;
+    }
+
+    /**
+     * Reset a player's health to 20 and optionally reset collections that award extra hearts.
+     *
+     * @param player the player whose health to reset
+     * @param admin  the admin who ran the command
+     */
+    private void resetPlayerHealth(Player player, CommandSender admin) {
+        UUID playerId = player.getUniqueId();
+
+        // Find all completed collections that award extra_heart perk
+        List<String> extraHeartCollections = findExtraHeartCollections(playerId);
+
+        // Reset those collections using existing logic
+        int resetCount = 0;
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
+        if (milestoneManager != null) {
+            for (String collectionName : extraHeartCollections) {
+                milestoneManager.revokeCollectionMilestone(playerId, collectionName);
+                resetCount++;
+            }
+        }
+
+        // Force reset health to 20
+        forceResetHealth(player);
+
+        // Notify admin
+        admin.sendMessage("§a§l✓ §aReset health for §e" + player.getName());
+        if (resetCount > 0) {
+            admin.sendMessage("§7  Reset §e" + resetCount + "§7 collection(s) that awarded extra hearts:");
+            for (String collectionName : extraHeartCollections) {
+                admin.sendMessage("§7    - §e" + collectionName);
+            }
+        } else {
+            admin.sendMessage("§7  No extra heart collections were completed.");
+            admin.sendMessage("§7  Health was reset anyway (fixes corruption).");
+        }
+
+        // Notify player
+        player.sendMessage("§e§l⚠ §eYour health has been reset by an administrator.");
+        if (resetCount > 0) {
+            player.sendMessage("§7The following collections have been reset:");
+            for (String collectionName : extraHeartCollections) {
+                player.sendMessage("§7  - §e" + collectionName);
+            }
+        }
+    }
+
+    /**
+     * Find all completed collections that award the extra_heart perk.
+     *
+     * @param playerId the player UUID
+     * @return list of collection names that award extra hearts and are completed
+     */
+    private List<String> findExtraHeartCollections(UUID playerId) {
+        List<String> collections = new ArrayList<>();
+        MilestoneManager milestoneManager = plugin.getMilestoneManager();
+        if (milestoneManager == null) {
+            return collections;
+        }
+
+        Set<String> completed = milestoneManager.getPlayerCompletedMilestones(playerId);
+
+        for (Milestone milestone : milestoneManager.getAllMilestones()) {
+            if (milestone.getType() != MilestoneType.COLLECTION) {
+                continue;
+            }
+            if (milestone.getPerks().contains("extra_heart")) {
+                String key = milestoneManager.normalizeMilestoneKey(milestone.getName());
+                if (completed.contains(key)) {
+                    collections.add(milestone.getName());
+                }
+            }
+        }
+
+        return collections;
+    }
+
+    /**
+     * Force reset a player's max health to 20 and current health to 20.
+     * Removes ALL attribute modifiers (including legacy/corrupted ones).
+     *
+     * @param player the player whose health to reset
+     */
+    private void forceResetHealth(Player player) {
+        AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
+        if (attribute == null) {
+            return;
+        }
+
+        // Remove ALL modifiers (not just ours - this fixes corruption)
+        for (AttributeModifier mod : new ArrayList<>(attribute.getModifiers())) {
+            attribute.removeModifier(mod);
+        }
+
+        // Set base value to 20 (default health)
+        attribute.setBaseValue(20.0);
+
+        // Cap current health at 20 if needed
+        if (player.getHealth() > 20.0) {
+            player.setHealth(20.0);
+        }
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage("§6§l=== Collection Log Admin Commands ===");
         sender.sendMessage("§e/cl collection complete <player> <collection>");
@@ -549,6 +674,8 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7  - Generate missing_items.txt report of uncollected materials");
         sender.sendMessage("§e/cl givelava <player>");
         sender.sendMessage("§7  - Give an infinite lava bucket to a player");
+        sender.sendMessage("§e/cl resethealth <player>");
+        sender.sendMessage("§7  - Reset player's max health to 20 and revoke extra heart collections");
     }
 
     @Override
@@ -558,7 +685,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava"));
+            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava", "resethealth"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
@@ -574,6 +701,14 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("givelava")) {
+            List<String> players = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                players.add(player.getName());
+            }
+            return filterCompletions(args[1], players);
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("resethealth")) {
             List<String> players = new ArrayList<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 players.add(player.getName());
