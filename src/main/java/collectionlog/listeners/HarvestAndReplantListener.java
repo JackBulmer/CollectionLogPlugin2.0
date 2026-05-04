@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * Listener for the Harvest & Auto-Replant perk.
- * Automatically replants crops when broken with a hoe.
+ * Harvests a 5x5 area of fully grown crops and automatically replants them.
  */
 public class HarvestAndReplantListener implements Listener {
 
@@ -32,8 +32,6 @@ public class HarvestAndReplantListener implements Listener {
     private final CollectionLogPlugin plugin;
     private final PerkManager perkManager;
     private final BlockOwnershipDAO blockOwnershipDAO;
-    // Replace the Set with a Map
-    private final Map<Location, Long> recentlyReplanted = new HashMap<>();
 
     // Supported crop types
     private static final Set<Material> SUPPORTED_CROPS = Set.of(
@@ -74,200 +72,147 @@ public class HarvestAndReplantListener implements Listener {
             return;
         }
 
-        // Check if this block was just replanted (prevent double-processing)
-        Long replantTime = recentlyReplanted.get(block.getLocation());
-        if (replantTime != null && System.currentTimeMillis() - replantTime < 100) {
-            return;
-        }
-
-        plugin.getLogger().info("=== Crop Break Event ===");
-        plugin.getLogger().info("Player: " + player.getName());
-        plugin.getLogger().info("Block: " + blockType);
-        plugin.getLogger().info("Location: " + block.getLocation());
-
         // Creative mode players don't get perk benefits
         if (player.getGameMode() == GameMode.CREATIVE) {
-            plugin.getLogger().info("SKIP: Creative mode");
             return;
         }
 
         // Check if player has perk unlocked and enabled
         UUID playerId = player.getUniqueId();
-        if (!perkManager.hasUnlocked(playerId, PERK_ID)) {
-            plugin.getLogger().info("SKIP: Perk not unlocked");
+        if (!perkManager.hasUnlocked(playerId, PERK_ID) || !perkManager.isEnabled(playerId, PERK_ID)) {
             return;
         }
-
-        if (!perkManager.isEnabled(playerId, PERK_ID)) {
-            plugin.getLogger().info("SKIP: Perk not enabled");
-            return;
-        }
-
-        plugin.getLogger().info("Perk is unlocked and enabled");
 
         // Must use a hoe
         ItemStack tool = player.getInventory().getItemInMainHand();
         if (!isHoe(tool.getType())) {
-            plugin.getLogger().info("SKIP: Not using a hoe (using " + tool.getType() + ")");
             return;
         }
-
-        plugin.getLogger().info("Using hoe: " + tool.getType());
 
         // Check if crop is fully grown
         if (!isFullyGrown(block)) {
-            plugin.getLogger().info("SKIP: Crop not fully grown");
             return;
         }
 
-        plugin.getLogger().info("Crop is fully grown");
-
-        // Check if block is player-placed (skip if owned)
+        // Check if center block is player-placed (skip if owned)
         if (blockOwnershipDAO.getOwner(block.getLocation()) != null) {
-            plugin.getLogger().info("SKIP: Block is player-placed (owned)");
             return;
         }
 
-        plugin.getLogger().info("Block is not player-placed");
-
-        // Check GriefPrevention permissions
+        // Check GriefPrevention permissions for center block
         if (!GriefPreventionUtil.canBreak(player, block.getLocation(), blockType)) {
-            plugin.getLogger().info("SKIP: GriefPrevention denied");
             return;
         }
 
-        plugin.getLogger().info("GriefPrevention check passed");
-
-        // CANCEL THE ENTIRE EVENT - we handle everything ourselves
+        // Cancel the original event – we handle all block breaking manually
         event.setCancelled(true);
 
-        // Mark this location with timestamp
-        recentlyReplanted.put(block.getLocation(), System.currentTimeMillis());
-
-        // Clean up old entries after 5 seconds
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            recentlyReplanted.remove(block.getLocation());
-        }, 100L);
-
-        plugin.getLogger().info("Event cancelled, calling harvestAndReplant");
-
-        // Handle harvest and replant
-        harvestAndReplant(player, block, tool);
+        // Scan 5x5 area and batch harvest all fully grown crops
+        harvestArea(player, block, tool);
     }
 
     /**
-     * Harvest the crop and automatically replant it.
+     * Scan a 5x5 area around the center block, harvest all fully grown crops,
+     * pool the seeds, replant where possible, and drop remaining items.
      */
-    private void harvestAndReplant(Player player, Block block, ItemStack tool) {
-        Material cropType = block.getType();
-        Material seedType = CROP_TO_SEED.get(cropType);
+    private void harvestArea(Player player, Block centerBlock, ItemStack tool) {
+        List<CropHarvest> cropsToHarvest = new ArrayList<>();
 
-        plugin.getLogger().info("=== Harvest Debug ===");
-        plugin.getLogger().info("Player: " + player.getName());
-        plugin.getLogger().info("Crop Type: " + cropType);
-        plugin.getLogger().info("Seed Type: " + seedType);
-        plugin.getLogger().info("Block location: " + block.getLocation());
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                Block candidate = centerBlock.getRelative(x, 0, z);
+                Material type = candidate.getType();
 
-        // Get drops with Fortune enchantment applied
-        Collection<ItemStack> drops = block.getDrops(tool, player);
+                if (!SUPPORTED_CROPS.contains(type)) {
+                    continue;
+                }
+                if (!isFullyGrown(candidate)) {
+                    continue;
+                }
+                if (blockOwnershipDAO.getOwner(candidate.getLocation()) != null) {
+                    continue;
+                }
+                if (!GriefPreventionUtil.canBreak(player, candidate.getLocation(), type)) {
+                    continue;
+                }
 
-        plugin.getLogger().info("Drops received: " + drops.size() + " stacks");
-        for (ItemStack drop : drops) {
-            plugin.getLogger().info("  - " + drop.getType() + " x" + drop.getAmount());
+                Collection<ItemStack> drops = candidate.getDrops(tool, player);
+                cropsToHarvest.add(new CropHarvest(candidate.getLocation(), type, drops));
+            }
         }
 
-        // Combine all drops of the seed type
-        int totalSeeds = 0;
+        if (cropsToHarvest.isEmpty()) {
+            return;
+        }
+
+        // Break all collected crops immediately (no events triggered)
+        Map<Material, Integer> seedPool = new HashMap<>();
         List<ItemStack> otherDrops = new ArrayList<>();
 
-        for (ItemStack drop : drops) {
-            if (drop.getType() == seedType) {
-                totalSeeds += drop.getAmount();
-            } else {
-                otherDrops.add(drop);
+        for (CropHarvest crop : cropsToHarvest) {
+            crop.location.getBlock().setType(Material.AIR);
+
+            Material seedType = CROP_TO_SEED.get(crop.cropType);
+            for (ItemStack drop : crop.drops) {
+                if (drop.getType() == seedType) {
+                    seedPool.merge(seedType, drop.getAmount(), Integer::sum);
+                } else {
+                    otherDrops.add(drop);
+                }
             }
         }
 
-        plugin.getLogger().info("Total seeds/items: " + totalSeeds);
-        plugin.getLogger().info("Other drops: " + otherDrops.size());
+        // Replant crops from the pooled seeds
+        int replantedCount = 0;
+        for (CropHarvest crop : cropsToHarvest) {
+            Material seedType = CROP_TO_SEED.get(crop.cropType);
+            int available = seedPool.getOrDefault(seedType, 0);
 
-        // Set block to air first (crop is broken)
-        block.setType(Material.AIR);
-        plugin.getLogger().info("Block set to AIR");
-
-        // Check if we have at least 1 seed/item to replant
-        boolean replanted = false;
-        if (totalSeeds > 0) {
-            plugin.getLogger().info("Attempting replant...");
-
-            // Use 1 seed/item for replanting
-            totalSeeds--;
-
-            // Replant the crop at age 0
-            block.setType(cropType);
-            plugin.getLogger().info("Block set back to: " + cropType);
-
-            BlockData blockData = block.getBlockData();
-            plugin.getLogger().info("BlockData type: " + blockData.getClass().getSimpleName());
-
-            if (blockData instanceof Ageable ageable) {
-                plugin.getLogger().info("Max age: " + ageable.getMaximumAge());
-                ageable.setAge(0);
-                block.setBlockData(ageable);
-                plugin.getLogger().info("Age set to 0 and blockData applied");
-                replanted = true;
-            } else {
-                plugin.getLogger().warning("BlockData is NOT Ageable!");
+            if (available > 0) {
+                Block cropBlock = crop.location.getBlock();
+                cropBlock.setType(crop.cropType);
+                BlockData blockData = cropBlock.getBlockData();
+                if (blockData instanceof Ageable ageable) {
+                    ageable.setAge(0);
+                    cropBlock.setBlockData(ageable);
+                }
+                seedPool.put(seedType, available - 1);
+                replantedCount++;
             }
-        } else {
-            plugin.getLogger().warning("No seeds available for replanting!");
         }
 
-        plugin.getLogger().info("Replanted: " + replanted);
-        plugin.getLogger().info("Final block type: " + block.getType());
-
-        // Check what's actually there after a tick
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            plugin.getLogger().info("Block after 1 tick: " + block.getType());
-        }, 1L);
-
-        // Drop remaining items for player
-        Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
-
-        // Drop remaining seeds (if any)
-        if (totalSeeds > 0) {
-            block.getWorld().dropItemNaturally(dropLoc, new ItemStack(seedType, totalSeeds));
+        // Drop leftover seeds for the player
+        Location dropLoc = centerBlock.getLocation().add(0.5, 0.5, 0.5);
+        for (Map.Entry<Material, Integer> entry : seedPool.entrySet()) {
+            if (entry.getValue() > 0) {
+                centerBlock.getWorld().dropItemNaturally(dropLoc, new ItemStack(entry.getKey(), entry.getValue()));
+            }
         }
 
         // Drop other items (wheat, beetroot, etc.)
         for (ItemStack drop : otherDrops) {
-            block.getWorld().dropItemNaturally(dropLoc, drop);
+            centerBlock.getWorld().dropItemNaturally(dropLoc, drop);
         }
 
-        // Visual and audio effects when replanted
-        if (replanted) {
-            // Happy villager particles
-            block.getWorld().spawnParticle(
+        // Visual and audio effects
+        if (replantedCount > 0) {
+            centerBlock.getWorld().spawnParticle(
                     Particle.HAPPY_VILLAGER,
-                    block.getLocation().add(0.5, 0.5, 0.5),
+                    centerBlock.getLocation().add(0.5, 0.5, 0.5),
                     15,
                     0.5, 0.5, 0.5,
                     0.0
             );
 
-            // Crop planting sound
-            block.getWorld().playSound(
-                    block.getLocation(),
+            centerBlock.getWorld().playSound(
+                    centerBlock.getLocation(),
                     Sound.ITEM_CROP_PLANT,
                     0.8f,
                     1.0f
             );
 
-            // Hoe sweep animation
             playSweepAnimation(player);
         }
-
-        plugin.getLogger().info("=== End Harvest Debug ===");
     }
 
     /**
@@ -313,5 +258,20 @@ public class HarvestAndReplantListener implements Listener {
                  GOLDEN_HOE, DIAMOND_HOE, NETHERITE_HOE -> true;
             default -> false;
         };
+    }
+
+    /**
+     * Stores information about a crop to be harvested.
+     */
+    private static class CropHarvest {
+        final Location location;
+        final Material cropType;
+        final Collection<ItemStack> drops;
+
+        CropHarvest(Location location, Material cropType, Collection<ItemStack> drops) {
+            this.location = location;
+            this.cropType = cropType;
+            this.drops = drops;
+        }
     }
 }
