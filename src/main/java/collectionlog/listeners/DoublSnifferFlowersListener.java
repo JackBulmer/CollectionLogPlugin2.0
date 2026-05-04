@@ -4,6 +4,7 @@ import collectionlog.CollectionLogPlugin;
 import collectionlog.perks.PerkManager;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
@@ -88,7 +89,7 @@ public class DoublSnifferFlowersListener implements Listener {
         }
 
         // Drop flower and seed at block location (block is broken naturally by the event)
-        var world = block.getWorld();
+        World world = block.getWorld();
         world.dropItemNaturally(block.getLocation(), flower);
         world.dropItemNaturally(block.getLocation(), seed);
     }
