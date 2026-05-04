@@ -87,11 +87,9 @@ public class DoublSnifferFlowersListener implements Listener {
             seed = new ItemStack(Material.PITCHER_POD, 1);
         }
 
-        // Drop flower and seed at block location
-        block.getWorld().dropItemNaturally(block.getLocation(), flower);
-        block.getWorld().dropItemNaturally(block.getLocation(), seed);
-
-        // Set block to air (break the crop)
-        block.setType(Material.AIR);
+        // Drop flower and seed at block location (block is broken naturally by the event)
+        var world = block.getWorld();
+        world.dropItemNaturally(block.getLocation(), flower);
+        world.dropItemNaturally(block.getLocation(), seed);
     }
 }
