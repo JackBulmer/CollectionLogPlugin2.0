@@ -19,6 +19,8 @@ import java.util.regex.Pattern;
 public class ExtraHeartsManager {
 
     private static final String MODIFIER_NAME = "collectionlog.extra_hearts";
+    /** Fixed UUID for the extra hearts modifier so it can be reliably found and replaced. */
+    private static final UUID MODIFIER_UUID = UUID.fromString("a3f9c1e2-7b4d-4f8a-b5e6-2d1c9f0a3e7b");
     /** Maximum number of extra hearts (4 hearts = 8 HP). */
     private static final int MAX_EXTRA_HEARTS = 4;
     /** Health points added per extra heart (1 heart = 2 HP). */
@@ -32,6 +34,10 @@ public class ExtraHeartsManager {
      * constructor (which stores the UUID string as the modifier name).
      */
     private static boolean isExtraHeartModifier(AttributeModifier mod) {
+        // Check by fixed UUID (for modifiers created after this fix)
+        if (MODIFIER_UUID.equals(mod.getUniqueId())) {
+            return true;
+        }
         if (MODIFIER_NAME.equalsIgnoreCase(mod.getName())) {
             return true;
         }
@@ -76,7 +82,9 @@ public class ExtraHeartsManager {
         // Add new modifier if player has extra hearts
         if (extraHeartCount > 0) {
             double healthToAdd = extraHeartCount * HEALTH_PER_HEART;
+            @SuppressWarnings("deprecation")
             AttributeModifier modifier = new AttributeModifier(
+                    MODIFIER_UUID,
                     MODIFIER_NAME,
                     healthToAdd,
                     AttributeModifier.Operation.ADD_NUMBER

@@ -256,12 +256,17 @@ public class MilestoneManager {
 
     private void awardCollectionRewards(Player player, Milestone milestone) {
         List<String> unlockedRewards = new ArrayList<>();
+        boolean hasExtraHeart = false;
 
         List<String> perks = milestone.getPerks();
         if (perks != null && !perks.isEmpty()) {
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+
+                if ("extra_heart".equals(perkId)) {
+                    hasExtraHeart = true;
+                }
 
                 // Special handling for infinite_lava_bucket - give the physical item
                 if ("infinite_lava_bucket".equals(perkId) && plugin.getInfiniteLavaBucket() != null) {
@@ -271,6 +276,10 @@ public class MilestoneManager {
             }
             // Apply any newly-unlocked potion-effect perks immediately
             plugin.getPotionEffectManager().applyPermanentEffects(player);
+            // Apply extra hearts immediately if the extra_heart perk was awarded
+            if (hasExtraHeart) {
+                plugin.getExtraHeartsManager().applyExtraHearts(player);
+            }
         }
 
         for (String tagDisplayName : milestone.getPrefixTags()) {
@@ -305,12 +314,20 @@ public class MilestoneManager {
         List<String> perks = milestone.getPerks();
         if (!perks.isEmpty()) {
             List<String> unlockedRewards = new ArrayList<>();
+            boolean hasExtraHeart = false;
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);
                 unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+                if ("extra_heart".equals(perkId)) {
+                    hasExtraHeart = true;
+                }
             }
             // Apply any newly-unlocked potion-effect perks immediately
             plugin.getPotionEffectManager().applyPermanentEffects(player);
+            // Apply extra hearts immediately if the extra_heart perk was awarded
+            if (hasExtraHeart) {
+                plugin.getExtraHeartsManager().applyExtraHearts(player);
+            }
             if (!unlockedRewards.isEmpty()) {
                 player.sendMessage("§a§l✦ Sub-Collection Rewards ✦");
                 for (String reward : unlockedRewards) {
