@@ -85,14 +85,22 @@ public class TreeCapitatorListener implements Listener {
             Material.FLOWERING_AZALEA_LEAVES
     );
 
-    /** Minimum leaf count to definitively classify a tree as natural. */
-    private static final int MIN_LEAVES_FOR_NATURAL_TREE = 10;
+    /** Cardinal directions for direct adjacency checks. */
+    private static final BlockFace[] CARDINAL_FACES = {
+        BlockFace.NORTH,
+        BlockFace.SOUTH,
+        BlockFace.EAST,
+        BlockFace.WEST,
+        BlockFace.UP,
+        BlockFace.DOWN
+    };
+
     /**
-     * Maximum number of logs allowed on the same Y level before the pattern
-     * is considered too horizontal to be a natural tree.
-     * Natural trees rarely exceed 4 logs per level (2×2 jungle/dark oak trunks).
+     * Minimum number of structure blocks that must be directly adjacent to spruce logs
+     * before the tree is classified as a structure.
+     * A threshold of 3 avoids false positives from a single nearby player-placed block.
      */
-    private static final int MAX_HORIZONTAL_LOGS_PER_LEVEL = 6;
+    private static final int MIN_STRUCTURE_BLOCKS_FOR_SPRUCE = 3;
 
     /** Structure indicator blocks commonly found in villages and buildings. */
     private static final Set<Material> STRUCTURE_BLOCKS = Set.of(
@@ -328,56 +336,55 @@ public class TreeCapitatorListener implements Listener {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns true if this is a natural tree using multi-layer detection.
+     * Check if this is a natural tree using targeted detection.
      *
-     * <p>Decision logic:
+     * <p>SPRUCE TREES (high risk in taiga villages):
      * <ul>
-     *   <li>10+ leaves → definitely natural tree</li>
-     *   <li>1-9 leaves + no structure blocks → natural tree</li>
-     *   <li>1-9 leaves + structure blocks → decorated structure</li>
-     *   <li>0 leaves + no structure blocks + vertical pattern → allow (player removed leaves)</li>
-     *   <li>0 leaves + structure blocks → structure</li>
-     *   <li>0 leaves + horizontal spread → structure</li>
+     *   <li>Check for structure blocks (planks, cobblestone, fences)</li>
+     *   <li>Check width vs height ratio</li>
+     *   <li>Check for leaves</li>
      * </ul>
+     *
+     * <p>OTHER TREES (low risk):
+     * <ul>
+     *   <li>Check for leaves only</li>
+     * </ul>
+     *
+     * @param startLog The bottom log of the tree
+     * @param logs All logs in the tree
+     * @return true if this is a natural tree, false if it's a structure
      */
     private boolean isNaturalTree(Block startLog, Set<Block> logs) {
-        // Nether trees: always allow (no structure confusion)
+        // Nether trees: always allow (no nether structures with stems)
         if (isNetherLog(startLog.getType())) {
             return true;
         }
 
-        // Layer 1: Count nearby leaves (improved search radius)
+        Material logType = startLog.getType();
+
+        // SPRUCE-ONLY CHECKS (for spruce villages in taiga biomes)
+        if (logType == Material.SPRUCE_LOG) {
+            // Check 1: Structure blocks (need 3+ to block)
+            // Requires 3+ to avoid false positives from nearby player builds
+            if (hasMinimumStructureBlocks(logs, MIN_STRUCTURE_BLOCKS_FOR_SPRUCE)) {
+                return false; // Spruce village house detected
+            }
+
+            // Check 2: Width vs height ratio
+            // Natural trees grow upward; structures spread horizontally
+            if (isWiderThanTall(logs)) {
+                return false; // Horizontal structure pattern detected
+            }
+        }
+
+        // For ALL trees: Check for leaves (improved radius)
         int leafCount = countNearbyLeaves(logs);
-
-        // Layer 2: Check for structure blocks
-        boolean hasStructureBlocks = hasStructureBlocksAdjacent(logs);
-
-        // If 10+ leaves, definitely a natural tree
-        if (leafCount >= MIN_LEAVES_FOR_NATURAL_TREE) {
-            return true;
-        }
-
-        // If 1-9 leaves but has structure blocks, likely a decorated structure
-        if (leafCount >= 1 && hasStructureBlocks) {
-            return false;
-        }
-
-        // If 1-9 leaves and no structure blocks, natural tree
         if (leafCount >= 1) {
-            return true;
+            return true; // Has leaves = natural tree
         }
 
-        // No leaves found — check for structure indicators
-        if (hasStructureBlocks) {
-            return false;
-        }
-
-        // No leaves, no structure blocks — check horizontal pattern
-        if (tooMuchHorizontalSpread(logs)) {
-            return false;
-        }
-
-        // No leaves but vertical pattern — allow (player removed leaves)
+        // No leaves found, but passed structure checks (if applicable)
+        // Allow: player may have removed leaves manually
         return true;
     }
 
@@ -407,46 +414,64 @@ public class TreeCapitatorListener implements Listener {
     }
 
     /**
-     * Returns true if any log has a structure block directly adjacent (within 1 block).
-     * Structures typically have logs touching planks, cobblestone, fences, etc.
+     * Check if logs have at least the minimum number of unique structure blocks adjacent.
+     * Uses direct contact only (6 cardinal faces) to avoid false positives.
+     * Counts unique structure blocks so a single block touching multiple logs is not
+     * counted more than once.
+     *
+     * @param logs All logs in the tree
+     * @param minimum Minimum number of unique structure blocks required
+     * @return true if minimum unique structure blocks found
      */
-    private boolean hasStructureBlocksAdjacent(Set<Block> logs) {
+    private boolean hasMinimumStructureBlocks(Set<Block> logs, int minimum) {
+        Set<Block> uniqueStructureBlocks = new HashSet<>();
+
         for (Block log : logs) {
-            for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
-                    for (int z = -1; z <= 1; z++) {
-                        if (x == 0 && y == 0 && z == 0) {
-                            continue;
-                        }
-                        if (STRUCTURE_BLOCKS.contains(log.getRelative(x, y, z).getType())) {
-                            return true;
-                        }
+            // Check only direct contact (6 cardinal directions)
+            for (BlockFace face : CARDINAL_FACES) {
+                Block adjacent = log.getRelative(face);
+                if (STRUCTURE_BLOCKS.contains(adjacent.getType())) {
+                    uniqueStructureBlocks.add(adjacent);
+
+                    // Early exit if we've found enough
+                    if (uniqueStructureBlocks.size() >= minimum) {
+                        return true;
                     }
                 }
             }
         }
-        return false;
+
+        return false; // Less than minimum unique structure blocks found
     }
 
     /**
-     * Returns true if logs are spread too horizontally (structure pattern).
-     * Natural trees grow vertically; structures often have many logs on the same Y level.
-     * More than 6 logs on any single Y level indicates a structure.
+     * Check if tree is wider than it is tall.
+     * Natural trees grow upward; structures spread horizontally.
+     *
+     * @param logs All logs in the tree
+     * @return true if width > height (structure pattern)
      */
-    private boolean tooMuchHorizontalSpread(Set<Block> logs) {
-        Map<Integer, Integer> logsPerY = new HashMap<>();
+    private boolean isWiderThanTall(Set<Block> logs) {
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
 
         for (Block log : logs) {
-            logsPerY.merge(log.getY(), 1, Integer::sum);
+            int x = log.getX(), y = log.getY(), z = log.getZ();
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
         }
 
-        for (int count : logsPerY.values()) {
-            if (count > MAX_HORIZONTAL_LOGS_PER_LEVEL) {
-                return true;
-            }
-        }
+        int height = maxY - minY + 1;
+        int width = Math.max(maxX - minX + 1, maxZ - minZ + 1);
 
-        return false;
+        // If width > height, it's wider than tall (structure pattern)
+        // Equal dimensions are allowed to handle narrow/square natural trees
+        return width > height;
     }
 
     /**
