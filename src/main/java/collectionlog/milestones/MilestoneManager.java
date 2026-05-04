@@ -784,8 +784,25 @@ public class MilestoneManager {
         return "INSERT OR IGNORE INTO " + table + " " + columnsAndValues;
     }
 
-    private String normalizeMilestoneKey(String key) {
+    public String normalizeMilestoneKey(String key) {
         return key == null ? "" : key.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Get all completed milestone keys for a player.
+     * Used by admin commands to find completed collections.
+     */
+    public Set<String> getPlayerCompletedMilestones(UUID playerId) {
+        ensureCompletedMilestonesLoaded(playerId);
+        return playerCompletedMilestones.getOrDefault(playerId, Collections.emptySet());
+    }
+
+    /**
+     * Get all registered milestones.
+     * Used by admin commands to search for specific perk rewards.
+     */
+    public java.util.Collection<Milestone> getAllMilestones() {
+        return milestones.values();
     }
 
     private String formatDisplayName(String id) {
