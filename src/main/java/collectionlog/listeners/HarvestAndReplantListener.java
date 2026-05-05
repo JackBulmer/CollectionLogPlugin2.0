@@ -184,6 +184,7 @@ public class HarvestAndReplantListener implements Listener {
                 }
 
                 Collection<ItemStack> drops = candidate.getDrops(tool, player);
+                plugin.getLogger().info("[DEBUG] Collected drops for " + type + " at " + candidate.getLocation() + ": " + drops);
                 cropsToHarvest.add(new CropHarvest(candidate.getLocation(), type, drops));
             }
         }
@@ -201,13 +202,18 @@ public class HarvestAndReplantListener implements Listener {
 
             // For the two-block-tall pitcher plant, explicitly clear the top half
             // before clearing the bottom so neither block is left floating.
+            // Use setType(AIR, false) to suppress physics and prevent a spurious
+            // BlockBreakEvent from firing for the top block, which would otherwise
+            // be caught by DoublSnifferFlowersListener and result in a duplicate drop.
             if (crop.cropType == Material.PITCHER_CROP) {
                 Block topBlock = cropBlock.getRelative(0, 1, 0);
                 if (topBlock.getType() == Material.PITCHER_CROP) {
-                    topBlock.setType(Material.AIR);
+                    plugin.getLogger().info("[DEBUG] Breaking pitcher plant top block at " + topBlock.getLocation() + " (suppressing physics)");
+                    topBlock.setType(Material.AIR, false);
                 }
             }
 
+            plugin.getLogger().info("[DEBUG] Breaking crop block: " + crop.cropType + " at " + cropBlock.getLocation());
             cropBlock.setType(Material.AIR);
 
             Material seedType = CROP_TO_SEED.get(crop.cropType);
@@ -225,8 +231,10 @@ public class HarvestAndReplantListener implements Listener {
             // (not the flower item itself), so also add the TORCHFLOWER flower item
             // to match what DoublSnifferFlowersListener would deliver.
             if (hasDoubleSnifferFlowers && isSnifferCrop(crop.cropType)) {
+                plugin.getLogger().info("[DEBUG] Adding double sniffer bonus for " + crop.cropType);
                 seedPool.merge(seedType, 1, Integer::sum);
                 if (crop.cropType == Material.TORCHFLOWER) {
+                    plugin.getLogger().info("[DEBUG] Adding bonus TORCHFLOWER to drops");
                     otherDrops.add(new ItemStack(Material.TORCHFLOWER, 1));
                 }
             }
@@ -268,6 +276,7 @@ public class HarvestAndReplantListener implements Listener {
         }
 
         // Drop other items (wheat, beetroot, etc.)
+        plugin.getLogger().info("[DEBUG] Dropping items at " + dropLoc + ": " + otherDrops);
         for (ItemStack drop : otherDrops) {
             centerBlock.getWorld().dropItemNaturally(dropLoc, drop);
         }
