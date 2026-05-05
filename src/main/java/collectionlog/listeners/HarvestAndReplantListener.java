@@ -65,7 +65,7 @@ public class HarvestAndReplantListener implements Listener {
         this.blockOwnershipDAO = plugin.getBlockOwnershipDAO();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
 
@@ -107,6 +107,16 @@ public class HarvestAndReplantListener implements Listener {
             return;
         }
 
+        // For PITCHER_CROP, normalise to the bottom block so the 5x5 scan
+        // centres on the correct Y level regardless of which half the player broke.
+        if (blockType == Material.PITCHER_CROP) {
+            BlockData bd = block.getBlockData();
+            if (bd instanceof org.bukkit.block.data.Bisected bisected
+                    && bisected.getHalf() == org.bukkit.block.data.Bisected.Half.TOP) {
+                block = block.getRelative(0, -1, 0);
+            }
+        }
+
         // Check if crop is fully grown
         if (!isFullyGrown(block)) {
             return;
@@ -126,14 +136,19 @@ public class HarvestAndReplantListener implements Listener {
         event.setCancelled(true);
 
         // Scan 5x5 area and batch harvest all fully grown crops
-        harvestArea(player, block, tool);
+        harvestArea(player, block, tool, playerId);
     }
 
     /**
      * Scan a 5x5 area around the center block, harvest all fully grown crops,
      * pool the seeds, replant where possible, and drop remaining items.
      */
-    private void harvestArea(Player player, Block centerBlock, ItemStack tool) {
+    private void harvestArea(Player player, Block centerBlock, ItemStack tool, UUID playerId) {
+        // Check once whether the player also has the double_sniffer_flowers perk so that
+        // when HarvestAndReplant handles sniffer crops the bonus seed is added to the
+        // pool (allowing it to be used for replanting).
+        boolean hasDoubleSnifferFlowers = perkManager.hasUnlocked(playerId, "double_sniffer_flowers");
+
         List<CropHarvest> cropsToHarvest = new ArrayList<>();
 
         for (int x = -2; x <= 2; x++) {
@@ -144,6 +159,17 @@ public class HarvestAndReplantListener implements Listener {
                 if (!SUPPORTED_CROPS.contains(type)) {
                     continue;
                 }
+
+                // Skip the upper half of a two-block-tall pitcher plant – it will be
+                // handled as part of the lower-half entry to avoid duplicate harvests.
+                if (type == Material.PITCHER_CROP) {
+                    BlockData bd = candidate.getBlockData();
+                    if (bd instanceof org.bukkit.block.data.Bisected bisected
+                            && bisected.getHalf() == org.bukkit.block.data.Bisected.Half.TOP) {
+                        continue;
+                    }
+                }
+
                 if (!isFullyGrown(candidate)) {
                     continue;
                 }
@@ -169,7 +195,18 @@ public class HarvestAndReplantListener implements Listener {
         List<ItemStack> otherDrops = new ArrayList<>();
 
         for (CropHarvest crop : cropsToHarvest) {
-            crop.location.getBlock().setType(Material.AIR);
+            Block cropBlock = crop.location.getBlock();
+
+            // For the two-block-tall pitcher plant, explicitly clear the top half
+            // before clearing the bottom so neither block is left floating.
+            if (crop.cropType == Material.PITCHER_CROP) {
+                Block topBlock = cropBlock.getRelative(0, 1, 0);
+                if (topBlock.getType() == Material.PITCHER_CROP) {
+                    topBlock.setType(Material.AIR);
+                }
+            }
+
+            cropBlock.setType(Material.AIR);
 
             Material seedType = CROP_TO_SEED.get(crop.cropType);
             for (ItemStack drop : crop.drops) {
@@ -178,6 +215,13 @@ public class HarvestAndReplantListener implements Listener {
                 } else {
                     otherDrops.add(drop);
                 }
+            }
+
+            // If the double_sniffer_flowers perk is also active, add a bonus seed to
+            // the pool so it can be used for replanting (or dropped as surplus).
+            // seedType is the same value derived from CROP_TO_SEED above.
+            if (hasDoubleSnifferFlowers && isSnifferCrop(crop.cropType)) {
+                seedPool.merge(seedType, 1, Integer::sum);
             }
         }
 
@@ -262,13 +306,41 @@ public class HarvestAndReplantListener implements Listener {
 
     /**
      * Check if a crop is fully grown.
+     *
+     * <p>For PITCHER_CROP, age data lives in the <em>top</em> block. When this method
+     * is called with the bottom block (the normalised form used everywhere else in this
+     * listener), it looks one block up to read the correct age value.</p>
      */
     private boolean isFullyGrown(Block block) {
+        if (block.getType() == Material.PITCHER_CROP) {
+            // Determine which half this block is and find the top half.
+            Block topBlock = block;
+            BlockData bd = block.getBlockData();
+            if (bd instanceof org.bukkit.block.data.Bisected bisected
+                    && bisected.getHalf() == org.bukkit.block.data.Bisected.Half.BOTTOM) {
+                Block above = block.getRelative(0, 1, 0);
+                if (above.getType() == Material.PITCHER_CROP) {
+                    topBlock = above;
+                }
+            }
+            BlockData topData = topBlock.getBlockData();
+            return topData instanceof Ageable topAgeable
+                    && topAgeable.getAge() == topAgeable.getMaximumAge();
+        }
+
         BlockData blockData = block.getBlockData();
         if (!(blockData instanceof Ageable ageable)) {
             return false;
         }
         return ageable.getAge() == ageable.getMaximumAge();
+    }
+
+    /**
+     * Returns {@code true} for crop types that are sniffer-related (torchflower and
+     * pitcher plant). Used to decide whether to apply the double_sniffer_flowers bonus.
+     */
+    private boolean isSnifferCrop(Material material) {
+        return material == Material.TORCHFLOWER_CROP || material == Material.PITCHER_CROP;
     }
 
     /**
