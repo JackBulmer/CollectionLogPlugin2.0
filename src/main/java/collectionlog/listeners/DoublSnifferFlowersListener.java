@@ -15,7 +15,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -62,74 +61,68 @@ public class DoublSnifferFlowersListener implements Listener {
             return;
         }
 
-        ItemStack bonusSeed;
         if (blockType == Material.TORCHFLOWER_CROP) {
-            bonusSeed = handleTorchflower(block);
+            handleTorchflower(event, block);
         } else {
-            bonusSeed = handlePitcherCrop(block);
-        }
-
-        if (bonusSeed == null) {
-            return;
-        }
-
-        // Collect vanilla drops, append the bonus seed, then cancel default drop behaviour
-        // and re-drop everything so no items are lost and the collection is complete.
-        Collection<ItemStack> drops = block.getDrops(player.getInventory().getItemInMainHand());
-        drops.add(bonusSeed);
-        event.setDropItems(false);
-        for (ItemStack drop : drops) {
-            block.getWorld().dropItemNaturally(block.getLocation(), drop);
+            handlePitcherCrop(event, block);
         }
     }
 
     /**
-     * Returns a bonus {@code TORCHFLOWER_SEEDS} item when the torchflower crop is
-     * fully grown on farmland, or {@code null} if conditions are not met.
+     * Handle torchflower harvesting.
+     * Returns {@code true} if perk was applied (vanilla drops cancelled and items
+     * dropped manually), {@code false} if conditions are not met (vanilla behaviour
+     * is left unchanged).
      */
-    private ItemStack handleTorchflower(Block block) {
+    private boolean handleTorchflower(BlockBreakEvent event, Block block) {
         BlockData blockData = block.getBlockData();
         if (!(blockData instanceof Ageable ageable)) {
-            return null;
+            return false;
         }
         if (ageable.getAge() != ageable.getMaximumAge()) {
-            return null;
+            return false;
         }
         if (block.getRelative(0, -1, 0).getType() != Material.FARMLAND) {
-            return null;
+            return false;
         }
-        return new ItemStack(Material.TORCHFLOWER_SEEDS, 1);
+
+        // Cancel vanilla drops – manually drop flower + seed so both always appear.
+        event.setDropItems(false);
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.TORCHFLOWER, 1));
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.TORCHFLOWER_SEEDS, 1));
+        return true;
     }
 
     /**
-     * Returns a bonus {@code PITCHER_POD} item when the pitcher plant is fully grown on
-     * farmland, or {@code null} if conditions are not met.
+     * Handle pitcher plant harvesting.
+     * Returns {@code true} if perk was applied (vanilla drops cancelled and items
+     * dropped manually), {@code false} if conditions are not met.
      *
      * <p>Pitcher plant is two blocks tall. Age data lives in the <em>top</em> block and
      * farmland must be checked under the <em>bottom</em> block. This method works
      * regardless of whether the player broke the top or bottom half.</p>
      */
-    private ItemStack handlePitcherCrop(Block block) {
+    private boolean handlePitcherCrop(BlockBreakEvent event, Block block) {
         Block topBlock;
         Block bottomBlock;
 
         BlockData bd = block.getBlockData();
         if (!(bd instanceof Bisected bisected)) {
-            return null; // PITCHER_CROP always implements Bisected; guard for safety
+            return false; // PITCHER_CROP always implements Bisected; guard for safety
         }
 
         if (bisected.getHalf() == Bisected.Half.BOTTOM) {
             bottomBlock = block;
             Block above = block.getRelative(0, 1, 0);
             if (above.getType() != Material.PITCHER_CROP) {
-                return null; // Incomplete plant
+                return false; // Incomplete plant
             }
             topBlock = above;
         } else {
             topBlock = block;
             Block below = block.getRelative(0, -1, 0);
             if (below.getType() != Material.PITCHER_CROP) {
-                return null; // Incomplete plant
+                return false; // Incomplete plant
             }
             bottomBlock = below;
         }
@@ -137,17 +130,22 @@ public class DoublSnifferFlowersListener implements Listener {
         // Age is stored in the TOP block
         BlockData topData = topBlock.getBlockData();
         if (!(topData instanceof Ageable topAgeable)) {
-            return null;
+            return false;
         }
         if (topAgeable.getAge() != topAgeable.getMaximumAge()) {
-            return null;
+            return false;
         }
 
         // Farmland must be directly under the BOTTOM block
         if (bottomBlock.getRelative(0, -1, 0).getType() != Material.FARMLAND) {
-            return null;
+            return false;
         }
 
-        return new ItemStack(Material.PITCHER_POD, 1);
+        // Cancel vanilla drops – manually drop flower + seed so both always appear,
+        // regardless of which half of the two-block plant the player broke.
+        event.setDropItems(false);
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_PLANT, 1));
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_POD, 1));
+        return true;
     }
 }
