@@ -51,8 +51,6 @@ public class DoublSnifferFlowersListener implements Listener {
         }
 
         // Only process sniffer flowers
-        // TORCHFLOWER_CROP = growing crop (Ageable, age 0-1)
-        // TORCHFLOWER = mature flower (not Ageable, but harvestable)
         if (blockType != Material.TORCHFLOWER_CROP &&
                 blockType != Material.TORCHFLOWER &&
                 blockType != Material.PITCHER_CROP) {
