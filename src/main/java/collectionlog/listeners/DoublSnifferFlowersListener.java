@@ -75,6 +75,17 @@ public class DoublSnifferFlowersListener implements Listener {
 
         plugin.getLogger().info("[DEBUG] Player has perk unlocked, processing...");
 
+        // If the player also has harvest_and_replant active and is using a hoe,
+        // defer to HarvestAndReplantListener which handles the full 5x5 harvest
+        // and integrates the bonus seed into the replanting pool.
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        if (perkManager.hasUnlocked(playerId, "harvest_and_replant") &&
+                perkManager.isEnabled(playerId, "harvest_and_replant") &&
+                tool != null && isHoe(tool.getType())) {
+            plugin.getLogger().info("[DEBUG] Player has harvest_and_replant with hoe, deferring to that listener");
+            return; // Let HarvestAndReplantListener handle it
+        }
+
         if (blockType == Material.TORCHFLOWER_CROP || blockType == Material.TORCHFLOWER) {
             plugin.getLogger().info("[DEBUG] Handling torchflower...");
             boolean result = handleTorchflower(event, block);
@@ -206,5 +217,16 @@ public class DoublSnifferFlowersListener implements Listener {
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_PLANT, 1));
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_POD, 1));
         return true;
+    }
+
+    /**
+     * Check if a material is a hoe.
+     */
+    private boolean isHoe(Material material) {
+        return switch (material) {
+            case WOODEN_HOE, STONE_HOE, IRON_HOE,
+                 GOLDEN_HOE, DIAMOND_HOE, NETHERITE_HOE -> true;
+            default -> false;
+        };
     }
 }

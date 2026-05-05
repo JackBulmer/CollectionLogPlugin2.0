@@ -45,6 +45,7 @@ public class HarvestAndReplantListener implements Listener {
             Material.BEETROOTS,
             Material.NETHER_WART,
             Material.TORCHFLOWER_CROP,
+            Material.TORCHFLOWER,
             Material.PITCHER_CROP
     );
 
@@ -56,6 +57,7 @@ public class HarvestAndReplantListener implements Listener {
             Material.BEETROOTS, Material.BEETROOT_SEEDS,
             Material.NETHER_WART, Material.NETHER_WART,
             Material.TORCHFLOWER_CROP, Material.TORCHFLOWER_SEEDS,
+            Material.TORCHFLOWER, Material.TORCHFLOWER_SEEDS,
             Material.PITCHER_CROP, Material.PITCHER_POD
     );
 
@@ -233,7 +235,12 @@ public class HarvestAndReplantListener implements Listener {
 
             if (available > 0) {
                 Block cropBlock = crop.location.getBlock();
-                cropBlock.setType(crop.cropType);
+                // TORCHFLOWER (mature flower) must be replanted as TORCHFLOWER_CROP (seedling)
+                // so it can grow again; replanting the mature block would leave a static flower.
+                Material replantType = (crop.cropType == Material.TORCHFLOWER)
+                        ? Material.TORCHFLOWER_CROP
+                        : crop.cropType;
+                cropBlock.setType(replantType);
                 BlockData blockData = cropBlock.getBlockData();
                 if (blockData instanceof Ageable ageable) {
                     ageable.setAge(0);
@@ -310,9 +317,19 @@ public class HarvestAndReplantListener implements Listener {
      * <p>For PITCHER_CROP, age data lives in the <em>top</em> block. When this method
      * is called with the bottom block (the normalised form used everywhere else in this
      * listener), it looks one block up to read the correct age value.</p>
+     *
+     * <p>For TORCHFLOWER (the mature flower block), it is always considered fully grown
+     * since it is not Ageable and represents the final mature state.</p>
      */
     private boolean isFullyGrown(Block block) {
-        if (block.getType() == Material.PITCHER_CROP) {
+        Material blockType = block.getType();
+
+        // TORCHFLOWER (mature flower) is always "fully grown"
+        if (blockType == Material.TORCHFLOWER) {
+            return true;
+        }
+
+        if (blockType == Material.PITCHER_CROP) {
             // Determine which half this block is and find the top half.
             Block topBlock = block;
             BlockData bd = block.getBlockData();
@@ -340,7 +357,9 @@ public class HarvestAndReplantListener implements Listener {
      * pitcher plant). Used to decide whether to apply the double_sniffer_flowers bonus.
      */
     private boolean isSnifferCrop(Material material) {
-        return material == Material.TORCHFLOWER_CROP || material == Material.PITCHER_CROP;
+        return material == Material.TORCHFLOWER_CROP ||
+               material == Material.TORCHFLOWER ||
+               material == Material.PITCHER_CROP;
     }
 
     /**
