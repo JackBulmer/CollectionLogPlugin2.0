@@ -45,7 +45,7 @@ public class DoublSnifferFlowersListener implements Listener {
         Material blockType = block.getType();
 
         // Only process sniffer flowers
-        if (blockType != Material.TORCHFLOWER_CROP && blockType != Material.PITCHER_CROP) {
+        if (blockType != Material.TORCHFLOWER && blockType != Material.PITCHER_CROP) {
             return;
         }
 
@@ -61,7 +61,7 @@ public class DoublSnifferFlowersListener implements Listener {
             return;
         }
 
-        if (blockType == Material.TORCHFLOWER_CROP) {
+        if (blockType == Material.TORCHFLOWER) {
             handleTorchflower(event, block);
         } else {
             handlePitcherCrop(event, block);
