@@ -51,7 +51,11 @@ public class DoublSnifferFlowersListener implements Listener {
         }
 
         // Only process sniffer flowers
-        if (blockType != Material.TORCHFLOWER && blockType != Material.PITCHER_CROP) {
+        // TORCHFLOWER_CROP = growing crop (Ageable, age 0-1)
+        // TORCHFLOWER = mature flower (not Ageable, but harvestable)
+        if (blockType != Material.TORCHFLOWER_CROP &&
+                blockType != Material.TORCHFLOWER &&
+                blockType != Material.PITCHER_CROP) {
             return;
         }
 
@@ -73,7 +77,7 @@ public class DoublSnifferFlowersListener implements Listener {
 
         plugin.getLogger().info("[DEBUG] Player has perk unlocked, processing...");
 
-        if (blockType == Material.TORCHFLOWER) {
+        if (blockType == Material.TORCHFLOWER_CROP || blockType == Material.TORCHFLOWER) {
             plugin.getLogger().info("[DEBUG] Handling torchflower...");
             boolean result = handleTorchflower(event, block);
             plugin.getLogger().info("[DEBUG] Torchflower handling result: " + result);
@@ -89,22 +93,45 @@ public class DoublSnifferFlowersListener implements Listener {
      * Returns {@code true} if perk was applied (vanilla drops cancelled and items
      * dropped manually), {@code false} if conditions are not met (vanilla behaviour
      * is left unchanged).
+     *
+     * <p>Torchflower has two block types:
+     * <ul>
+     *   <li>{@code TORCHFLOWER_CROP} – growing crop (Ageable, age 0–1). Only accepted
+     *       when at maximum age.</li>
+     *   <li>{@code TORCHFLOWER} – mature flower block (not Ageable). Always accepted;
+     *       no age check needed.</li>
+     * </ul>
+     * Both types must be sitting on farmland to qualify for the bonus seed.</p>
      */
     private boolean handleTorchflower(BlockBreakEvent event, Block block) {
         plugin.getLogger().info("[DEBUG] handleTorchflower: Starting checks...");
 
-        BlockData blockData = block.getBlockData();
-        plugin.getLogger().info("[DEBUG] Block data: " + blockData);
+        Material blockType = block.getType();
+        plugin.getLogger().info("[DEBUG] Block type: " + blockType);
 
-        if (!(blockData instanceof Ageable ageable)) {
-            plugin.getLogger().info("[DEBUG] Block is NOT Ageable! Type: " + blockData.getClass().getName());
-            return false;
+        // Handle TORCHFLOWER_CROP (growing crop, Ageable)
+        if (blockType == Material.TORCHFLOWER_CROP) {
+            plugin.getLogger().info("[DEBUG] Processing TORCHFLOWER_CROP (growing crop)");
+
+            BlockData blockData = block.getBlockData();
+            if (!(blockData instanceof Ageable ageable)) {
+                plugin.getLogger().info("[DEBUG] TORCHFLOWER_CROP is not Ageable (shouldn't happen)");
+                return false;
+            }
+
+            plugin.getLogger().info("[DEBUG] Crop age: " + ageable.getAge() + "/" + ageable.getMaximumAge());
+
+            if (ageable.getAge() != ageable.getMaximumAge()) {
+                plugin.getLogger().info("[DEBUG] Not fully grown!");
+                return false;
+            }
         }
-
-        plugin.getLogger().info("[DEBUG] Block is Ageable. Age: " + ageable.getAge() + "/" + ageable.getMaximumAge());
-
-        if (ageable.getAge() != ageable.getMaximumAge()) {
-            plugin.getLogger().info("[DEBUG] Not fully grown!");
+        // Handle TORCHFLOWER (mature flower, not Ageable)
+        else if (blockType == Material.TORCHFLOWER) {
+            plugin.getLogger().info("[DEBUG] Processing TORCHFLOWER (mature flower, always harvestable)");
+            // No age check needed – the flower block is always "mature"
+        } else {
+            plugin.getLogger().info("[DEBUG] Unexpected block type: " + blockType);
             return false;
         }
 
