@@ -44,13 +44,22 @@ public class DoublSnifferFlowersListener implements Listener {
         Block block = event.getBlock();
         Material blockType = block.getType();
 
+        // DEBUG: Log all block breaks to see what material it actually is
+        if (blockType == Material.TORCHFLOWER || blockType == Material.TORCHFLOWER_CROP) {
+            plugin.getLogger().info("[DEBUG] Torchflower block broken! Material: " + blockType);
+            plugin.getLogger().info("[DEBUG] Block data type: " + block.getBlockData().getClass().getName());
+        }
+
         // Only process sniffer flowers
         if (blockType != Material.TORCHFLOWER && blockType != Material.PITCHER_CROP) {
             return;
         }
 
+        plugin.getLogger().info("[DEBUG] Passed material check for: " + blockType);
+
         // Creative mode excluded (no drops)
         if (player.getGameMode() == GameMode.CREATIVE) {
+            plugin.getLogger().info("[DEBUG] Player in creative mode, skipping");
             return;
         }
 
@@ -58,13 +67,20 @@ public class DoublSnifferFlowersListener implements Listener {
 
         // Check perk unlocked
         if (!perkManager.hasUnlocked(playerId, PERK_ID)) {
+            plugin.getLogger().info("[DEBUG] Player " + player.getName() + " doesn't have perk unlocked");
             return;
         }
 
+        plugin.getLogger().info("[DEBUG] Player has perk unlocked, processing...");
+
         if (blockType == Material.TORCHFLOWER) {
-            handleTorchflower(event, block);
+            plugin.getLogger().info("[DEBUG] Handling torchflower...");
+            boolean result = handleTorchflower(event, block);
+            plugin.getLogger().info("[DEBUG] Torchflower handling result: " + result);
         } else {
-            handlePitcherCrop(event, block);
+            plugin.getLogger().info("[DEBUG] Handling pitcher crop...");
+            boolean result = handlePitcherCrop(event, block);
+            plugin.getLogger().info("[DEBUG] Pitcher crop handling result: " + result);
         }
     }
 
@@ -75,21 +91,39 @@ public class DoublSnifferFlowersListener implements Listener {
      * is left unchanged).
      */
     private boolean handleTorchflower(BlockBreakEvent event, Block block) {
+        plugin.getLogger().info("[DEBUG] handleTorchflower: Starting checks...");
+
         BlockData blockData = block.getBlockData();
+        plugin.getLogger().info("[DEBUG] Block data: " + blockData);
+
         if (!(blockData instanceof Ageable ageable)) {
+            plugin.getLogger().info("[DEBUG] Block is NOT Ageable! Type: " + blockData.getClass().getName());
             return false;
         }
+
+        plugin.getLogger().info("[DEBUG] Block is Ageable. Age: " + ageable.getAge() + "/" + ageable.getMaximumAge());
+
         if (ageable.getAge() != ageable.getMaximumAge()) {
+            plugin.getLogger().info("[DEBUG] Not fully grown!");
             return false;
         }
-        if (block.getRelative(0, -1, 0).getType() != Material.FARMLAND) {
+
+        Block below = block.getRelative(0, -1, 0);
+        plugin.getLogger().info("[DEBUG] Block below: " + below.getType());
+
+        if (below.getType() != Material.FARMLAND) {
+            plugin.getLogger().info("[DEBUG] Not on farmland!");
             return false;
         }
+
+        plugin.getLogger().info("[DEBUG] All checks passed! Dropping items...");
 
         // Cancel vanilla drops – manually drop flower + seed so both always appear.
         event.setDropItems(false);
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.TORCHFLOWER, 1));
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.TORCHFLOWER_SEEDS, 1));
+
+        plugin.getLogger().info("[DEBUG] Items dropped successfully!");
         return true;
     }
 
