@@ -44,10 +44,14 @@ public class DoublSnifferFlowersListener implements Listener {
         Block block = event.getBlock();
         Material blockType = block.getType();
 
-        // DEBUG: Log all block breaks to see what material it actually is
-        if (blockType == Material.TORCHFLOWER || blockType == Material.TORCHFLOWER_CROP) {
-            plugin.getLogger().info("[DEBUG] Torchflower block broken! Material: " + blockType);
+        // DEBUG: Log all sniffer flower block breaks
+        if (blockType == Material.TORCHFLOWER ||
+                blockType == Material.TORCHFLOWER_CROP ||
+                blockType == Material.PITCHER_CROP) {
+            plugin.getLogger().info("[DEBUG] Sniffer flower block broken! Material: " + blockType);
             plugin.getLogger().info("[DEBUG] Block data type: " + block.getBlockData().getClass().getName());
+            plugin.getLogger().info("[DEBUG] Event cancelled status: " + event.isCancelled());
+            plugin.getLogger().info("[DEBUG] Player: " + player.getName());
         }
 
         // Only process sniffer flowers
@@ -79,12 +83,23 @@ public class DoublSnifferFlowersListener implements Listener {
         // defer to HarvestAndReplantListener which handles the full 5x5 harvest
         // and integrates the bonus seed into the replanting pool.
         ItemStack tool = player.getInventory().getItemInMainHand();
-        if (perkManager.hasUnlocked(playerId, "harvest_and_replant") &&
-                perkManager.isEnabled(playerId, "harvest_and_replant") &&
-                tool != null && isHoe(tool.getType())) {
-            plugin.getLogger().info("[DEBUG] Player has harvest_and_replant with hoe, deferring to that listener");
+
+        boolean hasHarvestAndReplant = perkManager.hasUnlocked(playerId, "harvest_and_replant");
+        boolean harvestEnabled = perkManager.isEnabled(playerId, "harvest_and_replant");
+        boolean usingHoe = tool != null && isHoe(tool.getType());
+
+        plugin.getLogger().info("[DEBUG] Deferral check:");
+        plugin.getLogger().info("[DEBUG]   - Has harvest_and_replant unlocked: " + hasHarvestAndReplant);
+        plugin.getLogger().info("[DEBUG]   - Harvest_and_replant enabled: " + harvestEnabled);
+        plugin.getLogger().info("[DEBUG]   - Tool: " + (tool != null ? tool.getType() : "null"));
+        plugin.getLogger().info("[DEBUG]   - Using hoe: " + usingHoe);
+
+        if (hasHarvestAndReplant && harvestEnabled && usingHoe) {
+            plugin.getLogger().info("[DEBUG] *** DEFERRING to HarvestAndReplantListener (player has both perks + hoe) ***");
             return; // Let HarvestAndReplantListener handle it
         }
+
+        plugin.getLogger().info("[DEBUG] NOT deferring, will process in DoublSnifferFlowersListener");
 
         if (blockType == Material.TORCHFLOWER_CROP || blockType == Material.TORCHFLOWER) {
             plugin.getLogger().info("[DEBUG] Handling torchflower...");
@@ -173,49 +188,77 @@ public class DoublSnifferFlowersListener implements Listener {
      * regardless of whether the player broke the top or bottom half.</p>
      */
     private boolean handlePitcherCrop(BlockBreakEvent event, Block block) {
+        plugin.getLogger().info("[DEBUG] handlePitcherCrop: Starting checks...");
+        plugin.getLogger().info("[DEBUG] Block location: " + block.getLocation());
+
         Block topBlock;
         Block bottomBlock;
 
         BlockData bd = block.getBlockData();
         if (!(bd instanceof Bisected bisected)) {
+            plugin.getLogger().info("[DEBUG] Block is not Bisected (shouldn't happen for PITCHER_CROP)");
             return false; // PITCHER_CROP always implements Bisected; guard for safety
         }
 
+        plugin.getLogger().info("[DEBUG] Bisected half: " + bisected.getHalf());
+
         if (bisected.getHalf() == Bisected.Half.BOTTOM) {
+            plugin.getLogger().info("[DEBUG] Player broke BOTTOM half");
             bottomBlock = block;
             Block above = block.getRelative(0, 1, 0);
             if (above.getType() != Material.PITCHER_CROP) {
+                plugin.getLogger().info("[DEBUG] No top half found above (incomplete plant)");
                 return false; // Incomplete plant
             }
             topBlock = above;
+            plugin.getLogger().info("[DEBUG] Found top half at: " + topBlock.getLocation());
         } else {
+            plugin.getLogger().info("[DEBUG] Player broke TOP half");
             topBlock = block;
             Block below = block.getRelative(0, -1, 0);
             if (below.getType() != Material.PITCHER_CROP) {
+                plugin.getLogger().info("[DEBUG] No bottom half found below (incomplete plant)");
                 return false; // Incomplete plant
             }
             bottomBlock = below;
+            plugin.getLogger().info("[DEBUG] Found bottom half at: " + bottomBlock.getLocation());
         }
 
         // Age is stored in the TOP block
         BlockData topData = topBlock.getBlockData();
         if (!(topData instanceof Ageable topAgeable)) {
+            plugin.getLogger().info("[DEBUG] Top block is not Ageable (shouldn't happen)");
             return false;
         }
+
+        plugin.getLogger().info("[DEBUG] Pitcher crop age: " + topAgeable.getAge() + "/" + topAgeable.getMaximumAge());
+
         if (topAgeable.getAge() != topAgeable.getMaximumAge()) {
+            plugin.getLogger().info("[DEBUG] Not fully grown!");
             return false;
         }
 
         // Farmland must be directly under the BOTTOM block
-        if (bottomBlock.getRelative(0, -1, 0).getType() != Material.FARMLAND) {
+        Block underBottom = bottomBlock.getRelative(0, -1, 0);
+        plugin.getLogger().info("[DEBUG] Block below bottom half: " + underBottom.getType());
+
+        if (underBottom.getType() != Material.FARMLAND) {
+            plugin.getLogger().info("[DEBUG] Not on farmland!");
             return false;
         }
+
+        plugin.getLogger().info("[DEBUG] All checks passed! Dropping items...");
+        plugin.getLogger().info("[DEBUG] Event cancelled before drop: " + event.isCancelled());
 
         // Cancel vanilla drops – manually drop flower + seed so both always appear,
         // regardless of which half of the two-block plant the player broke.
         event.setDropItems(false);
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_PLANT, 1));
         block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(Material.PITCHER_POD, 1));
+
+        plugin.getLogger().info("[DEBUG] Items dropped successfully!");
+        plugin.getLogger().info("[DEBUG] Event cancelled after drop: " + event.isCancelled());
+
         return true;
     }
 
