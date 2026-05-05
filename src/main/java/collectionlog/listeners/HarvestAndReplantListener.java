@@ -221,9 +221,14 @@ public class HarvestAndReplantListener implements Listener {
 
             // If the double_sniffer_flowers perk is also active, add a bonus seed to
             // the pool so it can be used for replanting (or dropped as surplus).
-            // seedType is the same value derived from CROP_TO_SEED above.
+            // For TORCHFLOWER specifically, vanilla drops only gives TORCHFLOWER_SEEDS
+            // (not the flower item itself), so also add the TORCHFLOWER flower item
+            // to match what DoublSnifferFlowersListener would deliver.
             if (hasDoubleSnifferFlowers && isSnifferCrop(crop.cropType)) {
                 seedPool.merge(seedType, 1, Integer::sum);
+                if (crop.cropType == Material.TORCHFLOWER) {
+                    otherDrops.add(new ItemStack(Material.TORCHFLOWER, 1));
+                }
             }
         }
 
