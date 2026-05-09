@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -164,6 +165,12 @@ public class OpenableShulkersListener implements Listener {
                 return;
             }
 
+            if (event.getClick() == ClickType.SWAP_OFFHAND && isShulkerItem(player.getInventory().getItemInOffHand())) {
+                event.setCancelled(true);
+                player.sendMessage(NESTED_SHULKER_MESSAGE);
+                return;
+            }
+
             if (event.getClick().isKeyboardClick()) {
                 int hotbarButton = event.getHotbarButton();
                 if (hotbarButton >= 0 && isShulkerItem(player.getInventory().getItem(hotbarButton))) {
@@ -202,13 +209,13 @@ public class OpenableShulkersListener implements Listener {
         }
 
         int topInventorySize = event.getView().getTopInventory().getSize();
-        boolean draggingIntoTop = event.getRawSlots().stream().anyMatch(slot -> slot < topInventorySize);
-        if (!draggingIntoTop) {
-            return;
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < topInventorySize) {
+                event.setCancelled(true);
+                player.sendMessage(NESTED_SHULKER_MESSAGE);
+                return;
+            }
         }
-
-        event.setCancelled(true);
-        player.sendMessage(NESTED_SHULKER_MESSAGE);
     }
 
     /**
