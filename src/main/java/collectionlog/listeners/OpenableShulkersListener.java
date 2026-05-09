@@ -43,7 +43,7 @@ public class OpenableShulkersListener implements Listener {
         this.perkManager = plugin.getPerkManager();
     }
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Action action = event.getAction();
 
