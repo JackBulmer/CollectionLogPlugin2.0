@@ -152,7 +152,7 @@ public class OpenableShulkersListener implements Listener {
         }
 
         Inventory topInventory = event.getView().getTopInventory();
-        if (context.inventory != topInventory) {
+        if (!context.inventory.equals(topInventory)) {
             return;
         }
 
@@ -200,7 +200,7 @@ public class OpenableShulkersListener implements Listener {
         }
 
         ShulkerContext context = openShulkers.get(player.getUniqueId());
-        if (context == null || context.inventory != event.getView().getTopInventory()) {
+        if (context == null || !context.inventory.equals(event.getView().getTopInventory())) {
             return;
         }
 
