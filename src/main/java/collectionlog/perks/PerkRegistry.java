@@ -66,8 +66,9 @@ public final class PerkRegistry {
                         "§7instead of sand while this perk is enabled."),
                 Material.GLASS, "glass", true, false, true);
 
-        register("fast_ghast_riding", "Quicker Happy Ghasts",
-                List.of("§7Travel faster when riding a Happy Ghast."),
+        register("fast_ghast_riding", "Fast Ghast Riding",
+                List.of("§7Doubles Happy Ghast flying speed",
+                        "§7when you are the controlling rider."),
                 Material.DRIED_GHAST, "happy ghast", false, false, false);
 
         register("quicker_potion_brewing", "Quicker Potion Brewing",
