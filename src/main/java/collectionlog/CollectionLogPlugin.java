@@ -51,6 +51,7 @@ import collectionlog.listeners.CraftItemListener;
 import collectionlog.listeners.EnchantmentTableListener;
 import collectionlog.listeners.EntityDeathListener;
 import collectionlog.listeners.ExplosionListener;
+import collectionlog.listeners.FastGhastRidingListener;
 import collectionlog.listeners.InventoryClickListener;
 import collectionlog.listeners.ItemPickupListener;
 import collectionlog.listeners.MobHeadDropListener;
@@ -242,6 +243,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(harvestAndReplantListener, this);
             getServer().getPluginManager().registerEvents(new DoublSnifferFlowersListener(this), this);
             getServer().getPluginManager().registerEvents(new OpenableShulkersListener(this), this);
+            getServer().getPluginManager().registerEvents(new FastGhastRidingListener(this), this);
 
             // Schedule cleanup task for protected crops (runs every second)
             getServer().getScheduler().runTaskTimer(this, () ->
