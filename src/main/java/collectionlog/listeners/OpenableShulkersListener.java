@@ -9,9 +9,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
@@ -26,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OpenableShulkersListener implements Listener {
 
     private static final String PERK_ID = "openable_shulkers";
+    private static final String NESTED_SHULKER_MESSAGE = "§cYou cannot put a shulker box inside another shulker box!";
 
     private final CollectionLogPlugin plugin;
     private final PerkManager perkManager;
@@ -40,15 +45,22 @@ public class OpenableShulkersListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        ItemStack item = event.getItem();
+        Action action = event.getAction();
 
-        // Only process right-clicks with an item in main hand
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+        // Only process right-clicks
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        if (item == null || !isShulkerBox(item.getType())) {
+        // Ensure this only runs once from the main hand
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+
+        if (item == null || item.getType().isAir() || !isShulkerBox(item.getType())) {
             return;
         }
 
@@ -80,8 +92,8 @@ public class OpenableShulkersListener implements Listener {
                 ? shulkerItem.getItemMeta().getDisplayName()
                 : getShulkerBoxName(shulkerItem.getType());
 
-        // Create a 27-slot inventory (standard shulker size)
-        Inventory inventory = plugin.getServer().createInventory(null, 27, title);
+        // Create a shulker-box inventory for vanilla-consistent behavior
+        Inventory inventory = plugin.getServer().createInventory(null, InventoryType.SHULKER_BOX, title);
 
         // Load contents from ItemStack NBT if present
         if (shulkerItem.hasItemMeta() && shulkerItem.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
@@ -122,6 +134,81 @@ public class OpenableShulkersListener implements Listener {
 
         // Save the inventory contents back to the ItemStack
         saveShulkerContents(player, context.shulkerItem, context.inventory);
+    }
+
+    /**
+     * Prevent players from placing shulker boxes inside opened shulker inventories.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+
+        ShulkerContext context = openShulkers.get(player.getUniqueId());
+        if (context == null) {
+            return;
+        }
+
+        Inventory topInventory = event.getView().getTopInventory();
+        if (context.inventory != topInventory) {
+            return;
+        }
+
+        Inventory clickedInventory = event.getClickedInventory();
+
+        if (clickedInventory != null && clickedInventory.equals(topInventory)) {
+            if (isShulkerItem(event.getCursor())) {
+                event.setCancelled(true);
+                player.sendMessage(NESTED_SHULKER_MESSAGE);
+                return;
+            }
+
+            if (event.getClick().isKeyboardClick()) {
+                int hotbarButton = event.getHotbarButton();
+                if (hotbarButton >= 0 && isShulkerItem(player.getInventory().getItem(hotbarButton))) {
+                    event.setCancelled(true);
+                    player.sendMessage(NESTED_SHULKER_MESSAGE);
+                    return;
+                }
+            }
+        }
+
+        if (event.isShiftClick()
+                && clickedInventory != null
+                && clickedInventory.equals(event.getView().getBottomInventory())
+                && isShulkerItem(event.getCurrentItem())) {
+            event.setCancelled(true);
+            player.sendMessage(NESTED_SHULKER_MESSAGE);
+        }
+    }
+
+    /**
+     * Prevent dragging shulker boxes into opened shulker inventories.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+
+        ShulkerContext context = openShulkers.get(player.getUniqueId());
+        if (context == null || context.inventory != event.getView().getTopInventory()) {
+            return;
+        }
+
+        if (!isShulkerItem(event.getOldCursor())) {
+            return;
+        }
+
+        int topInventorySize = event.getView().getTopInventory().getSize();
+        boolean draggingIntoTop = event.getRawSlots().stream().anyMatch(slot -> slot < topInventorySize);
+        if (!draggingIntoTop) {
+            return;
+        }
+
+        event.setCancelled(true);
+        player.sendMessage(NESTED_SHULKER_MESSAGE);
     }
 
     /**
@@ -179,6 +266,13 @@ public class OpenableShulkersListener implements Listener {
                  BLACK_SHULKER_BOX -> true;
             default -> false;
         };
+    }
+
+    /**
+     * Check if an ItemStack is a shulker box.
+     */
+    private boolean isShulkerItem(ItemStack itemStack) {
+        return itemStack != null && !itemStack.getType().isAir() && isShulkerBox(itemStack.getType());
     }
 
     /**
