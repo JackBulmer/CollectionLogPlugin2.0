@@ -33,6 +33,7 @@ import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
 import collectionlog.listeners.DoublSnifferFlowersListener;
 import collectionlog.listeners.HarvestAndReplantListener;
+import collectionlog.listeners.OpenableShulkersListener;
 import collectionlog.listeners.InfiniteLavaBucketListener;
 import collectionlog.listeners.InstantGlassSmeltingListener;
 import collectionlog.listeners.StructureGrowListener;
@@ -240,6 +241,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             harvestAndReplantListener = new HarvestAndReplantListener(this);
             getServer().getPluginManager().registerEvents(harvestAndReplantListener, this);
             getServer().getPluginManager().registerEvents(new DoublSnifferFlowersListener(this), this);
+            getServer().getPluginManager().registerEvents(new OpenableShulkersListener(this), this);
 
             // Schedule cleanup task for protected crops (runs every second)
             getServer().getScheduler().runTaskTimer(this, () ->
