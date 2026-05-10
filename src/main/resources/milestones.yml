@@ -298,89 +298,268 @@ collections:
 sub_collections:
   wood:
     oak:
-      xp: 100
+      xp: 3
       items:
         - "DIAMOND:1"
-
     spruce:
-      xp: 100
+      xp: 3
       items:
         - "DIAMOND:1"
-
     birch:
-      xp: 100
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    jungle:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    acacia:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    dark oak:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    mangrove:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    cherry:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    bamboo:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+    pale oak:
+      xp: 3
       items:
         - "DIAMOND:1"
 
   ores:
     ore blocks:
-      xp: 150
+      xp: 3
       perks:
         - vein_miner
-      items:
-        - "DIAMOND:2"
 
     ore materials:
-      xp: 150
+      xp: 3
       perks:
         - permanent_night_vision
-      items:
-        - "DIAMOND:2"
-
-  weapons and tools:
-    hoes:
-      xp: 100
-      perks:
-        - harvest_and_replant
-      items:
-        - "DIAMOND:1"
 
   stones:
     stone:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     cobblestone:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     stone bricks:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     granite:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     diorite:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     andesite:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     deepslate:
-      xp: 75
+      xp: 3
       items:
-        - "EMERALD:2"
+        - "DIAMOND:1"
+
     tuff:
-      xp: 75
+      xp: 3
       items:
-        - "EMERALD:2"
+        - "DIAMOND:1"
+
     sandstone:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     red sandstone:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     bricks:
-      xp: 50
+      xp: 3
       items:
-        - "EMERALD:1"
+        - "DIAMOND:1"
+
     resin:
-      xp: 75
+      xp: 3
       items:
-        - "EMERALD:2"
+        - "DIAMOND:1"
+
+  armour:
+    leather armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    chainmail armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    copper armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    iron armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    golden armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    diamond armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    netherite armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    special armour:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+  weapons and tools:
+    spears:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    swords:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    pickaxes:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    axes:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    shovels:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    hoes:
+      xp: 3
+      perks:
+        - harvest_and_replant
+
+    other tools:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+  nether:
+    nether stones:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    nether brick:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    quartz:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    crimson:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    warped:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    miscellaneous nether:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+  nature:
+    mud and dirt:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    flowers:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    foliage:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    mushrooms:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    ground materials:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    ice and snow:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    bees:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    pumpkins:
+      xp: 3
+      items:
+        - "DIAMOND:1"
+
+    miscellaneous nature:
+      xp: 3
+      items:
+        - "DIAMOND:1"
