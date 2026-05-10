@@ -312,7 +312,7 @@ public class MilestoneManager {
 
         // XP Reward
         if (milestone.getXpReward() > 0) {
-            player.giveExp(milestone.getXpReward());
+            player.giveExpLevels(milestone.getXpReward());
             rewardMessages.add("§7• §6XP: §e+" + milestone.getXpReward());
         }
 
