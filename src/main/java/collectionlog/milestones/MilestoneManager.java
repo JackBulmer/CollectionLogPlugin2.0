@@ -14,6 +14,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.sql.Connection;
@@ -306,18 +307,49 @@ public class MilestoneManager {
     }
 
     private void awardSubCollectionRewards(Player player, SubCollectionMilestone milestone) {
+        List<String> rewardMessages = new ArrayList<>();
+        boolean inventoryFull = false;
+
+        // XP Reward
         if (milestone.getXpReward() > 0) {
             player.giveExp(milestone.getXpReward());
-            player.sendMessage("§a+ " + milestone.getXpReward() + " XP");
+            rewardMessages.add("§7• §6XP: §e+" + milestone.getXpReward());
         }
 
+        // Item Rewards
+        List<String> itemRewardStrings = milestone.getItemRewards();
+        if (!itemRewardStrings.isEmpty()) {
+            List<String> itemNames = new ArrayList<>();
+            for (String itemString : itemRewardStrings) {
+                ItemStack item = parseItemReward(itemString);
+                if (item != null) {
+                    HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(item);
+                    if (!leftover.isEmpty()) {
+                        inventoryFull = true;
+                        for (ItemStack drop : leftover.values()) {
+                            player.getWorld().dropItemNaturally(player.getLocation(), drop);
+                        }
+                    }
+                    String displayName = formatDisplayName(item.getType().name());
+                    if (item.getAmount() > 1) {
+                        itemNames.add(item.getAmount() + "x " + displayName);
+                    } else {
+                        itemNames.add(displayName);
+                    }
+                }
+            }
+            if (!itemNames.isEmpty()) {
+                rewardMessages.add("§7• §6Items: §e" + String.join(", ", itemNames));
+            }
+        }
+
+        // Perk Rewards
         List<String> perks = milestone.getPerks();
         if (!perks.isEmpty()) {
-            List<String> unlockedRewards = new ArrayList<>();
             boolean hasExtraHeart = false;
             for (String perkId : perks) {
                 unlockPerk(player.getUniqueId(), perkId);
-                unlockedRewards.add("§6Perk: §e" + formatDisplayName(perkId));
+                rewardMessages.add("§7• §6Perk: §e" + formatDisplayName(perkId));
                 if ("extra_heart".equals(perkId)) {
                     hasExtraHeart = true;
                 }
@@ -328,11 +360,19 @@ public class MilestoneManager {
             if (hasExtraHeart) {
                 plugin.getExtraHeartsManager().applyExtraHearts(player);
             }
-            if (!unlockedRewards.isEmpty()) {
-                player.sendMessage("§a§l✦ Sub-Collection Rewards ✦");
-                for (String reward : unlockedRewards) {
-                    player.sendMessage("  " + reward);
-                }
+        }
+
+        // Send formatted reward message
+        if (!rewardMessages.isEmpty()) {
+            player.sendMessage("§a§l✦ Sub-Collection Complete! ✦");
+            player.sendMessage("§7" + capitalizeCollectionName(milestone.getParentCollection())
+                    + " › " + capitalizeCollectionName(milestone.getSubCollection()));
+            player.sendMessage("§aUnlocked Rewards:");
+            for (String reward : rewardMessages) {
+                player.sendMessage(reward);
+            }
+            if (inventoryFull) {
+                player.sendMessage("§eYour inventory is full! Items dropped at your feet.");
             }
         }
 
@@ -340,6 +380,45 @@ public class MilestoneManager {
         if (plugin.getCustomRecipeManager() != null) {
             plugin.getCustomRecipeManager().discoverRecipesForPlayer(player);
         }
+    }
+
+    /**
+     * Parse an item reward string from config into an {@link ItemStack}.
+     * Format: {@code "MATERIAL:AMOUNT"} or {@code "MATERIAL"} (defaults to amount 1).
+     * Examples: {@code "DIAMOND:5"}, {@code "GOLDEN_APPLE:2"}, {@code "EMERALD"}.
+     *
+     * @return the parsed {@link ItemStack}, or {@code null} if the string is invalid
+     */
+    private ItemStack parseItemReward(String itemString) {
+        if (itemString == null || itemString.trim().isEmpty()) {
+            return null;
+        }
+
+        String[] parts = itemString.trim().split(":");
+        String materialName = parts[0].toUpperCase(Locale.ROOT);
+        int amount = 1;
+
+        if (parts.length > 1) {
+            try {
+                amount = Integer.parseInt(parts[1].trim());
+                if (amount <= 0) {
+                    plugin.getLogger().warning("Invalid item amount in reward (must be > 0): " + itemString);
+                    amount = 1;
+                }
+            } catch (NumberFormatException e) {
+                plugin.getLogger().warning("Invalid item amount in reward: " + itemString);
+            }
+        }
+
+        Material material;
+        try {
+            material = Material.valueOf(materialName);
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Invalid material in reward: " + materialName);
+            return null;
+        }
+
+        return new ItemStack(material, amount);
     }
 
     private void showMilestoneNotifications(Player player, Milestone milestone) {
