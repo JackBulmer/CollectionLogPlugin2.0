@@ -150,7 +150,7 @@ public class FastGhastRidingListener implements Listener {
     }
 
     private void applySpeedBoost(LivingEntity happyGhast) {
-        AttributeInstance flyingSpeed = happyGhast.getAttribute(Attribute.GENERIC_FLYING_SPEED);
+        AttributeInstance flyingSpeed = happyGhast.getAttribute(Attribute.FLYING_SPEED);
         if (flyingSpeed == null) {
             return;
         }
@@ -170,7 +170,7 @@ public class FastGhastRidingListener implements Listener {
             return;
         }
 
-        AttributeInstance flyingSpeed = happyGhast.getAttribute(Attribute.GENERIC_FLYING_SPEED);
+        AttributeInstance flyingSpeed = happyGhast.getAttribute(Attribute.FLYING_SPEED);
         if (flyingSpeed != null) {
             flyingSpeed.setBaseValue(originalSpeed);
         }
