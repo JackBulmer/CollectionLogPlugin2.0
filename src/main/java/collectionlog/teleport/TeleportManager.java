@@ -2,6 +2,8 @@ package collectionlog.teleport;
 
 import collectionlog.CollectionLogPlugin;
 import collectionlog.teleport.data.ActiveTeleport;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -48,7 +50,7 @@ public class TeleportManager implements Listener {
                 costPlayer.setLevel(costPlayer.getLevel() - tpCost);
             }
             player.teleport(destination);
-            player.sendActionBar("§aTeleported!");
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§aTeleported!"));
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
             return;
         }
@@ -64,12 +66,12 @@ public class TeleportManager implements Listener {
                     costPlayer.setLevel(costPlayer.getLevel() - tpCost);
                 }
                 player.teleport(destination);
-                player.sendActionBar("§aTeleported!");
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§aTeleported!"));
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
                 activeTeleports.remove(player.getUniqueId());
             },
             (reason) -> {
-                player.sendActionBar("§cTeleport cancelled!");
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§cTeleport cancelled!"));
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 activeTeleports.remove(player.getUniqueId());
             }
@@ -93,7 +95,8 @@ public class TeleportManager implements Listener {
             int remaining = tp.getRemainingSeconds();
 
             String color = remaining >= 4 ? "§e" : remaining >= 2 ? "§6" : "§c";
-            player.sendActionBar(color + "Teleporting in " + remaining + "...");
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                new TextComponent(color + "Teleporting in " + remaining + "..."));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_DING, 1f, 1f);
 
             tp.decrementSeconds();
