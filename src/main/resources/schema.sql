@@ -169,3 +169,12 @@ CREATE TABLE IF NOT EXISTS player_glowing (
     enabled INTEGER NOT NULL DEFAULT 0,
     color VARCHAR(16) NOT NULL DEFAULT 'WHITE'
 );
+
+-- Player teleport settings
+CREATE TABLE IF NOT EXISTS player_teleport_settings (
+    player_uuid CHAR(36) PRIMARY KEY,
+    max_homes INT NOT NULL DEFAULT 5,
+    tp_cost INT NOT NULL DEFAULT 5,
+    inter_dimensional INTEGER NOT NULL DEFAULT 1,
+    countdown_seconds INT NOT NULL DEFAULT 5
+);

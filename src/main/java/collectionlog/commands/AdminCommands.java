@@ -66,6 +66,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 case "missing-items" -> handleMissingItems(sender);
                 case "givelava" -> handleGiveLava(sender, args);
                 case "resethealth" -> handleResetHealth(sender, args);
+                case "teleport" -> handleTeleportAdmin(sender, args);
                 default -> {
                     sendHelp(sender);
                     yield true;
@@ -77,6 +78,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             plugin.getLogger().log(Level.WARNING, "Admin command failed", exception);
             return true;
         }
+    }
+
+    private boolean handleTeleportAdmin(CommandSender sender, String[] args) {
+        return plugin.getTeleportAdminCommand().handle(sender, args);
     }
 
     private boolean handleCollectionCommand(CommandSender sender, String[] args) {
@@ -685,7 +690,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava", "resethealth"));
+            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava", "resethealth", "teleport"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
@@ -714,6 +719,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 players.add(player.getName());
             }
             return filterCompletions(args[1], players);
+        }
+
+        if (args[0].equalsIgnoreCase("teleport") && plugin.getTeleportAdminCommand() != null) {
+            return plugin.getTeleportAdminCommand().onTabComplete(args);
         }
 
         if (args.length == 3) {

@@ -66,6 +66,40 @@ commands:
     usage: /harvest
     aliases: [replant, autoreplant]
 
+  sethome:
+    description: Create a home waypoint
+    usage: /sethome <name> [material]
+    permission: collectionlog.teleport.sethome
+
+  delhome:
+    description: Delete a home waypoint
+    usage: /delhome <name>
+    permission: collectionlog.teleport.delhome
+
+  home:
+    description: Teleport to a home or update home material
+    usage: /home <name> | /home update <name> <material>
+    permission: collectionlog.teleport.home
+
+  homes:
+    description: Open homes GUI
+    usage: /homes
+    permission: collectionlog.teleport.homes
+
+  tpr:
+    description: Send a teleport request to a player
+    usage: /tpr <player>
+    permission: collectionlog.teleport.request
+
+  tpa:
+    description: Accept a teleport request
+    usage: /tpa [player] [charge-me]
+    permission: collectionlog.teleport.accept
+
+  tp:
+    description: Teleport to home or player
+    usage: /tp <home|player>
+
 permissions:
   collectionlog.use:
     description: Use collection log features
@@ -76,3 +110,21 @@ permissions:
   collectionlog.craft:
     description: Use the /craft command (granted when Utilities collection is complete)
     default: false
+  collectionlog.teleport.sethome:
+    description: Use /sethome command
+    default: true
+  collectionlog.teleport.delhome:
+    description: Use /delhome command
+    default: true
+  collectionlog.teleport.home:
+    description: Use /home command
+    default: true
+  collectionlog.teleport.homes:
+    description: Use /homes command
+    default: true
+  collectionlog.teleport.request:
+    description: Use /tpr command
+    default: true
+  collectionlog.teleport.accept:
+    description: Use /tpa command
+    default: true
