@@ -37,6 +37,10 @@ public class CraftItemListener implements Listener {
             return;
         }
 
+        if (craftedItem.getType().name().endsWith("_ARMOR_TRIM_SMITHING_TEMPLATE")) {
+            return;
+        }
+
         for (CollectionMatcher.CollectionMatch match : collectionMatcher.findMatches(craftedItem)) {
             progressTrackingManager.trackItemCollection(player, match.collection(), match.signature())
                     .exceptionally(throwable -> {
