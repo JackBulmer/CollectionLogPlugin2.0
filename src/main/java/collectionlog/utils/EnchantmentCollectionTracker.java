@@ -51,9 +51,11 @@ public final class EnchantmentCollectionTracker {
 
         Map<Enchantment, Integer> enchantments = new LinkedHashMap<>();
         if (hasDirectEnchantments) {
-            enchantments.putAll(item.getEnchantments());
+            item.getEnchantments().forEach((enchantment, level) ->
+                    enchantments.put(enchantment, Math.max(1, level)));
         }
-        if (hasStoredEnchantments && meta instanceof EnchantmentStorageMeta storageMeta) {
+        if (hasStoredEnchantments) {
+            EnchantmentStorageMeta storageMeta = (EnchantmentStorageMeta) meta;
             storageMeta.getStoredEnchants().forEach((enchantment, level) ->
                     enchantments.merge(enchantment, Math.max(1, level), Math::max));
         }

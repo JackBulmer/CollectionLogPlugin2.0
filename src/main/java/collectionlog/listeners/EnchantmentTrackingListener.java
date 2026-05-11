@@ -51,6 +51,8 @@ public class EnchantmentTrackingListener implements Listener {
         }
 
         UUID dropper = itemTrackingManager.getDropper(event.getItem());
+        // Mirror ItemPickupListener ownership behavior: if another player dropped this item,
+        // pickup is allowed but collection progress is not awarded to the picker.
         if (dropper != null && !dropper.equals(player.getUniqueId())) {
             return;
         }
