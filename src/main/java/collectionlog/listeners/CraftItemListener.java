@@ -3,6 +3,7 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import collectionlog.utils.ItemSignatureHelper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -37,7 +38,7 @@ public class CraftItemListener implements Listener {
             return;
         }
 
-        if (craftedItem.getType().name().endsWith("_ARMOR_TRIM_SMITHING_TEMPLATE")) {
+        if (craftedItem.getType().name().endsWith(ItemSignatureHelper.ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX)) {
             return;
         }
 

@@ -19,6 +19,8 @@ import java.util.Set;
  * Generates collection signatures for all supported item formats.
  */
 public class ItemSignatureHelper {
+    public static final String ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX = "_ARMOR_TRIM_SMITHING_TEMPLATE";
+
     /**
      * Generate all candidate signatures for an item.
      */
@@ -37,19 +39,17 @@ public class ItemSignatureHelper {
 
         Material type = item.getType();
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            signatures.add(type.name());
-            addSmithingTemplateSignatures(type, signatures);
-            return signatures;
-        }
-
-        if (meta.hasCustomModelData()) {
+        if (meta != null && meta.hasCustomModelData()) {
             addCustomModelDataSignatures(meta, signatures);
             return signatures;
         }
 
         signatures.add(type.name());
         addSmithingTemplateSignatures(type, signatures);
+
+        if (meta == null) {
+            return signatures;
+        }
         addEnchantmentSignatures(meta, signatures);
         addPotionSignatures(type, meta, signatures);
         addGoatHornSignatures(type, meta, signatures);
@@ -95,11 +95,11 @@ public class ItemSignatureHelper {
     }
 
     private void addSmithingTemplateSignatures(Material type, Set<String> signatures) {
-        if (!type.name().endsWith("_ARMOR_TRIM_SMITHING_TEMPLATE")) {
+        if (!type.name().endsWith(ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX)) {
             return;
         }
         signatures.add(type.name()
-                .replace("_ARMOR_TRIM_SMITHING_TEMPLATE", "")
+                .replace(ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX, "")
                 .toLowerCase(Locale.ROOT));
     }
 

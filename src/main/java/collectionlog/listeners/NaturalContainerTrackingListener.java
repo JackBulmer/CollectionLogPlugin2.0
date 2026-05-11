@@ -4,6 +4,7 @@ import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
 import collectionlog.utils.EnchantmentCollectionTracker;
+import collectionlog.utils.ItemSignatureHelper;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -266,7 +267,7 @@ public class NaturalContainerTrackingListener implements Listener {
         }
 
         ItemStack item = event.getItem().getItemStack();
-        if (!item.getType().name().endsWith("_ARMOR_TRIM_SMITHING_TEMPLATE")) {
+        if (!item.getType().name().endsWith(ItemSignatureHelper.ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX)) {
             return;
         }
 
