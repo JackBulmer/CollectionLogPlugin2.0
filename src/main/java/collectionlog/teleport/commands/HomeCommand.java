@@ -145,7 +145,7 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
                     .filter(n -> n.toLowerCase().startsWith(partial))
                     .forEach(completions::add);
             } catch (Exception ignored) {}
-            return completions.stream().filter(c -> c.startsWith(partial)).collect(Collectors.toList());
+            return completions;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("update")) {
             String partial = args[1].toLowerCase();

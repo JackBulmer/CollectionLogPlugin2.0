@@ -78,11 +78,11 @@ public class TeleportManager implements Listener {
             ActiveTeleport tp = activeTeleports.get(player.getUniqueId());
             if (tp == null) return;
 
-            // Check horizontal movement
+            // Check horizontal movement (compare squared distance to avoid sqrt)
             Location currentLoc = player.getLocation();
             double dx = currentLoc.getX() - tp.getStartLocation().getX();
             double dz = currentLoc.getZ() - tp.getStartLocation().getZ();
-            if (Math.sqrt(dx * dx + dz * dz) > 0.1) {
+            if (dx * dx + dz * dz > 0.01) {
                 cancelTeleport(player.getUniqueId(), "moved");
                 return;
             }

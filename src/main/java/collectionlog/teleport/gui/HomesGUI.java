@@ -116,9 +116,11 @@ public class HomesGUI implements Listener {
             ItemMeta meta = clicked.getItemMeta();
             if (meta == null || !meta.hasDisplayName()) return;
 
-            // Strip the §X color prefix to recover the home name
             String displayName = meta.getDisplayName();
-            String homeName = displayName.length() > 2 ? displayName.substring(2) : displayName;
+            // Strip leading §X color prefix if present
+            String homeName = (displayName.length() > 2 && displayName.charAt(0) == '§')
+                ? displayName.substring(2)
+                : displayName;
 
             player.closeInventory();
             plugin.getServer().dispatchCommand(player, "home " + homeName);
