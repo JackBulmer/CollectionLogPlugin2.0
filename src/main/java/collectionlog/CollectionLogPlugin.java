@@ -45,6 +45,7 @@ import collectionlog.listeners.BlockPlaceListener;
 import collectionlog.listeners.BrewingStandListener;
 import collectionlog.listeners.BucketListener;
 import collectionlog.listeners.ContainerListener;
+import collectionlog.listeners.NaturalContainerTrackingListener;
 import collectionlog.crafting.CustomCraftingListener;
 import collectionlog.crafting.CustomRecipeManager;
 import collectionlog.listeners.CraftItemListener;
@@ -217,6 +218,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new PlayerDropItemListener(this), this);
             getServer().getPluginManager().registerEvents(new ItemPickupListener(this), this);
             getServer().getPluginManager().registerEvents(new ContainerListener(this), this);
+            getServer().getPluginManager().registerEvents(new NaturalContainerTrackingListener(this), this);
             getServer().getPluginManager().registerEvents(new EntityDeathListener(this), this);
             getServer().getPluginManager().registerEvents(new MobHeadDropListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerFishListener(this), this);
