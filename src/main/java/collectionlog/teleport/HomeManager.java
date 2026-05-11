@@ -1,6 +1,7 @@
 package collectionlog.teleport;
 
 import collectionlog.CollectionLogPlugin;
+import collectionlog.database.DatabaseType;
 import collectionlog.teleport.data.Home;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -123,7 +124,7 @@ public class HomeManager {
 
     public CompletableFuture<Void> saveHome(UUID playerId, String name, Material material, Location loc) {
         return CompletableFuture.runAsync(() -> {
-            boolean isSQLite = plugin.getDatabaseManager().getDatabaseType().name().equals("SQLITE");
+            boolean isSQLite = plugin.getDatabaseManager().getDatabaseType() == DatabaseType.SQLITE;
             String sql = isSQLite
                 ? "INSERT OR IGNORE INTO player_homes (player_uuid, home_name, icon_material, world, x, y, z, yaw, pitch, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 : "INSERT IGNORE INTO player_homes (player_uuid, home_name, icon_material, world, x, y, z, yaw, pitch, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";

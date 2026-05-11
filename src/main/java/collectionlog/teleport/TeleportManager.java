@@ -14,6 +14,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TeleportManager implements Listener {
+    /** Squared horizontal movement threshold (0.1 blocks). */
+    private static final double MOVEMENT_THRESHOLD_SQUARED = 0.01;
+
     private final CollectionLogPlugin plugin;
     private final Map<UUID, ActiveTeleport> activeTeleports = new ConcurrentHashMap<>();
 
@@ -82,7 +85,7 @@ public class TeleportManager implements Listener {
             Location currentLoc = player.getLocation();
             double dx = currentLoc.getX() - tp.getStartLocation().getX();
             double dz = currentLoc.getZ() - tp.getStartLocation().getZ();
-            if (dx * dx + dz * dz > 0.01) {
+            if (dx * dx + dz * dz > MOVEMENT_THRESHOLD_SQUARED) {
                 cancelTeleport(player.getUniqueId(), "moved");
                 return;
             }

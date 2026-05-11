@@ -141,7 +141,8 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
             List<String> completions = new ArrayList<>();
             completions.add("update");
             try {
-                homeManager.getHomeNames(player.getUniqueId()).get().stream()
+                homeManager.getHomeNames(player.getUniqueId())
+                    .get(1, java.util.concurrent.TimeUnit.SECONDS).stream()
                     .filter(n -> n.toLowerCase().startsWith(partial))
                     .forEach(completions::add);
             } catch (Exception ignored) {}
@@ -150,7 +151,8 @@ public class HomeCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && args[0].equalsIgnoreCase("update")) {
             String partial = args[1].toLowerCase();
             try {
-                return homeManager.getHomeNames(player.getUniqueId()).get().stream()
+                return homeManager.getHomeNames(player.getUniqueId())
+                    .get(1, java.util.concurrent.TimeUnit.SECONDS).stream()
                     .filter(n -> n.toLowerCase().startsWith(partial))
                     .collect(Collectors.toList());
             } catch (Exception ignored) {}

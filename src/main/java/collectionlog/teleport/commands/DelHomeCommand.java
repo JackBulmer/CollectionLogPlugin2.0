@@ -64,7 +64,8 @@ public class DelHomeCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1 && sender instanceof Player player) {
             String partial = args[0].toLowerCase();
             try {
-                return homeManager.getHomeNames(player.getUniqueId()).get().stream()
+                return homeManager.getHomeNames(player.getUniqueId())
+                    .get(1, java.util.concurrent.TimeUnit.SECONDS).stream()
                     .filter(n -> n.toLowerCase().startsWith(partial))
                     .collect(Collectors.toList());
             } catch (Exception ignored) {}

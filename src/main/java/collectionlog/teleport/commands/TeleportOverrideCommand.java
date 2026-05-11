@@ -47,41 +47,52 @@ public class TeleportOverrideCommand implements CommandExecutor, TabCompleter {
         // Try home lookup first for players with the required collection
         if (player.hasPermission("collectionlog.teleport.home") && validator.hasRequiredCollection(player)) {
             String name = args[0];
-            try {
-                var home = homeManager.getHome(player.getUniqueId(), name).get();
+            homeManager.getHome(player.getUniqueId(), name).thenAccept(home -> {
                 if (home != null) {
                     Location dest = home.toLocation();
-                    if (dest == null) {
-                        player.sendMessage("§cHome world not found");
-                        return true;
-                    }
-                    if (validator.isBannedWorld(player.getWorld().getName()) || validator.isBannedWorld(home.getWorld())) {
-                        player.sendMessage("§cYou cannot teleport home right now");
-                        return true;
-                    }
-                    settingsManager.getSettings(player.getUniqueId()).thenAccept(settings -> {
-                        if (!settings.isInterDimensional() && validator.isCrossDimension(player.getLocation(), dest)) {
-                            player.sendMessage("§cYou cannot teleport to other dimensions");
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (dest == null) {
+                            player.sendMessage("§cHome world not found");
                             return;
                         }
-                        if (!validator.hasSufficientXP(player, settings.getTpCost())) {
-                            player.sendMessage("§cYou need " + settings.getTpCost() + " XP levels to teleport (you have " + player.getLevel() + ")");
+                        if (validator.isBannedWorld(player.getWorld().getName()) || validator.isBannedWorld(home.getWorld())) {
+                            player.sendMessage("§cYou cannot teleport home right now");
                             return;
                         }
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            if (teleportManager.hasActiveTeleport(player.getUniqueId())) {
-                                player.sendMessage("§cTeleport already in progress");
-                                return;
-                            }
-                            teleportManager.startTeleport(player, dest, settings.getCountdownSeconds(), settings.getTpCost(), player);
-                        });
+                        settingsManager.getSettings(player.getUniqueId()).thenAccept(settings ->
+                            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                if (!settings.isInterDimensional() && validator.isCrossDimension(player.getLocation(), dest)) {
+                                    player.sendMessage("§cYou cannot teleport to other dimensions");
+                                    return;
+                                }
+                                if (!validator.hasSufficientXP(player, settings.getTpCost())) {
+                                    player.sendMessage("§cYou need " + settings.getTpCost() + " XP levels to teleport (you have " + player.getLevel() + ")");
+                                    return;
+                                }
+                                if (teleportManager.hasActiveTeleport(player.getUniqueId())) {
+                                    player.sendMessage("§cTeleport already in progress");
+                                    return;
+                                }
+                                teleportManager.startTeleport(player, dest, settings.getCountdownSeconds(), settings.getTpCost(), player);
+                            })
+                        );
                     });
-                    return true;
+                } else if (sender.hasPermission("minecraft.command.tp")) {
+                    // Home not found - vanilla fallback cannot be triggered here (already returned true)
+                    plugin.getServer().getScheduler().runTask(plugin, () ->
+                        player.sendMessage("§cHome not found: " + name));
+                } else {
+                    plugin.getServer().getScheduler().runTask(plugin, () ->
+                        player.sendMessage("§cYou don't have permission to use this command."));
                 }
-            } catch (Exception ignored) {}
+            }).exceptionally(ex -> {
+                plugin.getLogger().severe("Error in /tp: " + ex.getMessage());
+                return null;
+            });
+            return true;
         }
 
-        // Fall back to vanilla /tp for operators
+        // Fall back to vanilla /tp for operators (no home permission or collection lock)
         if (sender.hasPermission("minecraft.command.tp")) {
             return false;
         }
@@ -95,7 +106,8 @@ public class TeleportOverrideCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1 && sender instanceof Player player) {
             String partial = args[0].toLowerCase();
             try {
-                return homeManager.getHomeNames(player.getUniqueId()).get().stream()
+                return homeManager.getHomeNames(player.getUniqueId())
+                    .get(1, java.util.concurrent.TimeUnit.SECONDS).stream()
                     .filter(n -> n.toLowerCase().startsWith(partial))
                     .collect(Collectors.toList());
             } catch (Exception ignored) {}

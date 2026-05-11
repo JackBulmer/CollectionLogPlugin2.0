@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class TeleportAcceptCommand implements CommandExecutor, TabCompleter {
@@ -120,11 +121,10 @@ public class TeleportAcceptCommand implements CommandExecutor, TabCompleter {
             String partial = args[0].toLowerCase();
             List<TeleportRequest> pending = requestManager.getPendingRequests(player.getUniqueId());
             List<String> completions = pending.stream()
-                .map(r -> {
-                    Player p = Bukkit.getPlayer(r.getRequesterId());
-                    return p != null ? p.getName() : null;
-                })
-                .filter(n -> n != null && n.toLowerCase().startsWith(partial))
+                .map(r -> Bukkit.getPlayer(r.getRequesterId()))
+                .filter(Objects::nonNull)
+                .map(Player::getName)
+                .filter(n -> n.toLowerCase().startsWith(partial))
                 .collect(Collectors.toList());
             if ("charge-me".startsWith(partial)) completions.add("charge-me");
             return completions;

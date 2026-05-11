@@ -1,6 +1,7 @@
 package collectionlog.teleport;
 
 import collectionlog.CollectionLogPlugin;
+import collectionlog.database.DatabaseType;
 import collectionlog.teleport.data.TeleportSettings;
 
 import java.sql.Connection;
@@ -51,7 +52,7 @@ public class TeleportSettingsManager {
 
     public CompletableFuture<Void> saveSettings(UUID playerId, TeleportSettings settings) {
         return CompletableFuture.runAsync(() -> {
-            boolean isSQLite = plugin.getDatabaseManager().getDatabaseType().name().equals("SQLITE");
+            boolean isSQLite = plugin.getDatabaseManager().getDatabaseType() == DatabaseType.SQLITE;
             String sql = isSQLite
                 ? "INSERT OR REPLACE INTO player_teleport_settings (player_uuid, max_homes, tp_cost, inter_dimensional, countdown_seconds) VALUES (?, ?, ?, ?, ?)"
                 : "INSERT INTO player_teleport_settings (player_uuid, max_homes, tp_cost, inter_dimensional, countdown_seconds) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE max_homes=VALUES(max_homes), tp_cost=VALUES(tp_cost), inter_dimensional=VALUES(inter_dimensional), countdown_seconds=VALUES(countdown_seconds)";
