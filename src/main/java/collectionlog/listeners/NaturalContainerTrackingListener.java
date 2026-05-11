@@ -3,6 +3,7 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import collectionlog.utils.EnchantmentCollectionTracker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -151,6 +152,16 @@ public class NaturalContainerTrackingListener implements Listener {
                     removePlayerPlacedTag(containerItem);
                 } else {
                     trackCollection(player, containerItem);
+                    if (containerItem.getType() != Material.ENCHANTED_BOOK) {
+                        EnchantmentCollectionTracker.trackEnchantments(
+                                plugin,
+                                collectionMatcher,
+                                progressTrackingManager,
+                                player,
+                                containerItem,
+                                false,
+                                "natural container");
+                    }
                 }
             }
         }

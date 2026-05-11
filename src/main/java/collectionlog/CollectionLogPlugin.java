@@ -50,6 +50,7 @@ import collectionlog.crafting.CustomCraftingListener;
 import collectionlog.crafting.CustomRecipeManager;
 import collectionlog.listeners.CraftItemListener;
 import collectionlog.listeners.EnchantmentTableListener;
+import collectionlog.listeners.EnchantmentTrackingListener;
 import collectionlog.listeners.EntityDeathListener;
 import collectionlog.listeners.ExplosionListener;
 import collectionlog.listeners.FastGhastRidingListener;
@@ -227,6 +228,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new BrewingStandListener(this), this);
             getServer().getPluginManager().registerEvents(new BucketListener(this), this);
             getServer().getPluginManager().registerEvents(new EnchantmentTableListener(this), this);
+            getServer().getPluginManager().registerEvents(new EnchantmentTrackingListener(this), this);
             getServer().getPluginManager().registerEvents(new SmithingTableListener(this), this);
             getServer().getPluginManager().registerEvents(new StonecutterListener(this), this);
             getServer().getPluginManager().registerEvents(new VillagerTradingListener(this), this);
