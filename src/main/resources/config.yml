@@ -57,3 +57,27 @@ mob-drops:
 
   # Enable/disable spawn egg drops
   spawn-eggs-enabled: true
+
+teleport:
+  # Default maximum number of homes (capped at 18)
+  max_homes: 5
+
+  # XP levels deducted per teleport
+  tp_cost: 5
+
+  # Allow teleporting across dimensions (Overworld/Nether/End)
+  inter_dimensional_teleporting: true
+
+  # Countdown before teleport executes (seconds); 0 = instant
+  countdown_seconds: 5
+
+  # Worlds where homes cannot be created and teleports are blocked
+  banned_worlds:
+    - "resource_world"
+    - "event_world"
+
+  # Milestone name that must be completed before teleports unlock ("" = no lock)
+  required_collection: ""
+
+  # Teleport-request expiration time in seconds
+  request_timeout: 60

@@ -15,6 +15,20 @@ import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
 import collectionlog.commands.TunnelMinerCommand;
 import collectionlog.commands.VeinMinerCommand;
+import collectionlog.teleport.HomeManager;
+import collectionlog.teleport.TeleportManager;
+import collectionlog.teleport.TeleportRequestManager;
+import collectionlog.teleport.TeleportSettingsManager;
+import collectionlog.teleport.TeleportValidator;
+import collectionlog.teleport.commands.DelHomeCommand;
+import collectionlog.teleport.commands.HomeCommand;
+import collectionlog.teleport.commands.HomesCommand;
+import collectionlog.teleport.commands.SetHomeCommand;
+import collectionlog.teleport.commands.TeleportAcceptCommand;
+import collectionlog.teleport.commands.TeleportAdminCommand;
+import collectionlog.teleport.commands.TeleportOverrideCommand;
+import collectionlog.teleport.commands.TeleportRequestCommand;
+import collectionlog.teleport.gui.HomesGUI;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
@@ -116,6 +130,13 @@ public class CollectionLogPlugin extends JavaPlugin {
     private HarvestAndReplantListener harvestAndReplantListener;
     private TreeCapitatorListener treeCapitatorListener;
     private StructureGrowListener structureGrowListener;
+    private HomeManager homeManager;
+    private TeleportSettingsManager teleportSettingsManager;
+    private TeleportRequestManager teleportRequestManager;
+    private TeleportValidator teleportValidator;
+    private TeleportManager teleportManager;
+    private HomesGUI homesGUI;
+    private TeleportAdminCommand teleportAdminCommand;
 
     @Override
     public void onEnable() {
@@ -266,6 +287,17 @@ public class CollectionLogPlugin extends JavaPlugin {
             structureGrowListener = new StructureGrowListener(this);
             getServer().getPluginManager().registerEvents(structureGrowListener, this);
 
+            // Initialize teleport system
+            homeManager = new HomeManager(this);
+            teleportSettingsManager = new TeleportSettingsManager(this);
+            teleportRequestManager = new TeleportRequestManager(this);
+            teleportValidator = new TeleportValidator(this);
+            teleportManager = new TeleportManager(this);
+            homesGUI = new HomesGUI(this, homeManager, teleportManager, teleportSettingsManager, teleportValidator);
+            teleportAdminCommand = new TeleportAdminCommand(this, teleportSettingsManager);
+            getServer().getPluginManager().registerEvents(teleportManager, this);
+            getServer().getPluginManager().registerEvents(homesGUI, this);
+
             // Schedule auto-disable check for Tree Capitator (every 60 seconds)
             getServer().getScheduler().runTaskTimer(this, () -> {
                 if (treeCapitatorListener != null) {
@@ -351,6 +383,53 @@ public class CollectionLogPlugin extends JavaPlugin {
                 harvestCommand.setExecutor(new HarvestCommand(this));
             } else {
                 getLogger().warning("Command 'harvest' not found in plugin.yml!");
+            }
+
+            PluginCommand setHomeCommand = getCommand("sethome");
+            if (setHomeCommand != null) {
+                SetHomeCommand setHomeExec = new SetHomeCommand(this, homeManager, teleportSettingsManager, teleportValidator);
+                setHomeCommand.setExecutor(setHomeExec);
+                setHomeCommand.setTabCompleter(setHomeExec);
+            }
+
+            PluginCommand delHomeCommand = getCommand("delhome");
+            if (delHomeCommand != null) {
+                DelHomeCommand delHomeExec = new DelHomeCommand(this, homeManager, teleportValidator);
+                delHomeCommand.setExecutor(delHomeExec);
+                delHomeCommand.setTabCompleter(delHomeExec);
+            }
+
+            PluginCommand homeCommand = getCommand("home");
+            if (homeCommand != null) {
+                HomeCommand homeExec = new HomeCommand(this, homeManager, teleportManager, teleportSettingsManager, teleportValidator);
+                homeCommand.setExecutor(homeExec);
+                homeCommand.setTabCompleter(homeExec);
+            }
+
+            PluginCommand homesCommand = getCommand("homes");
+            if (homesCommand != null) {
+                homesCommand.setExecutor(new HomesCommand(this, homesGUI, teleportValidator));
+            }
+
+            PluginCommand tprCommand = getCommand("tpr");
+            if (tprCommand != null) {
+                TeleportRequestCommand tprExec = new TeleportRequestCommand(this, teleportRequestManager, teleportValidator);
+                tprCommand.setExecutor(tprExec);
+                tprCommand.setTabCompleter(tprExec);
+            }
+
+            PluginCommand tpaCommand = getCommand("tpa");
+            if (tpaCommand != null) {
+                TeleportAcceptCommand tpaExec = new TeleportAcceptCommand(this, teleportRequestManager, teleportManager, teleportSettingsManager, teleportValidator);
+                tpaCommand.setExecutor(tpaExec);
+                tpaCommand.setTabCompleter(tpaExec);
+            }
+
+            PluginCommand tpCommand = getCommand("tp");
+            if (tpCommand != null) {
+                TeleportOverrideCommand tpExec = new TeleportOverrideCommand(this, homeManager, teleportManager, teleportSettingsManager, teleportValidator);
+                tpCommand.setExecutor(tpExec);
+                tpCommand.setTabCompleter(tpExec);
             }
             getLogger().info("✅ GUI and commands registered");
 
@@ -518,5 +597,33 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public StructureGrowListener getStructureGrowListener() {
         return structureGrowListener;
+    }
+
+    public HomeManager getHomeManager() {
+        return homeManager;
+    }
+
+    public TeleportSettingsManager getTeleportSettingsManager() {
+        return teleportSettingsManager;
+    }
+
+    public TeleportRequestManager getTeleportRequestManager() {
+        return teleportRequestManager;
+    }
+
+    public TeleportValidator getTeleportValidator() {
+        return teleportValidator;
+    }
+
+    public TeleportManager getTeleportManager() {
+        return teleportManager;
+    }
+
+    public HomesGUI getHomesGUI() {
+        return homesGUI;
+    }
+
+    public TeleportAdminCommand getTeleportAdminCommand() {
+        return teleportAdminCommand;
     }
 }
