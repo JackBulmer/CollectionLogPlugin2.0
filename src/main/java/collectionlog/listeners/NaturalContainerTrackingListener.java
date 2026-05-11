@@ -3,10 +3,10 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import collectionlog.utils.EnchantmentCollectionTracker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -24,12 +24,8 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Tracks items collected from naturally generated containers using Persistent Data Containers (PDC).
@@ -157,7 +153,14 @@ public class NaturalContainerTrackingListener implements Listener {
                 } else {
                     trackCollection(player, containerItem);
                     if (containerItem.getType() != Material.ENCHANTED_BOOK) {
-                        trackEnchantments(player, containerItem, false);
+                        EnchantmentCollectionTracker.trackEnchantments(
+                                plugin,
+                                collectionMatcher,
+                                progressTrackingManager,
+                                player,
+                                containerItem,
+                                false,
+                                "natural container");
                     }
                 }
             }
@@ -263,36 +266,6 @@ public class NaturalContainerTrackingListener implements Listener {
                                 "Failed to track natural container item collection: " + throwable.getMessage());
                         return null;
                     });
-        }
-    }
-
-    private void trackEnchantments(Player player, ItemStack item, boolean includeStoredEnchantments) {
-        if (item == null || item.getType().isAir()) {
-            return;
-        }
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return;
-        }
-
-        Map<Enchantment, Integer> enchantments = new LinkedHashMap<>(item.getEnchantments());
-        if (includeStoredEnchantments && meta instanceof EnchantmentStorageMeta storageMeta) {
-            storageMeta.getStoredEnchants().forEach((enchantment, level) ->
-                    enchantments.merge(enchantment, Math.max(1, level), Math::max));
-        }
-
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
-            String enchantmentKey = entry.getKey().getKey().getKey();
-            int level = Math.max(1, entry.getValue());
-
-            for (CollectionMatcher.CollectionMatch match : collectionMatcher.findMatchesForEnchantment(enchantmentKey, level)) {
-                progressTrackingManager.trackItemCollection(player, match.collection(), match.signature())
-                        .exceptionally(throwable -> {
-                            plugin.getLogger().severe(
-                                    "Failed to track natural container enchantment collection: " + throwable.getMessage());
-                            return null;
-                        });
-            }
         }
     }
 

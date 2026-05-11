@@ -4,9 +4,9 @@ import collectionlog.CollectionLogPlugin;
 import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import collectionlog.utils.EnchantmentCollectionTracker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,12 +19,8 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantInventory;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -64,7 +60,8 @@ public class EnchantmentTrackingListener implements Listener {
             return;
         }
 
-        trackEnchantments(player, item, false, "item pickup");
+        EnchantmentCollectionTracker.trackEnchantments(
+                plugin, collectionMatcher, progressTrackingManager, player, item, false, "item pickup");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -83,7 +80,8 @@ public class EnchantmentTrackingListener implements Listener {
             return;
         }
 
-        trackEnchantments(player, result, false, "villager trade");
+        EnchantmentCollectionTracker.trackEnchantments(
+                plugin, collectionMatcher, progressTrackingManager, player, result, false, "villager trade");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -100,7 +98,8 @@ public class EnchantmentTrackingListener implements Listener {
             return;
         }
 
-        trackEnchantments(event.getPlayer(), item, false, "fishing");
+        EnchantmentCollectionTracker.trackEnchantments(
+                plugin, collectionMatcher, progressTrackingManager, event.getPlayer(), item, false, "fishing");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -119,40 +118,8 @@ public class EnchantmentTrackingListener implements Listener {
             return;
         }
 
-        trackEnchantments(player, result, true, "anvil");
-    }
-
-    private void trackEnchantments(Player player, ItemStack item, boolean includeStoredEnchantments, String source) {
-        if (item == null || item.getType().isAir()) {
-            return;
-        }
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return;
-        }
-
-        Map<Enchantment, Integer> enchantments = new LinkedHashMap<>(item.getEnchantments());
-        if (includeStoredEnchantments && meta instanceof EnchantmentStorageMeta storageMeta) {
-            storageMeta.getStoredEnchants().forEach((enchantment, level) ->
-                    enchantments.merge(enchantment, Math.max(1, level), Math::max));
-        }
-        if (enchantments.isEmpty()) {
-            return;
-        }
-
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
-            String enchantmentKey = entry.getKey().getKey().getKey();
-            int level = Math.max(1, entry.getValue());
-
-            for (CollectionMatcher.CollectionMatch match : collectionMatcher.findMatchesForEnchantment(enchantmentKey, level)) {
-                progressTrackingManager.trackItemCollection(player, match.collection(), match.signature())
-                        .exceptionally(throwable -> {
-                            plugin.getLogger().severe(
-                                    "Failed to track " + source + " enchantment progress: " + throwable.getMessage());
-                            return null;
-                        });
-            }
-        }
+        EnchantmentCollectionTracker.trackEnchantments(
+                plugin, collectionMatcher, progressTrackingManager, player, result, true, "anvil");
     }
 
     private boolean isItemPlayerPlaced(ItemStack item) {
