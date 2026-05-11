@@ -4,6 +4,7 @@ import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
 import collectionlog.utils.EnchantmentCollectionTracker;
+import collectionlog.utils.ItemSignatureHelper;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
@@ -15,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -254,6 +256,22 @@ public class NaturalContainerTrackingListener implements Listener {
         if (isPlayerPlacedContainer(source) || isPlayerPlacedContainer(destination)) {
             markItemAsPlayerPlaced(event.getItem());
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEntityPickupItem(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || collectionMatcher == null
+                || progressTrackingManager == null) {
+            return;
+        }
+
+        ItemStack item = event.getItem().getItemStack();
+        if (!item.getType().name().endsWith(ItemSignatureHelper.ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX)) {
+            return;
+        }
+
+        trackCollection(player, item);
     }
 
     // ─── Helper Methods ───────────────────────────────────────────────────────

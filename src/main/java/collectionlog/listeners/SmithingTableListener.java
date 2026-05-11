@@ -10,10 +10,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.SmithingInventory;
+import org.bukkit.inventory.meta.ArmorMeta;
 
 /**
  * Tracks item collection when players craft items at smithing tables.
- * Primarily used for netherite tool/armor upgrades and armor trims.
+ * Primarily used for netherite tool/armor upgrades.
  */
 public class SmithingTableListener implements Listener {
     private final CollectionLogPlugin plugin;
@@ -45,6 +46,10 @@ public class SmithingTableListener implements Listener {
 
         ItemStack result = event.getCurrentItem();
         if (result == null || result.getType().isAir()) {
+            return;
+        }
+
+        if (result.getItemMeta() instanceof ArmorMeta armorMeta && armorMeta.hasTrim()) {
             return;
         }
 

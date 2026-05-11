@@ -4,7 +4,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MusicInstrumentMeta;
@@ -20,6 +19,8 @@ import java.util.Set;
  * Generates collection signatures for all supported item formats.
  */
 public class ItemSignatureHelper {
+    public static final String ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX = "_ARMOR_TRIM_SMITHING_TEMPLATE";
+
     /**
      * Generate all candidate signatures for an item.
      */
@@ -38,20 +39,19 @@ public class ItemSignatureHelper {
 
         Material type = item.getType();
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            signatures.add(type.name());
-            return signatures;
-        }
-
-        if (meta.hasCustomModelData()) {
+        if (meta != null && meta.hasCustomModelData()) {
             addCustomModelDataSignatures(meta, signatures);
             return signatures;
         }
 
         signatures.add(type.name());
+        addSmithingTemplateSignatures(type, signatures);
+
+        if (meta == null) {
+            return signatures;
+        }
         addEnchantmentSignatures(meta, signatures);
         addPotionSignatures(type, meta, signatures);
-        addArmorTrimSignatures(meta, signatures);
         addGoatHornSignatures(type, meta, signatures);
         addMobHeadSignatures(type, sourceEntityType, signatures);
 
@@ -94,14 +94,13 @@ public class ItemSignatureHelper {
         signatures.add(potionName + ":" + format);
     }
 
-    private void addArmorTrimSignatures(ItemMeta meta, Set<String> signatures) {
-        if (!(meta instanceof ArmorMeta armorMeta)) {
+    private void addSmithingTemplateSignatures(Material type, Set<String> signatures) {
+        if (!type.name().endsWith(ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX)) {
             return;
         }
-
-        if (armorMeta.hasTrim() && armorMeta.getTrim() != null) {
-            signatures.add(armorMeta.getTrim().getPattern().getKey().getKey().toLowerCase(Locale.ROOT));
-        }
+        signatures.add(type.name()
+                .replace(ARMOR_TRIM_SMITHING_TEMPLATE_SUFFIX, "")
+                .toLowerCase(Locale.ROOT));
     }
 
     private void addGoatHornSignatures(Material type, ItemMeta meta, Set<String> signatures) {
