@@ -14,7 +14,7 @@ import org.bukkit.inventory.meta.ArmorMeta;
 
 /**
  * Tracks item collection when players craft items at smithing tables.
- * Primarily used for netherite tool/armor upgrades and armor trims.
+ * Primarily used for netherite tool/armor upgrades.
  */
 public class SmithingTableListener implements Listener {
     private final CollectionLogPlugin plugin;
