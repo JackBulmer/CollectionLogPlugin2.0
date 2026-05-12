@@ -196,3 +196,13 @@ CREATE TABLE IF NOT EXISTS player_teleport_settings (
     inter_dimensional INTEGER NOT NULL DEFAULT 1,
     countdown_seconds INT NOT NULL DEFAULT 5
 );
+
+-- Persistent leaderboard hologram locations
+CREATE TABLE IF NOT EXISTS leaderboard_holograms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    world VARCHAR(255) NOT NULL,
+    x DOUBLE NOT NULL,
+    y DOUBLE NOT NULL,
+    z DOUBLE NOT NULL,
+    created_at BIGINT NOT NULL
+);

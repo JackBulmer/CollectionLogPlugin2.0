@@ -180,6 +180,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             }
         }
 
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(target.getUniqueId(), target.getName());
+        }
+
         sender.sendMessage("§aMarked collection '" + collection.getName() + "' as complete for " + target.getName());
         target.sendMessage("§a§lCollection completed by admin: " + collection.getName());
         return true;
@@ -203,6 +207,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             mm.checkSubCollectionCompletion(target.getUniqueId(), parent.getId(), sub.getName());
         }
 
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(target.getUniqueId(), target.getName());
+        }
+
         sender.sendMessage("§aCompleted '" + parent.getName() + " › " + sub.getName() + "' for " + target.getName());
         return true;
     }
@@ -223,6 +231,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             mm.revokeCollectionMilestone(playerId, key);
         }
 
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(playerId, target.getName());
+        }
+
         sender.sendMessage("§aReset '" + parent.getName() + " › " + sub.getName() + "' for " + target.getName());
         return true;
     }
@@ -235,6 +247,10 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         joinFuture(playerCollectionDAO.resetCollectionProgress(playerId, collection.getId()));
         if (milestoneManager != null) {
             milestoneManager.revokeCollectionMilestones(playerId, collection.getId());
+        }
+
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(playerId, target.getName());
         }
 
         sender.sendMessage("§aReset collection '" + collection.getName() + "' for " + target.getName());
@@ -331,6 +347,9 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7Affected collections: " + String.join(", ", affectedCollections));
         if (!revokedCollections.isEmpty()) {
             sender.sendMessage("§eRevoked collection perks: " + String.join(", ", revokedCollections));
+        }
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(playerId, target.getName());
         }
         return true;
     }

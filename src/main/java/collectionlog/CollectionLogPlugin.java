@@ -10,11 +10,15 @@ import collectionlog.commands.DyeCommand;
 import collectionlog.commands.GlowingCommand;
 import collectionlog.commands.HarvestCommand;
 import collectionlog.commands.InstantGlassCommand;
+import collectionlog.commands.LogScoreboardCommand;
+import collectionlog.commands.LogStatsCommand;
 import collectionlog.commands.LogsCommand;
 import collectionlog.commands.PerksCommand;
 import collectionlog.commands.TagsCommand;
 import collectionlog.commands.TunnelMinerCommand;
 import collectionlog.commands.VeinMinerCommand;
+import collectionlog.leaderboard.HologramManager;
+import collectionlog.leaderboard.LeaderboardManager;
 import collectionlog.teleport.HomeManager;
 import collectionlog.teleport.TeleportManager;
 import collectionlog.teleport.TeleportRequestManager;
@@ -89,6 +93,7 @@ import collectionlog.managers.GlowingManager;
 import collectionlog.managers.InfiniteDyesManager;
 import collectionlog.managers.StrafeManager;
 import collectionlog.milestones.MilestoneManager;
+import collectionlog.stats.CollectionStatsFileManager;
 import collectionlog.tags.TagManager;
 import collectionlog.utils.CollectionMatcher;
 import collectionlog.utils.GriefPreventionUtil;
@@ -143,6 +148,9 @@ public class CollectionLogPlugin extends JavaPlugin {
     private TeleportAdminCommand teleportAdminCommand;
     private LargerEnderChestManager largerEnderChestManager;
     private LargerEnderChestListener largerEnderChestListener;
+    private LeaderboardManager leaderboardManager;
+    private CollectionStatsFileManager collectionStatsFileManager;
+    private HologramManager hologramManager;
 
     @Override
     public void onEnable() {
@@ -236,6 +244,18 @@ public class CollectionLogPlugin extends JavaPlugin {
             largerEnderChestManager = new LargerEnderChestManager(this);
             largerEnderChestManager.loadCondensingPlayersAsync();
             largerEnderChestListener = new LargerEnderChestListener(this, largerEnderChestManager);
+            leaderboardManager = new LeaderboardManager(this);
+            collectionStatsFileManager = new CollectionStatsFileManager(this, leaderboardManager);
+            hologramManager = new HologramManager(this, leaderboardManager);
+            leaderboardManager.refreshAllPlayerStats().whenComplete((ignored, throwable) -> {
+                if (throwable != null) {
+                    getLogger().log(Level.SEVERE, "Failed to refresh leaderboard stats on startup", throwable);
+                }
+                collectionStatsFileManager.generateStatsFile();
+                hologramManager.updateHolograms();
+            });
+            hologramManager.loadHologramsFromDatabase();
+            hologramManager.start();
             getLogger().info("✅ Managers initialized");
 
             // Initialize GriefPrevention integration
@@ -397,6 +417,22 @@ public class CollectionLogPlugin extends JavaPlugin {
                 getLogger().warning("Command 'harvest' not found in plugin.yml!");
             }
 
+            PluginCommand logStatsCommand = getCommand("logstats");
+            if (logStatsCommand != null) {
+                logStatsCommand.setExecutor(new LogStatsCommand(this));
+            } else {
+                getLogger().warning("Command 'logstats' not found in plugin.yml!");
+            }
+
+            PluginCommand logScoreboardCommand = getCommand("logscoreboard");
+            if (logScoreboardCommand != null) {
+                LogScoreboardCommand executor = new LogScoreboardCommand(this);
+                logScoreboardCommand.setExecutor(executor);
+                logScoreboardCommand.setTabCompleter(executor);
+            } else {
+                getLogger().warning("Command 'logscoreboard' not found in plugin.yml!");
+            }
+
             PluginCommand setHomeCommand = getCommand("sethome");
             if (setHomeCommand != null) {
                 SetHomeCommand setHomeExec = new SetHomeCommand(this, homeManager, teleportSettingsManager, teleportValidator);
@@ -467,6 +503,9 @@ public class CollectionLogPlugin extends JavaPlugin {
         }
         if (quickerPotionBrewingListener != null) {
             quickerPotionBrewingListener.shutdown();
+        }
+        if (hologramManager != null) {
+            hologramManager.shutdown();
         }
 
         // Shutdown async tasks
@@ -644,5 +683,17 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public TeleportAdminCommand getTeleportAdminCommand() {
         return teleportAdminCommand;
+    }
+
+    public LeaderboardManager getLeaderboardManager() {
+        return leaderboardManager;
+    }
+
+    public CollectionStatsFileManager getCollectionStatsFileManager() {
+        return collectionStatsFileManager;
+    }
+
+    public HologramManager getHologramManager() {
+        return hologramManager;
     }
 }

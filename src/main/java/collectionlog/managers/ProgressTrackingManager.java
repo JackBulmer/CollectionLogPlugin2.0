@@ -87,6 +87,11 @@ public class ProgressTrackingManager {
                         asyncTaskManager.runSync(() -> {
                             ProgressMessageHelper.sendProgressMessage(plugin, player, result);
                             triggerMilestoneChecks(player, result);
+                            if (plugin instanceof CollectionLogPlugin collectionLogPlugin
+                                    && collectionLogPlugin.getCollectionStatsFileManager() != null) {
+                                collectionLogPlugin.getCollectionStatsFileManager()
+                                        .updatePlayerStats(player.getUniqueId(), player.getName());
+                            }
                         });
                     }
                     return result;

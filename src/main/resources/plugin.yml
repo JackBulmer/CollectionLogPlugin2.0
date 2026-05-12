@@ -100,12 +100,24 @@ commands:
     description: Teleport to home or player
     usage: /tp <home|player>
 
+  logstats:
+    description: Show the top collection log rankings
+    usage: /logstats
+
+  logscoreboard:
+    description: Create or remove collection log leaderboard scoreboards
+    usage: /logscoreboard <create|remove>
+    permission: collectionlog.admin.scoreboard
+
 permissions:
   collectionlog.use:
     description: Use collection log features
     default: true
   collectionlog.admin:
     description: Administrative commands
+    default: op
+  collectionlog.admin.scoreboard:
+    description: Create and remove collection log scoreboards
     default: op
   collectionlog.craft:
     description: Use the /craft command (granted when Utilities collection is complete)
