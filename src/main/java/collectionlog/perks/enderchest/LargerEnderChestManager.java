@@ -123,6 +123,7 @@ public class LargerEnderChestManager {
         }
 
         Map<Integer, ItemStack> extraItems = collectExtraItems(inventory);
+        Inventory condensedInventory = extraItems.isEmpty() ? null : createCondensedInventory(vanillaContents, extraItems);
         if (extraItems.isEmpty()) {
             player.getEnderChest().setContents(vanillaContents);
             plugin.getAsyncTaskManager().runAsync(() -> {
@@ -134,8 +135,8 @@ public class LargerEnderChestManager {
                     player.sendMessage("§aEnder chest condensing complete! You now have a normal ender chest.");
                 }
             }));
-        } else if (canFitInVanillaSlots(vanillaContents, extraItems)) {
-            autoCondense(player, playerId, vanillaContents, extraItems);
+        } else if (condensedInventory != null) {
+            autoCondense(player, playerId, condensedInventory);
         } else {
             player.getEnderChest().setContents(vanillaContents);
             plugin.getAsyncTaskManager().runAsync(() -> extraRowDAO.saveExtraRow(playerId, extraItems))
@@ -183,23 +184,7 @@ public class LargerEnderChestManager {
         return extraItems;
     }
 
-    private boolean canFitInVanillaSlots(ItemStack[] vanillaContents, Map<Integer, ItemStack> extraItems) {
-        return createCondensedInventory(vanillaContents, extraItems) != null;
-    }
-
-    private void autoCondense(Player player, UUID playerId, ItemStack[] vanillaContents, Map<Integer, ItemStack> extraItems) {
-        Inventory condensedInventory = createCondensedInventory(vanillaContents, extraItems);
-        if (condensedInventory == null) {
-            player.getEnderChest().setContents(vanillaContents);
-            plugin.getAsyncTaskManager().runAsync(() -> extraRowDAO.saveExtraRow(playerId, extraItems))
-                    .exceptionally(throwable -> {
-                        plugin.getLogger().severe("Failed to save condensing ender chest: " + throwable.getMessage());
-                        return null;
-                    });
-            plugin.getLogger().warning("Unable to auto-condense ender chest for " + playerId + "; keeping condensing mode active.");
-            return;
-        }
-
+    private void autoCondense(Player player, UUID playerId, Inventory condensedInventory) {
         player.getEnderChest().setContents(condensedInventory.getContents());
 
         plugin.getAsyncTaskManager().runAsync(() -> {
