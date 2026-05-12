@@ -725,6 +725,7 @@ public class MilestoneManager {
         for (String perkId : milestone.getPerks()) {
             perks.remove(perkId);
             removePerkFromDatabase(playerId, perkId);
+            triggerPerkRevocationHandlers(playerId, perkId);
         }
 
         for (String tagDisplayName : milestone.getPrefixTags()) {
@@ -732,6 +733,22 @@ public class MilestoneManager {
         }
         for (String tagDisplayName : milestone.getSuffixTags()) {
             removeTagFromDatabase(playerId, tagDisplayName);
+        }
+    }
+
+    /**
+     * Triggers perk-specific revocation handlers when a perk is removed via
+     * collection reset. This ensures cleanup logic (e.g., condensing mode) runs
+     * when perks are revoked through {@link #revokeMilestoneRewards}, not just
+     * through direct perk revocation via {@link collectionlog.perks.PerkManager}.
+     *
+     * <p>Note: {@code extra_heart} updates are handled separately in
+     * {@link #revokeCollectionMilestone} via an explicit call to
+     * {@code updateExtraHearts()}, so they are not duplicated here.
+     */
+    private void triggerPerkRevocationHandlers(UUID playerId, String perkId) {
+        if ("larger_ender_chest".equals(perkId) && plugin.getLargerEnderChestManager() != null) {
+            plugin.getLargerEnderChestManager().handlePerkRevoked(playerId);
         }
     }
 
