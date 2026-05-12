@@ -184,33 +184,20 @@ public class LargerEnderChestManager {
     }
 
     private boolean canFitInVanillaSlots(ItemStack[] vanillaContents, Map<Integer, ItemStack> extraItems) {
-        Inventory condensedInventory = Bukkit.createInventory(null, VANILLA_SIZE);
-        condensedInventory.setContents(cloneContents(vanillaContents));
-
-        for (ItemStack extraItem : extraItems.values()) {
-            if (extraItem == null || extraItem.getType().isAir()) {
-                continue;
-            }
-
-            Map<Integer, ItemStack> leftovers = condensedInventory.addItem(extraItem.clone());
-            if (!leftovers.isEmpty()) {
-                return false;
-            }
-        }
-
-        return true;
+        return createCondensedInventory(vanillaContents, extraItems) != null;
     }
 
     private void autoCondense(Player player, UUID playerId, ItemStack[] vanillaContents, Map<Integer, ItemStack> extraItems) {
-        Inventory condensedInventory = Bukkit.createInventory(null, VANILLA_SIZE);
-        condensedInventory.setContents(cloneContents(vanillaContents));
-
-        for (ItemStack extraItem : extraItems.values()) {
-            if (extraItem == null || extraItem.getType().isAir()) {
-                continue;
-            }
-
-            condensedInventory.addItem(extraItem.clone());
+        Inventory condensedInventory = createCondensedInventory(vanillaContents, extraItems);
+        if (condensedInventory == null) {
+            player.getEnderChest().setContents(vanillaContents);
+            plugin.getAsyncTaskManager().runAsync(() -> extraRowDAO.saveExtraRow(playerId, extraItems))
+                    .exceptionally(throwable -> {
+                        plugin.getLogger().severe("Failed to save condensing ender chest: " + throwable.getMessage());
+                        return null;
+                    });
+            plugin.getLogger().warning("Unable to auto-condense ender chest for " + playerId + "; keeping condensing mode active.");
+            return;
         }
 
         player.getEnderChest().setContents(condensedInventory.getContents());
@@ -224,6 +211,24 @@ public class LargerEnderChestManager {
                 player.sendMessage("§aEnder chest condensed! You now have a normal ender chest.");
             }
         }));
+    }
+
+    private Inventory createCondensedInventory(ItemStack[] vanillaContents, Map<Integer, ItemStack> extraItems) {
+        Inventory condensedInventory = Bukkit.createInventory(null, VANILLA_SIZE);
+        condensedInventory.setContents(cloneContents(vanillaContents));
+
+        for (ItemStack extraItem : extraItems.values()) {
+            if (extraItem == null || extraItem.getType().isAir()) {
+                continue;
+            }
+
+            Map<Integer, ItemStack> leftovers = condensedInventory.addItem(extraItem.clone());
+            if (!leftovers.isEmpty()) {
+                return null;
+            }
+        }
+
+        return condensedInventory;
     }
 
     private ItemStack[] cloneContents(ItemStack[] contents) {
