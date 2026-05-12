@@ -27,6 +27,10 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
 
+        if (plugin.getCollectionStatsFileManager() != null) {
+            plugin.getCollectionStatsFileManager().updatePlayerStats(playerId, player.getName());
+        }
+
         // Pre-load perk toggle state so perk checks on the main thread are fast
         plugin.getPerkManager().loadPlayerToggles(playerId);
 
