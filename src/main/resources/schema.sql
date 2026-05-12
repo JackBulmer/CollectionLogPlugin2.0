@@ -163,6 +163,24 @@ CREATE TABLE IF NOT EXISTS player_perk_toggles (
 
 CREATE INDEX IF NOT EXISTS idx_perk_toggles_uuid ON player_perk_toggles(player_uuid);
 
+-- Larger Ender Chest: Extra Row Storage
+CREATE TABLE IF NOT EXISTS ender_chest_extra (
+    player_uuid CHAR(36) NOT NULL,
+    slot INT NOT NULL,
+    item_type VARCHAR(64) NOT NULL,
+    item_amount INT NOT NULL,
+    item_data TEXT,
+    PRIMARY KEY (player_uuid, slot)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ender_extra_player ON ender_chest_extra(player_uuid);
+
+-- Larger Ender Chest: Condensing Mode Tracking
+CREATE TABLE IF NOT EXISTS ender_chest_condensing (
+    player_uuid CHAR(36) PRIMARY KEY,
+    marked_at BIGINT NOT NULL
+);
+
 -- Player glowing preferences (Glowing perk)
 CREATE TABLE IF NOT EXISTS player_glowing (
     player_uuid VARCHAR(36) PRIMARY KEY,
