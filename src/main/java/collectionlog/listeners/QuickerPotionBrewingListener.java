@@ -181,7 +181,7 @@ public class QuickerPotionBrewingListener implements Listener {
                     }
 
                     BrewingStand brewingStand = (BrewingStand) block.getState();
-                    if (brewingStand.getFuelLevel() > 0 && brewingStand.getBrewingTime() > 0) {
+                    if (brewingStand.getBrewingTime() > 0) {
                         brewingStand.setBrewingTime(Math.max(0, brewingStand.getBrewingTime() - 1));
                         brewingStand.update();
                         continue;
