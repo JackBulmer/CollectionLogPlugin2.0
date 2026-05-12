@@ -135,21 +135,25 @@ public class HologramManager {
                         return;
                     }
 
-                    plugin.getAsyncTaskManager().runSync(() -> {
-                        try {
-                            holograms.clear();
-                            for (LeaderboardHologram hologram : loadedHolograms) {
-                                if (Bukkit.getWorld(hologram.worldName()) == null) {
-                                    deleteInvalidWorldHologram(hologram.id());
-                                    continue;
+                    try {
+                        plugin.getAsyncTaskManager().runSync(() -> {
+                            try {
+                                holograms.clear();
+                                for (LeaderboardHologram hologram : loadedHolograms) {
+                                    if (Bukkit.getWorld(hologram.worldName()) == null) {
+                                        deleteInvalidWorldHologram(hologram.id());
+                                        continue;
+                                    }
+                                    holograms.put(hologram.id(), hologram);
                                 }
-                                holograms.put(hologram.id(), hologram);
+                                future.complete(null);
+                            } catch (Exception exception) {
+                                future.completeExceptionally(exception);
                             }
-                            future.complete(null);
-                        } catch (Exception exception) {
-                            future.completeExceptionally(exception);
-                        }
-                    });
+                        });
+                    } catch (Exception exception) {
+                        future.completeExceptionally(exception);
+                    }
                 });
 
         return future.exceptionally(throwable -> {

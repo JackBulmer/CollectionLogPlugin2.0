@@ -256,6 +256,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             hologramManager.loadHologramsFromDatabase().whenComplete((ignored, throwable) -> {
                 if (throwable != null) {
                     getLogger().log(Level.SEVERE, "Failed to load holograms on startup", throwable);
+                    return;
                 }
                 hologramManager.updateHolograms();
                 hologramManager.start();
