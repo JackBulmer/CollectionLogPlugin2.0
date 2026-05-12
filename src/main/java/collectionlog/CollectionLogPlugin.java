@@ -76,6 +76,7 @@ import collectionlog.listeners.PlayerFishListener;
 import collectionlog.listeners.BedrockBreakListener;
 import collectionlog.listeners.PlayerDropItemListener;
 import collectionlog.listeners.PlayerJoinListener;
+import collectionlog.listeners.QuickerPotionBrewingListener;
 import collectionlog.listeners.SilkTouchObtainableListener;
 import collectionlog.listeners.SmithingTableListener;
 import collectionlog.listeners.StonecutterListener;
@@ -125,6 +126,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private InfiniteDyesManager infiniteDyesManager;
     private InfiniteDyesGUI infiniteDyesGUI;
     private InstantGlassSmeltingListener instantGlassSmeltingListener;
+    private QuickerPotionBrewingListener quickerPotionBrewingListener;
     private VeinMinerListener veinMinerListener;
     private TunnelMinerListener tunnelMinerListener;
     private HarvestAndReplantListener harvestAndReplantListener;
@@ -260,6 +262,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new InfiniteLavaBucketListener(this), this);
             instantGlassSmeltingListener = new InstantGlassSmeltingListener(this);
             getServer().getPluginManager().registerEvents(instantGlassSmeltingListener, this);
+            quickerPotionBrewingListener = new QuickerPotionBrewingListener(this);
+            getServer().getPluginManager().registerEvents(quickerPotionBrewingListener, this);
             veinMinerListener = new VeinMinerListener(this);
             getServer().getPluginManager().registerEvents(veinMinerListener, this);
             tunnelMinerListener = new TunnelMinerListener(this);
@@ -452,6 +456,9 @@ public class CollectionLogPlugin extends JavaPlugin {
         }
         if (containerTrackingManager != null) {
             containerTrackingManager.clearCache();
+        }
+        if (quickerPotionBrewingListener != null) {
+            quickerPotionBrewingListener.shutdown();
         }
 
         // Shutdown async tasks
