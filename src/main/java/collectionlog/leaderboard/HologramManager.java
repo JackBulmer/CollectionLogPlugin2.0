@@ -156,10 +156,7 @@ public class HologramManager {
                     }
                 });
 
-        return future.exceptionally(throwable -> {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load leaderboard holograms", throwable);
-            return null;
-        });
+        return future;
     }
 
     public void updateHolograms() {
