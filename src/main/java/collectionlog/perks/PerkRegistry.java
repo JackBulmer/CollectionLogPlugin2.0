@@ -56,6 +56,11 @@ public final class PerkRegistry {
                         "§7Use §e/cl teleport end §7to return there."),
                 Material.ENDER_EYE, "end", false, false, false);
 
+        register("larger_ender_chest", "Larger Ender Chest",
+                List.of("§7Expands your ender chest from 3 rows",
+                        "§7to 4 rows (36 slots total)."),
+                Material.ENDER_CHEST, "end", false, false, false);
+
         register("cheaper_golden_apples", "Cheaper Golden Apples",
                 List.of("§7Craft golden apples using 4 gold ingots",
                         "§7(skip the corners) instead of 8."),

@@ -45,6 +45,8 @@ import collectionlog.perks.PerkManager;
 import collectionlog.perks.PhantomTogglePerk;
 import collectionlog.perks.PotionEffectManager;
 import collectionlog.perks.ExtraHeartsManager;
+import collectionlog.perks.enderchest.LargerEnderChestListener;
+import collectionlog.perks.enderchest.LargerEnderChestManager;
 import collectionlog.listeners.DoublSnifferFlowersListener;
 import collectionlog.listeners.HarvestAndReplantListener;
 import collectionlog.listeners.OpenableShulkersListener;
@@ -139,6 +141,8 @@ public class CollectionLogPlugin extends JavaPlugin {
     private TeleportManager teleportManager;
     private HomesGUI homesGUI;
     private TeleportAdminCommand teleportAdminCommand;
+    private LargerEnderChestManager largerEnderChestManager;
+    private LargerEnderChestListener largerEnderChestListener;
 
     @Override
     public void onEnable() {
@@ -229,6 +233,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             glowingGUI = new GlowingGUI(this);
             infiniteDyesManager = new InfiniteDyesManager();
             infiniteDyesGUI = new InfiniteDyesGUI(this);
+            largerEnderChestManager = new LargerEnderChestManager(this);
+            largerEnderChestManager.loadCondensingPlayersAsync();
+            largerEnderChestListener = new LargerEnderChestListener(this, largerEnderChestManager);
             getLogger().info("✅ Managers initialized");
 
             // Initialize GriefPrevention integration
@@ -273,6 +280,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new DoublSnifferFlowersListener(this), this);
             getServer().getPluginManager().registerEvents(new OpenableShulkersListener(this), this);
             getServer().getPluginManager().registerEvents(new FastGhastRidingListener(this), this);
+            getServer().getPluginManager().registerEvents(largerEnderChestListener, this);
 
             // Schedule cleanup task for protected crops (runs every second)
             getServer().getScheduler().runTaskTimer(this, () ->
@@ -600,6 +608,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public TreeCapitatorListener getTreeCapitatorListener() {
         return treeCapitatorListener;
+    }
+
+    public LargerEnderChestManager getLargerEnderChestManager() {
+        return largerEnderChestManager;
     }
 
     public StructureGrowListener getStructureGrowListener() {

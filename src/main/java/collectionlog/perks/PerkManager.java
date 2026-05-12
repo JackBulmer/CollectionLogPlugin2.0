@@ -77,6 +77,10 @@ public class PerkManager {
         if ("extra_heart".equals(perkId)) {
             plugin.getExtraHeartsManager().updateExtraHearts(playerId);
         }
+
+        if ("larger_ender_chest".equals(perkId) && plugin.getLargerEnderChestManager() != null) {
+            plugin.getLargerEnderChestManager().handlePerkRevoked(playerId);
+        }
     }
 
     // ─── Toggle state ─────────────────────────────────────────────────────────
