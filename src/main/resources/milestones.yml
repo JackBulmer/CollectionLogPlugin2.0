@@ -130,6 +130,7 @@ collections:
   end:
     perks:
       - end_teleportation
+      - larger_ender_chest
       - permanent_slow_falling
     tags:
       prefix: []
