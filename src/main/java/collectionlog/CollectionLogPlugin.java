@@ -252,10 +252,14 @@ public class CollectionLogPlugin extends JavaPlugin {
                     getLogger().log(Level.SEVERE, "Failed to refresh leaderboard stats on startup", throwable);
                 }
                 collectionStatsFileManager.generateStatsFile();
-                hologramManager.updateHolograms();
             });
-            hologramManager.loadHologramsFromDatabase();
-            hologramManager.start();
+            hologramManager.loadHologramsFromDatabase().whenComplete((ignored, throwable) -> {
+                if (throwable != null) {
+                    getLogger().log(Level.SEVERE, "Failed to load holograms on startup", throwable);
+                }
+                hologramManager.updateHolograms();
+                hologramManager.start();
+            });
             getLogger().info("✅ Managers initialized");
 
             // Initialize GriefPrevention integration
