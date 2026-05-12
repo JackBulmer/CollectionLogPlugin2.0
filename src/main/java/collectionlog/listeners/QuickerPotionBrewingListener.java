@@ -34,6 +34,7 @@ import java.util.UUID;
 public class QuickerPotionBrewingListener implements Listener {
 
     private static final String PERK_ID = "quicker_potion_brewing";
+    private static final int EXTRA_BREW_TIME_REDUCTION_PER_TICK = 1;
 
     private final CollectionLogPlugin plugin;
     private final PerkManager perkManager;
@@ -182,7 +183,8 @@ public class QuickerPotionBrewingListener implements Listener {
 
                     BrewingStand brewingStand = (BrewingStand) block.getState();
                     if (brewingStand.getBrewingTime() > 0) {
-                        brewingStand.setBrewingTime(Math.max(0, brewingStand.getBrewingTime() - 1));
+                        brewingStand.setBrewingTime(Math.max(0,
+                                brewingStand.getBrewingTime() - EXTRA_BREW_TIME_REDUCTION_PER_TICK));
                         brewingStand.update();
                         continue;
                     }
