@@ -7,6 +7,8 @@ import java.util.UUID;
 
 public class CondensingEnderChestHolder implements InventoryHolder {
     private final UUID playerId;
+    /** Set immediately after Bukkit creates the inventory for this holder. */
+    private Inventory inventory;
 
     public CondensingEnderChestHolder(UUID playerId) {
         this.playerId = playerId;
@@ -16,8 +18,15 @@ public class CondensingEnderChestHolder implements InventoryHolder {
         return playerId;
     }
 
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
+    }
+
     @Override
     public Inventory getInventory() {
-        return null;
+        if (inventory == null) {
+            throw new IllegalStateException("CondensingEnderChestHolder inventory has not been initialized yet");
+        }
+        return inventory;
     }
 }

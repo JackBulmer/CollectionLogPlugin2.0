@@ -22,6 +22,8 @@ public class LargerEnderChestManager {
     private static final int LARGER_SIZE = 36;
     private static final int EXTRA_START = 27;
     private static final int EXTRA_END = 35;
+    private static final String ENDER_CHEST_TITLE = "Ender Chest";
+    private static final String CONDENSING_TITLE = "Ender Chest §c(Condensing Mode)";
 
     private final CollectionLogPlugin plugin;
     private final ExtraRowDAO extraRowDAO;
@@ -48,7 +50,9 @@ public class LargerEnderChestManager {
 
     public void openLargerEnderChest(Player player) {
         UUID playerId = player.getUniqueId();
-        Inventory inventory = Bukkit.createInventory(new LargerEnderChestHolder(playerId), LARGER_SIZE, "Ender Chest");
+        LargerEnderChestHolder holder = new LargerEnderChestHolder(playerId);
+        Inventory inventory = Bukkit.createInventory(holder, LARGER_SIZE, ENDER_CHEST_TITLE);
+        holder.setInventory(inventory);
 
         ItemStack[] vanillaContents = player.getEnderChest().getContents();
         for (int i = 0; i < VANILLA_SIZE && i < vanillaContents.length; i++) {
@@ -70,8 +74,9 @@ public class LargerEnderChestManager {
 
     public void openCondensingEnderChest(Player player) {
         UUID playerId = player.getUniqueId();
-        Inventory inventory = Bukkit.createInventory(new CondensingEnderChestHolder(playerId), LARGER_SIZE,
-                "Ender Chest §c(Condensing Mode)");
+        CondensingEnderChestHolder holder = new CondensingEnderChestHolder(playerId);
+        Inventory inventory = Bukkit.createInventory(holder, LARGER_SIZE, CONDENSING_TITLE);
+        holder.setInventory(inventory);
 
         ItemStack[] vanillaContents = player.getEnderChest().getContents();
         for (int i = 0; i < VANILLA_SIZE && i < vanillaContents.length; i++) {

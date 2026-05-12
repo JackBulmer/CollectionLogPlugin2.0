@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -87,11 +88,11 @@ public class LargerEnderChestListener implements Listener {
                 ItemStack cursor = event.getCursor();
                 ItemStack current = event.getCurrentItem();
 
-                boolean removingByPickup = (cursor == null || cursor.getType().isAir())
+                boolean removingByMouseClick = (cursor == null || cursor.getType().isAir())
                         && current != null && !current.getType().isAir();
-                boolean removingByShift = event.isShiftClick() && current != null && !current.getType().isAir();
+                boolean removingByShift = event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY;
 
-                if (!removingByPickup && !removingByShift) {
+                if (!removingByMouseClick && !removingByShift) {
                     event.setCancelled(true);
                     sendRestrictionMessage((Player) event.getWhoClicked());
                 }

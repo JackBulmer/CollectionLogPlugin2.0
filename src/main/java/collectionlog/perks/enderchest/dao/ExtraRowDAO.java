@@ -134,7 +134,7 @@ public class ExtraRowDAO {
     }
 
     private ItemStack deserializeItem(String itemType, int amount, String itemData) {
-        if (itemData == null || itemData.isBlank()) {
+        if (itemData == null || itemData.isEmpty()) {
             Material material = Material.getMaterial(itemType);
             return material == null ? null : new ItemStack(material, amount);
         }
