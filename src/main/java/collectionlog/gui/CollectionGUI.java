@@ -37,19 +37,15 @@ public class CollectionGUI implements Listener {
     private static final String BLANK_TITLE = " ";
 
     private static final int INVENTORY_SIZE = 54;
-    private static final int MAIN_INVENTORY_SIZE = 45;
-    private static final int MAIN_PAGE_SIZE = 36;
+    private static final int MAIN_PAGE_SIZE = 44;
     private static final int COLLECTION_PAGE_SIZE = 45;
     private static final int SUB_COLLECTION_LIST_PAGE_SIZE = 27;
     private static final int SUB_PAGE_SIZE = 45;
 
-    private static final int SLOT_MAIN_PREV = 36;
-    private static final int SLOT_MAIN_STATS = 39;
-    private static final int SLOT_MAIN_CLOSE = 41;
-    private static final int SLOT_MAIN_NEXT = 44;
-
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 48;
+    private static final int SLOT_MAIN_STATS = 48;
+    private static final int SLOT_MAIN_CLOSE = 50;
     private static final int SLOT_FILTER = 50;
     private static final int SLOT_NEXT = 53;
     private static final int SLOT_INFO = 49;
@@ -63,7 +59,6 @@ public class CollectionGUI implements Listener {
     private final PlayerCollectionDAO playerCollectionDAO;
     private final InventoryHolder guiInventoryHolder = new CollectionGuiHolder();
     private final Map<UUID, GUIState> guiStates = new HashMap<>();
-    private final Map<UUID, Integer> mainMenuPages = new HashMap<>();
 
     public CollectionGUI(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -272,16 +267,6 @@ public class CollectionGUI implements Listener {
             return;
         }
 
-        if (slot == SLOT_MAIN_PREV && state.viewType() == ViewType.MAIN && state.hasPrevious()) {
-            navigate(player, state, state.page() - 1);
-            return;
-        }
-
-        if (slot == SLOT_MAIN_NEXT && state.viewType() == ViewType.MAIN && state.hasNext()) {
-            navigate(player, state, state.page() + 1);
-            return;
-        }
-
         if (slot == SLOT_BACK && state.viewType() != ViewType.MAIN) {
             handleBack(player, state);
             return;
@@ -351,11 +336,7 @@ public class CollectionGUI implements Listener {
         entries.sort(Comparator.comparing(e -> e.collection().getName(), String.CASE_INSENSITIVE_ORDER));
 
         PageSlice<CollectionEntry> pageSlice = slice(entries, page, MAIN_PAGE_SIZE);
-        int totalPages = Math.max(1, (entries.size() + MAIN_PAGE_SIZE - 1) / MAIN_PAGE_SIZE);
-        String title = totalPages > 1
-                ? "Collection Log - Page " + (pageSlice.page() + 1) + "/" + totalPages
-                : "Collection Log";
-        Inventory inventory = Bukkit.createInventory(guiInventoryHolder, MAIN_INVENTORY_SIZE, title);
+        Inventory inventory = Bukkit.createInventory(guiInventoryHolder, INVENTORY_SIZE, BLANK_TITLE);
 
         int totalCollected = 0;
         int totalItems = 0;
@@ -375,24 +356,17 @@ public class CollectionGUI implements Listener {
             slotActions.put(slot, SlotAction.openCollection(entry.collectionId()));
         }
 
-        if (pageSlice.hasPrevious()) {
-            inventory.setItem(SLOT_MAIN_PREV, createPreviousPageButton(pageSlice.page(), totalPages));
-        }
-        inventory.setItem(SLOT_MAIN_CLOSE, createExitButton());
-        if (pageSlice.hasNext()) {
-            inventory.setItem(SLOT_MAIN_NEXT, createNextPageButton(pageSlice.page(), totalPages));
-        }
+        inventory.setItem(SLOT_MAIN_CLOSE, GUIHelper.createNavigationButton("Close", BACK_ICON_CUSTOM_MODEL_DATA));
 
         player.openInventory(inventory);
-        mainMenuPages.put(player.getUniqueId(), pageSlice.page());
         guiStates.put(player.getUniqueId(), new GUIState(
                 ViewType.MAIN,
                 null,
                 null,
                 pageSlice.page(),
                 showUncollectedOnly,
-                pageSlice.hasPrevious(),
-                pageSlice.hasNext(),
+                false,
+                false,
                 slotActions
         ));
     }
@@ -400,8 +374,8 @@ public class CollectionGUI implements Listener {
     private void handleBack(Player player, GUIState state) {
         switch (state.viewType()) {
             case MAIN -> player.closeInventory();
-            case COLLECTION -> openMainMenu(player, mainMenuPages.getOrDefault(player.getUniqueId(), 0), false);
-            case SUB_COLLECTION_LIST -> openMainMenu(player, mainMenuPages.getOrDefault(player.getUniqueId(), 0), false);
+            case COLLECTION -> openMainMenu(player, 0, false);
+            case SUB_COLLECTION_LIST -> openMainMenu(player, 0, false);
             case SUB_COLLECTION -> openSubCollectionListingView(player, state.collectionId(), 0, state.showUncollectedOnly());
         }
     }
@@ -894,45 +868,15 @@ public class CollectionGUI implements Listener {
     }
 
     private int[] buildMainMenuSlots() {
-        return buildSlotRange(0, MAIN_PAGE_SIZE - 1);
-    }
-
-    private ItemStack createPreviousPageButton(int page, int totalPages) {
-        ItemStack prevButton = new ItemStack(Material.ARROW);
-        ItemMeta prevMeta = prevButton.getItemMeta();
-        if (prevMeta == null) {
-            return prevButton;
+        int[] slots = new int[44];
+        int index = 0;
+        for (int slot = 0; slot < INVENTORY_SIZE && index < slots.length; slot++) {
+            if (slot == SLOT_MAIN_STATS || slot == SLOT_MAIN_CLOSE) {
+                continue;
+            }
+            slots[index++] = slot;
         }
-
-        prevMeta.setDisplayName("§e◀ Previous Page");
-        prevMeta.setLore(List.of("§7Page " + page + "/" + totalPages));
-        prevButton.setItemMeta(prevMeta);
-        return prevButton;
-    }
-
-    private ItemStack createNextPageButton(int page, int totalPages) {
-        ItemStack nextButton = new ItemStack(Material.ARROW);
-        ItemMeta nextMeta = nextButton.getItemMeta();
-        if (nextMeta == null) {
-            return nextButton;
-        }
-
-        nextMeta.setDisplayName("§eNext Page ▶");
-        nextMeta.setLore(List.of("§7Page " + (page + 2) + "/" + totalPages));
-        nextButton.setItemMeta(nextMeta);
-        return nextButton;
-    }
-
-    private ItemStack createExitButton() {
-        ItemStack closeButton = new ItemStack(Material.BARRIER);
-        ItemMeta closeMeta = closeButton.getItemMeta();
-        if (closeMeta == null) {
-            return closeButton;
-        }
-
-        closeMeta.setDisplayName("§cClose");
-        closeButton.setItemMeta(closeMeta);
-        return closeButton;
+        return slots;
     }
 
     private <T> PageSlice<T> slice(List<T> source, int requestedPage, int pageSize) {
