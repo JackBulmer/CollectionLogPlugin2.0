@@ -88,6 +88,10 @@ public class DatabaseBackupManager {
         return plugin.getAsyncTaskManager().runAsync(this::listBackupsInternal);
     }
 
+    public List<File> listBackupsSync() {
+        return listBackupsInternal();
+    }
+
     public CompletableFuture<Boolean> restoreBackup(File backupFile) {
         return plugin.getAsyncTaskManager().runAsync(() -> {
             if (!backupFile.exists() || !backupFile.isFile()) {
@@ -166,7 +170,7 @@ public class DatabaseBackupManager {
     private File createBackupInternal() throws IOException, SQLException {
         DatabaseType databaseType = plugin.getDatabaseManager().getDatabaseType();
         String extension = databaseType == DatabaseType.SQLITE ? "db" : "sql";
-        String fileName = "backup-" + BACKUP_TIMESTAMP.format(LocalDateTime.now()) + "." + extension;
+        String fileName = "backup-" + currentTimestamp() + "." + extension;
         File backupFile = new File(backupDirectory, fileName);
 
         if (databaseType == DatabaseType.SQLITE) {
@@ -217,9 +221,9 @@ public class DatabaseBackupManager {
             return;
         }
 
-        File safetyBackup = new File(plugin.getDataFolder(),
-                "data-before-restore-" + BACKUP_TIMESTAMP.format(LocalDateTime.now()) + ".db");
-        Files.copy(databaseFile.toPath(), safetyBackup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        File preRestoreBackup = new File(plugin.getDataFolder(),
+                "data-before-restore-" + currentTimestamp() + ".db");
+        Files.copy(databaseFile.toPath(), preRestoreBackup.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.copy(backupFile.toPath(), databaseFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
@@ -317,9 +321,7 @@ public class DatabaseBackupManager {
                     i++;
                     continue;
                 }
-                if (i == 0 || sql.charAt(i - 1) != '\\') {
-                    inSingleQuote = !inSingleQuote;
-                }
+                inSingleQuote = !inSingleQuote;
             }
             if (character == ';' && !inSingleQuote) {
                 String statement = current.toString().trim();
@@ -348,5 +350,9 @@ public class DatabaseBackupManager {
             result.append(String.format(Locale.ROOT, "%02X", b));
         }
         return result.toString();
+    }
+
+    private String currentTimestamp() {
+        return BACKUP_TIMESTAMP.format(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()));
     }
 }

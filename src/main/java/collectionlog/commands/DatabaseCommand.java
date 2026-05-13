@@ -151,7 +151,7 @@ public class DatabaseCommand implements CommandExecutor, TabCompleter {
         try {
             String parentPath = backupManager.getBackupDirectory().getCanonicalPath();
             String candidatePath = file.getCanonicalPath();
-            if (!candidatePath.startsWith(parentPath + File.separator) && !candidatePath.equals(parentPath)) {
+            if (!candidatePath.startsWith(parentPath + File.separator)) {
                 return null;
             }
             return file;
@@ -183,17 +183,12 @@ public class DatabaseCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 2 && "restore".equalsIgnoreCase(args[0])) {
             String partial = args[1].toLowerCase(Locale.ROOT);
-            try {
-                return backupManager.listBackups()
-                        .join()
-                        .stream()
-                        .map(File::getName)
-                        .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(partial))
-                        .limit(20)
-                        .collect(Collectors.toList());
-            } catch (Exception ignored) {
-                return new ArrayList<>();
-            }
+            return backupManager.listBackupsSync()
+                    .stream()
+                    .map(File::getName)
+                    .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(partial))
+                    .limit(20)
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 3 && "restore".equalsIgnoreCase(args[0])) {
