@@ -101,6 +101,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 public class CollectionLogPlugin extends JavaPlugin {
@@ -247,15 +248,24 @@ public class CollectionLogPlugin extends JavaPlugin {
             leaderboardManager = new LeaderboardManager(this);
             collectionStatsFileManager = new CollectionStatsFileManager(this, leaderboardManager);
             hologramManager = new HologramManager(this, leaderboardManager);
-            leaderboardManager.refreshAllPlayerStats().whenComplete((ignored, throwable) -> {
-                if (throwable != null) {
-                    getLogger().log(Level.SEVERE, "Failed to refresh leaderboard stats on startup", throwable);
-                }
-                collectionStatsFileManager.generateStatsFile();
-                hologramManager.updateHolograms();
-            });
-            hologramManager.loadHologramsFromDatabase();
-            hologramManager.start();
+            CompletableFuture<Void> refreshLeaderboardStats = leaderboardManager.refreshAllPlayerStats()
+                    .handle((ignored, throwable) -> {
+                        if (throwable != null) {
+                            getLogger().log(Level.SEVERE, "Failed to refresh leaderboard stats on startup", throwable);
+                        }
+                        collectionStatsFileManager.generateStatsFile();
+                        return null;
+                    });
+            hologramManager.loadHologramsFromDatabase()
+                    .thenCombine(refreshLeaderboardStats, (ignoredHolograms, ignoredStats) -> null)
+                    .whenComplete((ignored, throwable) -> {
+                        if (throwable != null) {
+                            getLogger().log(Level.SEVERE, "Failed to load holograms on startup", throwable);
+                            return;
+                        }
+                        hologramManager.updateHolograms();
+                        hologramManager.start();
+                    });
             getLogger().info("✅ Managers initialized");
 
             // Initialize GriefPrevention integration

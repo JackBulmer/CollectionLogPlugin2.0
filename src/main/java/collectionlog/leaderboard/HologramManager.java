@@ -125,23 +125,38 @@ public class HologramManager {
                 });
     }
 
-    public void loadHologramsFromDatabase() {
+    public CompletableFuture<Void> loadHologramsFromDatabase() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
         plugin.getAsyncTaskManager().runAsync(this::loadStoredHolograms)
-                .thenAccept(loadedHolograms -> plugin.getAsyncTaskManager().runSync(() -> {
-                    holograms.clear();
-                    for (LeaderboardHologram hologram : loadedHolograms) {
-                        if (Bukkit.getWorld(hologram.worldName()) == null) {
-                            deleteInvalidWorldHologram(hologram.id());
-                            continue;
-                        }
-                        holograms.put(hologram.id(), hologram);
+                .whenComplete((loadedHolograms, throwable) -> {
+                    if (throwable != null) {
+                        future.completeExceptionally(throwable);
+                        return;
                     }
-                    updateHolograms();
-                }))
-                .exceptionally(throwable -> {
-                    plugin.getLogger().log(Level.SEVERE, "Failed to load leaderboard holograms", throwable);
-                    return null;
+
+                    try {
+                        plugin.getAsyncTaskManager().runSync(() -> {
+                            try {
+                                holograms.clear();
+                                for (LeaderboardHologram hologram : loadedHolograms) {
+                                    if (Bukkit.getWorld(hologram.worldName()) == null) {
+                                        deleteInvalidWorldHologram(hologram.id());
+                                        continue;
+                                    }
+                                    holograms.put(hologram.id(), hologram);
+                                }
+                                future.complete(null);
+                            } catch (Exception exception) {
+                                future.completeExceptionally(exception);
+                            }
+                        });
+                    } catch (Exception exception) {
+                        future.completeExceptionally(exception);
+                    }
                 });
+
+        return future;
     }
 
     public void updateHolograms() {
