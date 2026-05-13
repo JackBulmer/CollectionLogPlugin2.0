@@ -26,6 +26,7 @@ import java.util.logging.Level;
 public class HologramManager {
     private static final double LINE_SPACING = 0.25D;
     private static final long REFRESH_INTERVAL_TICKS = 1200L;
+    public static final long STARTUP_DELAY_TICKS = 100L;
     private static final double REMOVE_DISTANCE = 10.0D;
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getIntegerInstance(java.util.Locale.US);
 

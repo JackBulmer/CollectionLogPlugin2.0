@@ -263,7 +263,10 @@ public class CollectionLogPlugin extends JavaPlugin {
                             getLogger().log(Level.SEVERE, "Failed to load holograms on startup", throwable);
                             return;
                         }
-                        hologramManager.updateHolograms();
+                        // Delay initial update to allow chunks to load before spawning armor stands
+                        getServer().getScheduler().runTaskLater(this, () -> {
+                            hologramManager.updateHolograms();
+                        }, HologramManager.STARTUP_DELAY_TICKS);
                         hologramManager.start();
                     });
             getLogger().info("✅ Managers initialized");
