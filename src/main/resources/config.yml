@@ -12,13 +12,17 @@ database:
   username: root
   password: changeme
 
+  # Backup settings
+  backup-interval: 30
+  backup-retention: 10
+  backup-on-shutdown: true
+
 # Plugin Settings
 plugin:
   # Enable debug logging
   debug: false
 
-  # Auto-save interval (in minutes, 0 = disabled)
-  # Note: With database, saves are instant, this is for backup only
+  # Legacy backup interval setting (database.backup-interval is preferred)
   backup-interval: 30
 
 messages:
@@ -64,6 +68,9 @@ teleport:
 
   # XP levels deducted per teleport
   tp_cost: 5
+
+  # XP levels deducted for /hub teleports
+  hub_cost: 1
 
   # Allow teleporting across dimensions (Overworld/Nether/End)
   inter_dimensional_teleporting: true

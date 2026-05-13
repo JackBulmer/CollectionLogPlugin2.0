@@ -20,7 +20,7 @@ commands:
 
   cldb:
     description: Database management commands
-    usage: /cldb <info|migrate|backup>
+    usage: /cldb <info|backup|list|restore>
     permission: collectionlog.admin
 
   tags:
@@ -100,6 +100,16 @@ commands:
     description: Teleport to home or player
     usage: /tp <home|player>
 
+  hub:
+    description: Teleport to the server hub
+    usage: /hub
+    permission: collectionlog.teleport.hub
+
+  sethub:
+    description: Set the server hub location
+    usage: /sethub
+    permission: collectionlog.admin
+
   logstats:
     description: Show the top collection log rankings
     usage: /logstats
@@ -139,4 +149,7 @@ permissions:
     default: true
   collectionlog.teleport.accept:
     description: Use /tpa command
+    default: true
+  collectionlog.teleport.hub:
+    description: Use /hub command
     default: true

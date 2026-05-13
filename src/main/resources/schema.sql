@@ -206,3 +206,16 @@ CREATE TABLE IF NOT EXISTS leaderboard_holograms (
     z DOUBLE NOT NULL,
     created_at BIGINT NOT NULL
 );
+
+-- Server-wide hub location
+CREATE TABLE IF NOT EXISTS server_hub (
+    id INTEGER PRIMARY KEY,
+    world VARCHAR(64) NOT NULL,
+    x DOUBLE NOT NULL,
+    y DOUBLE NOT NULL,
+    z DOUBLE NOT NULL,
+    yaw FLOAT NOT NULL,
+    pitch FLOAT NOT NULL,
+    set_by CHAR(36),
+    updated_at BIGINT NOT NULL
+);

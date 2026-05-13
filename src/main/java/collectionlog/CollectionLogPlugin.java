@@ -6,6 +6,7 @@ import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
 import collectionlog.commands.CraftCommand;
+import collectionlog.commands.DatabaseCommand;
 import collectionlog.commands.DyeCommand;
 import collectionlog.commands.GlowingCommand;
 import collectionlog.commands.HarvestCommand;
@@ -20,20 +21,24 @@ import collectionlog.commands.VeinMinerCommand;
 import collectionlog.leaderboard.HologramManager;
 import collectionlog.leaderboard.LeaderboardManager;
 import collectionlog.teleport.HomeManager;
+import collectionlog.teleport.HubManager;
 import collectionlog.teleport.TeleportManager;
 import collectionlog.teleport.TeleportRequestManager;
 import collectionlog.teleport.TeleportSettingsManager;
 import collectionlog.teleport.TeleportValidator;
 import collectionlog.teleport.commands.DelHomeCommand;
 import collectionlog.teleport.commands.HomeCommand;
+import collectionlog.teleport.commands.HubCommand;
 import collectionlog.teleport.commands.HomesCommand;
 import collectionlog.teleport.commands.SetHomeCommand;
+import collectionlog.teleport.commands.SetHubCommand;
 import collectionlog.teleport.commands.TeleportAcceptCommand;
 import collectionlog.teleport.commands.TeleportAdminCommand;
 import collectionlog.teleport.commands.TeleportOverrideCommand;
 import collectionlog.teleport.commands.TeleportRequestCommand;
 import collectionlog.teleport.gui.HomesGUI;
 import collectionlog.database.AsyncTaskManager;
+import collectionlog.database.DatabaseBackupManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
 import collectionlog.database.dao.BlockOwnershipDAO;
@@ -108,6 +113,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private static CollectionLogPlugin instance;
 
     private DatabaseManager databaseManager;
+    private DatabaseBackupManager databaseBackupManager;
     private AsyncTaskManager asyncTaskManager;
     private BlockOwnershipDAO blockOwnershipDAO;
     private ContainerItemDAO containerItemDAO;
@@ -145,6 +151,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private TeleportRequestManager teleportRequestManager;
     private TeleportValidator teleportValidator;
     private TeleportManager teleportManager;
+    private HubManager hubManager;
     private HomesGUI homesGUI;
     private TeleportAdminCommand teleportAdminCommand;
     private LargerEnderChestManager largerEnderChestManager;
@@ -188,6 +195,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             }
 
             getLogger().info("✅ Database connected successfully");
+            databaseBackupManager = new DatabaseBackupManager(this);
+            databaseBackupManager.scheduleBackups();
+
             // Initialize DAOs
             blockOwnershipDAO = new BlockOwnershipDAO(this, databaseManager);
             containerItemDAO = new ContainerItemDAO(this, databaseManager);
@@ -338,6 +348,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             teleportRequestManager = new TeleportRequestManager(this);
             teleportValidator = new TeleportValidator(this);
             teleportManager = new TeleportManager(this);
+            hubManager = new HubManager(this);
             homesGUI = new HomesGUI(this, homeManager, teleportManager, teleportSettingsManager, teleportValidator);
             teleportAdminCommand = new TeleportAdminCommand(this, teleportSettingsManager);
             getServer().getPluginManager().registerEvents(teleportManager, this);
@@ -363,6 +374,13 @@ public class CollectionLogPlugin extends JavaPlugin {
                 AdminCommands executor = new AdminCommands(this);
                 adminCommand.setExecutor(executor);
                 adminCommand.setTabCompleter(executor);
+            }
+
+            PluginCommand databaseCommand = getCommand("cldb");
+            if (databaseCommand != null) {
+                DatabaseCommand executor = new DatabaseCommand(this, databaseBackupManager);
+                databaseCommand.setExecutor(executor);
+                databaseCommand.setTabCompleter(executor);
             }
 
             PluginCommand tagsCommand = getCommand("tags");
@@ -492,6 +510,16 @@ public class CollectionLogPlugin extends JavaPlugin {
                 tpCommand.setExecutor(tpExec);
                 tpCommand.setTabCompleter(tpExec);
             }
+
+            PluginCommand hubCommand = getCommand("hub");
+            if (hubCommand != null) {
+                hubCommand.setExecutor(new HubCommand(this, hubManager, teleportManager, teleportSettingsManager, teleportValidator));
+            }
+
+            PluginCommand setHubCommand = getCommand("sethub");
+            if (setHubCommand != null) {
+                setHubCommand.setExecutor(new SetHubCommand(this, hubManager));
+            }
             getLogger().info("✅ GUI and commands registered");
 
         } catch (SQLException e) {
@@ -520,6 +548,9 @@ public class CollectionLogPlugin extends JavaPlugin {
         if (hologramManager != null) {
             hologramManager.shutdown();
         }
+        if (databaseBackupManager != null) {
+            databaseBackupManager.shutdown();
+        }
 
         // Shutdown async tasks
         if (asyncTaskManager != null) {
@@ -540,6 +571,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public DatabaseBackupManager getDatabaseBackupManager() {
+        return databaseBackupManager;
     }
 
     public AsyncTaskManager getAsyncTaskManager() {
@@ -688,6 +723,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public TeleportManager getTeleportManager() {
         return teleportManager;
+    }
+
+    public HubManager getHubManager() {
+        return hubManager;
     }
 
     public HomesGUI getHomesGUI() {
