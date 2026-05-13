@@ -181,7 +181,9 @@ public class HologramManager {
                         Location location = hologram.location(world);
                         int chunkX = location.getBlockX() >> 4;
                         int chunkZ = location.getBlockZ() >> 4;
-                        world.loadChunk(chunkX, chunkZ);
+                        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                            world.loadChunk(chunkX, chunkZ);
+                        }
 
                         renderHologram(hologram, location, lines);
                     }
