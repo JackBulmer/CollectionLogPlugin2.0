@@ -905,7 +905,7 @@ public class CollectionGUI implements Listener {
         }
 
         prevMeta.setDisplayName("§e◀ Previous Page");
-        prevMeta.setLore(List.of("§7Page " + (page + 1) + "/" + totalPages));
+        prevMeta.setLore(List.of("§7Page " + page + "/" + totalPages));
         prevButton.setItemMeta(prevMeta);
         return prevButton;
     }
@@ -918,7 +918,7 @@ public class CollectionGUI implements Listener {
         }
 
         nextMeta.setDisplayName("§eNext Page ▶");
-        nextMeta.setLore(List.of("§7Page " + (page + 1) + "/" + totalPages));
+        nextMeta.setLore(List.of("§7Page " + (page + 2) + "/" + totalPages));
         nextButton.setItemMeta(nextMeta);
         return nextButton;
     }
