@@ -145,7 +145,14 @@ public class HologramManager {
                                         deleteInvalidWorldHologram(hologram.id());
                                         continue;
                                     }
-                                    holograms.put(hologram.id(), hologram);
+                                    holograms.put(hologram.id(), new LeaderboardHologram(
+                                            hologram.id(),
+                                            hologram.worldName(),
+                                            hologram.x(),
+                                            hologram.y(),
+                                            hologram.z(),
+                                            hologram.createdAt()
+                                    ));
                                 }
                                 future.complete(null);
                             } catch (Exception exception) {
@@ -174,9 +181,7 @@ public class HologramManager {
                         Location location = hologram.location(world);
                         int chunkX = location.getBlockX() >> 4;
                         int chunkZ = location.getBlockZ() >> 4;
-                        if (!world.isChunkLoaded(chunkX, chunkZ)) {
-                            continue;
-                        }
+                        world.loadChunk(chunkX, chunkZ);
 
                         renderHologram(hologram, location, lines);
                     }
