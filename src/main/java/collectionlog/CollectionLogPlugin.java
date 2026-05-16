@@ -159,6 +159,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private LeaderboardManager leaderboardManager;
     private CollectionStatsFileManager collectionStatsFileManager;
     private HologramManager hologramManager;
+    private boolean mythicMobsAvailable;
 
     @Override
     public void onEnable() {
@@ -170,6 +171,13 @@ public class CollectionLogPlugin extends JavaPlugin {
 
         // Save default config
         saveDefaultConfig();
+
+        mythicMobsAvailable = getServer().getPluginManager().isPluginEnabled("MythicMobs");
+        if (mythicMobsAvailable) {
+            getLogger().info("✅ MythicMobs detected - custom Mythic mob head drops enabled");
+        } else {
+            getLogger().info("ℹ MythicMobs not detected - using vanilla mob head/spawn egg drops only");
+        }
 
         // Initialize async task manager
         asyncTaskManager = new AsyncTaskManager(this);
@@ -747,5 +755,9 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public HologramManager getHologramManager() {
         return hologramManager;
+    }
+
+    public boolean isMythicMobsAvailable() {
+        return mythicMobsAvailable;
     }
 }

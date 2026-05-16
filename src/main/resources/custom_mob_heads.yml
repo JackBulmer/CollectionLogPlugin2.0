@@ -1,0 +1,58 @@
+# MythicMobs Custom Head Configuration
+# Maps MythicMobs internal names to HeadDatabase IDs
+# Multiple mobs can share the same head ID (they drop the same head)
+
+custom_mobs:
+  # Bison (1 unique head)
+  nm_bison: "127453"
+  nm_bison_baby: "127453"
+
+  # Birds (2 unique heads)
+  nm_blue_tit: "109562"
+  nm_cardinal: "68945"
+  nm_robin: "3479"
+
+  # Reptiles (1 unique head for all snakes, 1 for chameleon)
+  nm_chameleon: "86467"
+  nm_snake_boa: "50110"
+  nm_snake_cobra: "50110"
+  nm_snake_coral: "50110"
+  nm_snake_corn: "50110"
+  nm_snake_python: "50110"
+  nm_snake_viper: "50110"
+
+  # Large Mammals (4 unique heads)
+  nm_elephant: "124341"
+  nm_elephant_baby: "124341"
+  nm_giraffe: "110727"
+  nm_giraffe_baby: "110727"
+  nm_hippo: "67856"
+  nm_hippo_baby: "67856"
+  nm_zebra: "57145"
+  nm_zebra_baby: "57145"
+
+  # Bears (1 unique head)
+  nm_grizzly_bear: "123659"
+  nm_grizzly_bear_baby: "123659"
+
+  # Small Mammals (2 unique heads)
+  nm_hedgehog: "49350"
+  nm_raccoon: "98816"
+
+  # Rats (1 unique head for all colors)
+  nm_rat_albino: "107763"
+  nm_rat_brown: "107763"
+  nm_rat_gray: "107763"
+
+  # Predators (1 unique head)
+  nm_lion: "57286"
+  nm_lion_baby: "57286"
+  nm_lionness: "57286"
+
+  # Aquatic (2 unique heads)
+  nm_orca: "120379"
+  nm_shark_great_white: "4266"
+  nm_shark_hammerhead: "4266"
+
+  # Winter (1 unique head)
+  nm_reindeer: "81327"

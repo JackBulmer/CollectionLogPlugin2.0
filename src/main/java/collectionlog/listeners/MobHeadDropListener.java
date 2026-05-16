@@ -1,6 +1,8 @@
 package collectionlog.listeners;
 
 import collectionlog.CollectionLogPlugin;
+import io.lumine.mythic.bukkit.MythicBukkit;
+import io.lumine.mythic.core.mobs.ActiveMob;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -19,6 +21,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -26,9 +30,13 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.io.File;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import java.util.logging.Level;
 
 /**
  * Handles mob head and spawn egg drops when mobs are killed by players.
@@ -39,6 +47,9 @@ public class MobHeadDropListener implements Listener {
     private final HeadDatabaseAPI hdbAPI;
     private final NamespacedKey mobHeadKey;
     private final NamespacedKey spawnEggKey;
+    private final NamespacedKey mythicMobHeadKey;
+    private final NamespacedKey mythicMobHeadIdKey;
+    private final Map<String, String> customMobHeads;
 
     public MobHeadDropListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -46,6 +57,10 @@ public class MobHeadDropListener implements Listener {
         this.hdbAPI = new HeadDatabaseAPI();
         this.mobHeadKey = new NamespacedKey(plugin, "mob_head");
         this.spawnEggKey = new NamespacedKey(plugin, "spawn_egg");
+        this.mythicMobHeadKey = new NamespacedKey(plugin, "mythic_mob_head");
+        this.mythicMobHeadIdKey = new NamespacedKey(plugin, "mythic_mob_head_id");
+        this.customMobHeads = new HashMap<>();
+        loadCustomMobHeads();
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -66,6 +81,19 @@ public class MobHeadDropListener implements Listener {
 
         boolean spawnEggsEnabled = plugin.getConfig().getBoolean("mob-drops.spawn-eggs-enabled", true);
         boolean mobHeadsEnabled = plugin.getConfig().getBoolean("mob-drops.mob-heads-enabled", true);
+
+        Optional<String> mythicMobInternalName = isMythicMob(entity);
+        if (mythicMobInternalName.isPresent()) {
+            if (mobHeadsEnabled && random.nextInt(mobHeadChance) == 0) {
+                ItemStack customMobHead = getCustomMobHead(mythicMobInternalName.get());
+                if (customMobHead != null) {
+                    dropGlowingItem(entity.getWorld(), entity.getLocation(), customMobHead);
+                    spawnParticleEffect(entity.getLocation());
+                    plugin.getLogger().info("Mythic mob head dropped: " + mythicMobInternalName.get());
+                }
+            }
+            return;
+        }
 
         // Spawn egg drop (1 in X chance)
         if (spawnEggsEnabled && random.nextInt(spawnEggChance) == 0) {
@@ -157,6 +185,84 @@ public class MobHeadDropListener implements Listener {
         return eggMaterial != null ? new ItemStack(eggMaterial) : null;
     }
 
+    private Optional<String> isMythicMob(Entity entity) {
+        if (!plugin.isMythicMobsAvailable()) {
+            return Optional.empty();
+        }
+
+        try {
+            MythicBukkit mythicBukkit = MythicBukkit.inst();
+            if (mythicBukkit == null) {
+                return Optional.empty();
+            }
+            Optional<ActiveMob> mythicMob = mythicBukkit.getMobManager().getActiveMob(entity.getUniqueId());
+            return mythicMob.map(activeMob -> activeMob.getType().getInternalName());
+        } catch (Exception e) {
+            if (plugin.getConfig().getBoolean("plugin.debug", false)) {
+                plugin.getLogger().log(Level.WARNING, "Failed to check MythicMobs mob status", e);
+            }
+            return Optional.empty();
+        }
+    }
+
+    private ItemStack getCustomMobHead(String internalName) {
+        if (internalName == null || internalName.isBlank()) {
+            return null;
+        }
+
+        String headId = customMobHeads.get(internalName.toLowerCase(Locale.ROOT));
+        if (headId == null || headId.isBlank()) {
+            return null;
+        }
+
+        ItemStack mobHead = hdbAPI.getItemHead(headId);
+        if (mobHead == null) {
+            plugin.getLogger().warning("Invalid HeadDatabase ID '" + headId + "' for MythicMobs mob '" + internalName + "'");
+            return null;
+        }
+
+        ItemMeta meta = mobHead.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.GOLD + getMythicHeadDisplayName(internalName, headId));
+            PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
+            dataContainer.set(mythicMobHeadKey, PersistentDataType.STRING, internalName);
+            dataContainer.set(mythicMobHeadIdKey, PersistentDataType.STRING, headId);
+            mobHead.setItemMeta(meta);
+        }
+
+        return mobHead;
+    }
+
+    private void loadCustomMobHeads() {
+        customMobHeads.clear();
+
+        File configFile = new File(plugin.getDataFolder(), "custom_mob_heads.yml");
+        if (!configFile.exists()) {
+            plugin.saveResource("custom_mob_heads.yml", false);
+        }
+
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+        ConfigurationSection customMobsSection = config.getConfigurationSection("custom_mobs");
+        if (customMobsSection == null) {
+            plugin.getLogger().warning("No custom_mobs section found in custom_mob_heads.yml");
+            return;
+        }
+
+        for (String internalName : customMobsSection.getKeys(false)) {
+            String headId = customMobsSection.getString(internalName, "").trim();
+            if (!headId.isBlank()) {
+                customMobHeads.put(internalName.toLowerCase(Locale.ROOT), headId);
+            }
+        }
+    }
+
+    private String getMythicHeadDisplayName(String internalName, String headId) {
+        return MYTHIC_HEAD_DISPLAY_NAMES.getOrDefault(
+                headId,
+                capitalizeWords(internalName.replace('_', ' ')) + " Head"
+        );
+    }
+
     private String capitalizeWords(String str) {
         String[] words = str.toLowerCase().split(" ");
         StringBuilder result = new StringBuilder();
@@ -172,8 +278,28 @@ public class MobHeadDropListener implements Listener {
 
     // ========== MOB HEAD DATABASE IDS ==========
     public static final Map<EntityType, String> MOB_HEAD_IDS = new HashMap<>();
+    private static final Map<String, String> MYTHIC_HEAD_DISPLAY_NAMES = new HashMap<>();
 
     static {
+        MYTHIC_HEAD_DISPLAY_NAMES.put("127453", "Bison Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("109562", "Blue Tit Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("68945", "Cardinal Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("86467", "Chameleon Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("124341", "Elephant Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("110727", "Giraffe Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("123659", "Grizzly Bear Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("49350", "Hedgehog Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("67856", "Hippo Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("57286", "Lion Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("120379", "Orca Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("98816", "Raccoon Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("107763", "Rat Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("81327", "Reindeer Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("3479", "Robin Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("4266", "Shark Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("50110", "Snake Head");
+        MYTHIC_HEAD_DISPLAY_NAMES.put("57145", "Zebra Head");
+
         // Vanilla heads
         MOB_HEAD_IDS.put(EntityType.ZOMBIE, "ZOMBIE_HEAD");
         MOB_HEAD_IDS.put(EntityType.CREEPER, "CREEPER_HEAD");
