@@ -118,7 +118,8 @@ public class SpecialCollectionLoader {
                     if (entry.getKey().startsWith("MYTHIC:")) {
                         items.add(entry.getKey());
                     } else {
-                        // Vanilla/custom entity heads continue to use "ENTITY_NAME:<headId>" signatures.
+                        // EntityType entries use key=entity name and value=HeadDB ID, so compose
+                        // the standard "ENTITY_NAME:<headId>" signature here.
                         items.add(entry.getKey() + ":" + entry.getValue());
                     }
                 }

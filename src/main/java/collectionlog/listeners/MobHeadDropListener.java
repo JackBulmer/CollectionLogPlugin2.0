@@ -191,7 +191,11 @@ public class MobHeadDropListener implements Listener {
         }
 
         try {
-            Optional<ActiveMob> mythicMob = MythicBukkit.inst().getMobManager().getActiveMob(entity.getUniqueId());
+            MythicBukkit mythicBukkit = MythicBukkit.inst();
+            if (mythicBukkit == null) {
+                return Optional.empty();
+            }
+            Optional<ActiveMob> mythicMob = mythicBukkit.getMobManager().getActiveMob(entity.getUniqueId());
             return mythicMob.map(activeMob -> activeMob.getType().getInternalName());
         } catch (Exception e) {
             if (plugin.getConfig().getBoolean("plugin.debug", false)) {
@@ -219,8 +223,7 @@ public class MobHeadDropListener implements Listener {
 
         ItemMeta meta = mobHead.getItemMeta();
         if (meta != null) {
-            String displayName = MYTHIC_HEAD_DISPLAY_NAMES.getOrDefault(headId, capitalizeWords(internalName.replace('_', ' ')) + " Head");
-            meta.setDisplayName(ChatColor.GOLD + displayName);
+            meta.setDisplayName(ChatColor.GOLD + getMythicHeadDisplayName(internalName, headId));
             PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
             dataContainer.set(mythicMobHeadKey, PersistentDataType.STRING, internalName);
             dataContainer.set(mythicMobHeadIdKey, PersistentDataType.STRING, headId);
@@ -251,6 +254,13 @@ public class MobHeadDropListener implements Listener {
                 customMobHeads.put(internalName.toLowerCase(Locale.ROOT), headId);
             }
         }
+    }
+
+    private String getMythicHeadDisplayName(String internalName, String headId) {
+        return MYTHIC_HEAD_DISPLAY_NAMES.getOrDefault(
+                headId,
+                capitalizeWords(internalName.replace('_', ' ')) + " Head"
+        );
     }
 
     private String capitalizeWords(String str) {
