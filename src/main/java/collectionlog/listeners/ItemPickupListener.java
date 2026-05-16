@@ -2,6 +2,7 @@ package collectionlog.listeners;
 
 import collectionlog.CollectionLogPlugin;
 import collectionlog.anticheat.ItemTrackingManager;
+import collectionlog.collections.CollectionDefinition;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
 import org.bukkit.Material;
@@ -158,11 +159,19 @@ public class ItemPickupListener implements Listener {
         }
 
         String signature = "MYTHIC:" + headId;
-        progressTrackingManager.trackItemCollection(player, "mob_heads", signature)
-                .exceptionally(throwable -> {
-                    plugin.getLogger().severe("Failed to track Mythic mob head pickup: " + throwable.getMessage());
-                    return null;
-                });
+
+        // Get the CollectionDefinition object first
+        CollectionDefinition mobHeadsCollection = plugin.getCollectionLoader().getCollection("mob_heads");
+        if (mobHeadsCollection != null) {
+            progressTrackingManager.trackItemCollection(player, mobHeadsCollection, signature)
+                    .exceptionally(throwable -> {
+                        plugin.getLogger().severe("Failed to track Mythic mob head pickup: " + throwable.getMessage());
+                        return null;
+                    });
+        } else {
+            plugin.getLogger().warning("mob_heads collection not found!");
+        }
+
         return true;
     }
 }

@@ -97,7 +97,7 @@ public class TeleportManager implements Listener {
             String color = remaining >= 4 ? "§e" : remaining >= 2 ? "§6" : "§c";
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                 new TextComponent(color + "Teleporting in " + remaining + "..."));
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_DING, 1f, 1f);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
 
             tp.decrementSeconds();
 
