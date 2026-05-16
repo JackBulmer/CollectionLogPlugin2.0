@@ -246,7 +246,7 @@ public class MobHeadDropListener implements Listener {
         }
 
         for (String internalName : customMobsSection.getKeys(false)) {
-            String headId = config.getString("custom_mobs." + internalName, "").trim();
+            String headId = customMobsSection.getString(internalName, "").trim();
             if (!headId.isBlank()) {
                 customMobHeads.put(internalName.toLowerCase(Locale.ROOT), headId);
             }

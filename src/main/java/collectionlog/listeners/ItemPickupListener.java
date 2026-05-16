@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.UUID;
@@ -143,12 +144,14 @@ public class ItemPickupListener implements Listener {
             return false;
         }
 
-        String mythicInternalName = meta.getPersistentDataContainer().get(mythicMobHeadKey, PersistentDataType.STRING);
+        PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
+
+        String mythicInternalName = dataContainer.get(mythicMobHeadKey, PersistentDataType.STRING);
         if (mythicInternalName == null || mythicInternalName.isBlank()) {
             return false;
         }
 
-        String headId = meta.getPersistentDataContainer().get(mythicMobHeadIdKey, PersistentDataType.STRING);
+        String headId = dataContainer.get(mythicMobHeadIdKey, PersistentDataType.STRING);
         if (headId == null || headId.isBlank()) {
             plugin.getLogger().warning("Mythic mob head missing HeadDatabase ID tag for mob: " + mythicInternalName);
             return true;

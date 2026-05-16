@@ -114,9 +114,11 @@ public class SpecialCollectionLoader {
                 String customJson = gson.toJson(data.get("custom"));
                 Map<String, String> custom = gson.fromJson(customJson, mapType);
                 for (Map.Entry<String, String> entry : custom.entrySet()) {
+                    // MYTHIC signatures are already stored in final "MYTHIC:<headId>" format.
                     if (entry.getKey().startsWith("MYTHIC:")) {
                         items.add(entry.getKey());
                     } else {
+                        // Vanilla/custom entity heads continue to use "ENTITY_NAME:<headId>" signatures.
                         items.add(entry.getKey() + ":" + entry.getValue());
                     }
                 }
