@@ -28,12 +28,16 @@ public class ItemPickupListener implements Listener {
     private final ItemTrackingManager itemTrackingManager;
     private final CollectionMatcher collectionMatcher;
     private final ProgressTrackingManager progressTrackingManager;
+    private final NamespacedKey mythicMobHeadKey;
+    private final NamespacedKey mythicMobHeadIdKey;
 
     public ItemPickupListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
         this.itemTrackingManager = plugin.getItemTrackingManager();
         this.collectionMatcher = plugin.getCollectionMatcher();
         this.progressTrackingManager = plugin.getProgressTrackingManager();
+        this.mythicMobHeadKey = new NamespacedKey(plugin, "mythic_mob_head");
+        this.mythicMobHeadIdKey = new NamespacedKey(plugin, "mythic_mob_head_id");
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -88,6 +92,10 @@ public class ItemPickupListener implements Listener {
             return;
         }
 
+        if (trackMythicMobHeadProgress(player, item)) {
+            return;
+        }
+
         EntityType mobHeadEntityType = extractMobHeadEntityType(item);
 
         for (CollectionMatcher.CollectionMatch match : collectionMatcher.findMatches(item, mobHeadEntityType)) {
@@ -123,5 +131,35 @@ public class ItemPickupListener implements Listener {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private boolean trackMythicMobHeadProgress(Player player, ItemStack item) {
+        if (item.getType() != Material.PLAYER_HEAD) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        String mythicInternalName = meta.getPersistentDataContainer().get(mythicMobHeadKey, PersistentDataType.STRING);
+        if (mythicInternalName == null || mythicInternalName.isBlank()) {
+            return false;
+        }
+
+        String headId = meta.getPersistentDataContainer().get(mythicMobHeadIdKey, PersistentDataType.STRING);
+        if (headId == null || headId.isBlank()) {
+            plugin.getLogger().warning("Mythic mob head missing HeadDatabase ID tag for mob: " + mythicInternalName);
+            return true;
+        }
+
+        String signature = "MYTHIC:" + headId;
+        progressTrackingManager.trackItemCollection(player, "mob_heads", signature)
+                .exceptionally(throwable -> {
+                    plugin.getLogger().severe("Failed to track Mythic mob head pickup: " + throwable.getMessage());
+                    return null;
+                });
+        return true;
     }
 }
