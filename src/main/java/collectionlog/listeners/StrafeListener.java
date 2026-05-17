@@ -28,6 +28,8 @@ import java.util.UUID;
  * Boosts player based on movement direction with an upward burst.
  */
 public class StrafeListener implements Listener {
+    private static final double MIN_HORIZONTAL_MOVEMENT_SQUARED = 0.01;
+
     private final CollectionLogPlugin plugin;
     private final StrafeManager strafeManager;
     private final Map<UUID, Long> airborneTime = new HashMap<>();
@@ -187,9 +189,13 @@ public class StrafeListener implements Listener {
         velocity.setY(0); // Ignore vertical movement
 
         // If player isn't moving horizontally, use facing direction as fallback
-        if (velocity.lengthSquared() < 0.01) {
+        if (velocity.lengthSquared() < MIN_HORIZONTAL_MOVEMENT_SQUARED) {
             velocity = player.getLocation().getDirection().clone();
             velocity.setY(0);
+        }
+
+        if (velocity.lengthSquared() < MIN_HORIZONTAL_MOVEMENT_SQUARED) {
+            velocity = new Vector(0, 0, 1);
         }
 
         velocity.normalize();
