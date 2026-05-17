@@ -25,7 +25,7 @@ import java.util.UUID;
 
 /**
  * Allows players to strafe by right-clicking with a sword.
- * Boosts player 2 blocks up and 3 blocks forward in the direction they're facing.
+ * Boosts player based on movement direction with an upward burst.
  */
 public class StrafeListener implements Listener {
     private final CollectionLogPlugin plugin;
@@ -182,13 +182,20 @@ public class StrafeListener implements Listener {
     }
 
     private void performStrafe(Player player) {
-        // Get direction player is facing
-        Vector direction = player.getLocation().getDirection().clone();
-        direction.setY(0);
-        direction.normalize();
+        // Get direction player is moving
+        Vector velocity = player.getVelocity().clone();
+        velocity.setY(0); // Ignore vertical movement
+
+        // If player isn't moving horizontally, use facing direction as fallback
+        if (velocity.lengthSquared() < 0.01) {
+            velocity = player.getLocation().getDirection().clone();
+            velocity.setY(0);
+        }
+
+        velocity.normalize();
 
         // Boost: 1.0 horizontal velocity, 0.8 vertical velocity
-        Vector strafeVelocity = direction.multiply(1.0);
+        Vector strafeVelocity = velocity.multiply(1.0);
         strafeVelocity.setY(0.8);
 
         player.setVelocity(strafeVelocity);
