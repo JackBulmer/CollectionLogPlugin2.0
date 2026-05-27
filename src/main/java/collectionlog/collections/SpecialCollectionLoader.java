@@ -6,9 +6,15 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,27 +49,26 @@ public class SpecialCollectionLoader {
 
     private void loadSpecialCollection(SpecialCollectionType type) {
         try {
-            String fileName = "special_collections/" + type.getJsonFile() + ".json";
-            InputStream rawStream = plugin.getResource(fileName);
-
-            if (rawStream == null) {
+            String fileName = type.getJsonFile() + ".json";
+            InputStream stream = getSpecialCollectionStream(fileName);
+            if (stream == null) {
                 plugin.getLogger().warning("Special collection file not found: " + fileName);
                 return;
             }
 
             List<String> items;
-            try (InputStream stream = rawStream) {
+            try (InputStream inputStream = stream) {
                 // Handle different JSON formats
                 if (type == SpecialCollectionType.MOB_HEADS) {
                     // Special handling for mob_heads.json (has vanilla/custom structure)
-                    items = loadMobHeads(stream);
+                    items = loadMobHeads(inputStream);
                 } else if (type == SpecialCollectionType.JB_FISHING_PLUS || type == SpecialCollectionType.TCG) {
                     // Custom model data items (has name, rarity, customModelData)
-                    items = loadCustomModelDataItems(stream);
+                    items = loadCustomModelDataItems(inputStream);
                 } else {
                     // Simple string arrays
                     Type listType = new TypeToken<List<String>>() { }.getType();
-                    try (InputStreamReader reader = new InputStreamReader(stream)) {
+                    try (InputStreamReader reader = new InputStreamReader(inputStream)) {
                         items = gson.fromJson(reader, listType);
                     }
 
@@ -86,6 +91,59 @@ public class SpecialCollectionLoader {
 
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to load special collection: " + type.getJsonFile(), e);
+        }
+    }
+
+    /**
+     * Gets an InputStream for a special collection file.
+     * Priority:
+     * 1. External file in plugins/CollectionLogPlugin/special_collections/
+     * 2. Embedded resource in JAR
+     *
+     * If external file doesn't exist, attempts to copy from embedded resource.
+     *
+     * @param fileName The JSON filename (e.g., "tcg.json")
+     * @return InputStream for the file, or null if not found
+     */
+    private InputStream getSpecialCollectionStream(String fileName) {
+        File externalDir = new File(plugin.getDataFolder(), "special_collections");
+        File externalFile = new File(externalDir, fileName);
+
+        if (externalFile.exists()) {
+            try {
+                plugin.getLogger().fine("Loading " + fileName + " from external file");
+                return new FileInputStream(externalFile);
+            } catch (FileNotFoundException e) {
+                plugin.getLogger().warning("External file exists but cannot be read: " + fileName);
+            }
+        }
+
+        String resourcePath = "special_collections/" + fileName;
+        byte[] resourceData;
+        try (InputStream resourceStream = plugin.getResource(resourcePath)) {
+            if (resourceStream == null) {
+                plugin.getLogger().warning("Resource not found in JAR: " + resourcePath);
+                return null;
+            }
+            resourceData = resourceStream.readAllBytes();
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to read resource from JAR: " + resourcePath, e);
+            return null;
+        }
+
+        if (!externalDir.exists() && !externalDir.mkdirs()) {
+            plugin.getLogger().warning("Failed to create special_collections directory");
+            return new ByteArrayInputStream(resourceData);
+        }
+
+        try {
+            Files.write(externalFile.toPath(), resourceData);
+            plugin.getLogger().info("Copied " + fileName + " from JAR to " + externalFile.getPath());
+            return new ByteArrayInputStream(resourceData);
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to copy " + fileName + " to external location", e);
+            plugin.getLogger().fine("Using embedded resource for " + fileName);
+            return new ByteArrayInputStream(resourceData);
         }
     }
 
