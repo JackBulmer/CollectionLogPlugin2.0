@@ -410,183 +410,178 @@
     "customModelData": 635201
   },
   {
-    "name": "Aerial Card Card",
+    "name": "Aerial Card",
     "rarity": "COMMON",
-    "customModelData": 635206
+    "customModelData": 635045
   },
   {
-    "name": "Black Wraith Card Card",
+    "name": "Golden Eel Card",
     "rarity": "COMMON",
-    "customModelData": 635207
+    "customModelData": 635046
   },
   {
-    "name": "Bloodscale Card Card",
+    "name": "Blue Marlin Card",
     "rarity": "COMMON",
-    "customModelData": 635208
+    "customModelData": 635047
   },
   {
-    "name": "Blue Goby Card Card",
+    "name": "Blue Tang Card",
     "rarity": "COMMON",
-    "customModelData": 635209
+    "customModelData": 635048
   },
   {
-    "name": "Blue Lobster Card Card",
+    "name": "Elderfin Leviathan Card",
     "rarity": "COMMON",
-    "customModelData": 635210
+    "customModelData": 635049
   },
   {
-    "name": "Blue Marlin Card Card",
+    "name": "Dark Hunter Card",
     "rarity": "COMMON",
-    "customModelData": 635211
+    "customModelData": 635050
   },
   {
-    "name": "Blue Tang Card Card",
+    "name": "Bloodscale Card",
     "rarity": "COMMON",
-    "customModelData": 635212
+    "customModelData": 635051
   },
   {
-    "name": "Dark Hunter Card Card",
+    "name": "Lilyfin Card",
     "rarity": "COMMON",
-    "customModelData": 635213
+    "customModelData": 635052
   },
   {
-    "name": "Dead Fish Card Card",
+    "name": "Stream Snapper Card",
     "rarity": "COMMON",
-    "customModelData": 635214
+    "customModelData": 635053
   },
   {
-    "name": "Diamond Octopus Card Card",
+    "name": "Golden Squid Card",
     "rarity": "COMMON",
-    "customModelData": 635215
+    "customModelData": 635054
   },
   {
-    "name": "Dusky Pike Card Card",
+    "name": "Starfish Card",
     "rarity": "COMMON",
-    "customModelData": 635216
+    "customModelData": 635055
   },
   {
-    "name": "Eel Card Card",
+    "name": "Blue Lobster Card",
     "rarity": "COMMON",
-    "customModelData": 635217
+    "customModelData": 635056
   },
   {
-    "name": "Elderfin Leviathan Card Card",
+    "name": "Black Wraith Card",
     "rarity": "COMMON",
-    "customModelData": 635218
+    "customModelData": 635057
   },
   {
-    "name": "Golden Eel Card Card",
+    "name": "Sus Fish Card",
     "rarity": "COMMON",
-    "customModelData": 635219
+    "customModelData": 635058
   },
   {
-    "name": "Golden Squid Card Card",
+    "name": "Humbolt Squid Card",
     "rarity": "COMMON",
-    "customModelData": 635220
+    "customModelData": 635060
   },
   {
-    "name": "Humbolt Squid Card Card",
+    "name": "Spectral Fish Card",
     "rarity": "COMMON",
-    "customModelData": 635221
+    "customModelData": 635061
   },
   {
-    "name": "Lilyfin Card Card",
+    "name": "Dead Fish Card",
     "rarity": "COMMON",
-    "customModelData": 635222
+    "customModelData": 635062
   },
   {
-    "name": "Lobster Card Card",
+    "name": "Totem Fish Card",
     "rarity": "COMMON",
-    "customModelData": 635223
-  },
-  {
-    "name": "Magenta Dottyback Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635224
-  },
-  {
-    "name": "Magikarp Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635225
-  },
-  {
-    "name": "Manta Ray Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635226
-  },
-  {
-    "name": "Money Fish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635227
-  },
-  {
-    "name": "Pond Minnow Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635228
-  },
-  {
-    "name": "Rainbow Diver Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635229
-  },
-  {
-    "name": "Red Fang Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635230
-  },
-  {
-    "name": "Robo Fish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635231
-  },
-  {
-    "name": "Scarlet Koi Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635232
-  },
-  {
-    "name": "Shrimp Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635233
-  },
-  {
-    "name": "Spectral Fish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635234
-  },
-  {
-    "name": "Starfish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635235
-  },
-  {
-    "name": "Stream Snapper Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635236
-  },
-  {
-    "name": "Sus Fish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635237
-  },
-  {
-    "name": "Tadpole Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635238
-  },
-  {
-    "name": "Totem Fish Card Card",
-    "rarity": "COMMON",
-    "customModelData": 635239
+    "customModelData": 635063
   },
   {
     "name": "Twilight Salmon Fish Card",
     "rarity": "COMMON",
-    "customModelData": 635240
+    "customModelData": 635064
   },
   {
-    "name": "Violet Varrango Card Card",
+    "name": "Lobster Card",
     "rarity": "COMMON",
-    "customModelData": 635241
+    "customModelData": 635065
+  },
+  {
+    "name": "Diamond Octopus Card",
+    "rarity": "COMMON",
+    "customModelData": 635066
+  },
+  {
+    "name": "Shrimp Card",
+    "rarity": "COMMON",
+    "customModelData": 635067
+  },
+  {
+    "name": "Violet Varrango Card",
+    "rarity": "COMMON",
+    "customModelData": 635068
+  },
+  {
+    "name": "Dusky Pike Card",
+    "rarity": "COMMON",
+    "customModelData": 635069
+  },
+  {
+    "name": "Eel Card",
+    "rarity": "COMMON",
+    "customModelData": 635070
+  },
+  {
+    "name": "Magenta Dottyback Card",
+    "rarity": "COMMON",
+    "customModelData": 635071
+  },
+  {
+    "name": "Magikarp Card",
+    "rarity": "COMMON",
+    "customModelData": 635072
+  },
+  {
+    "name": "Scarlet Koi Card",
+    "rarity": "COMMON",
+    "customModelData": 635073
+  },
+  {
+    "name": "Manta Ray Card",
+    "rarity": "COMMON",
+    "customModelData": 635074
+  },
+  {
+    "name": "Money Fish Card",
+    "rarity": "COMMON",
+    "customModelData": 635075
+  },
+  {
+    "name": "Pond Minnow Card",
+    "rarity": "COMMON",
+    "customModelData": 635076
+  },
+  {
+    "name": "Rainbow Diver Card",
+    "rarity": "COMMON",
+    "customModelData": 635077
+  },
+  {
+    "name": "Red Fang Card",
+    "rarity": "COMMON",
+    "customModelData": 635078
+  },
+  {
+    "name": "Robo Fish Card",
+    "rarity": "COMMON",
+    "customModelData": 635079
+  },
+  {
+    "name": "Blue Goby Card",
+    "rarity": "COMMON",
+    "customModelData": 635080
   }
 ]
