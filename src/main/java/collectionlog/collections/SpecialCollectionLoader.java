@@ -7,6 +7,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -119,31 +119,32 @@ public class SpecialCollectionLoader {
         }
 
         String resourcePath = "special_collections/" + fileName;
-        InputStream resourceStream = plugin.getResource(resourcePath);
-        if (resourceStream == null) {
-            plugin.getLogger().warning("Resource not found in JAR: " + resourcePath);
+        byte[] resourceData;
+        try (InputStream resourceStream = plugin.getResource(resourcePath)) {
+            if (resourceStream == null) {
+                plugin.getLogger().warning("Resource not found in JAR: " + resourcePath);
+                return null;
+            }
+            resourceData = resourceStream.readAllBytes();
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to read resource from JAR: " + resourcePath, e);
             return null;
         }
 
         if (!externalDir.exists() && !externalDir.mkdirs()) {
             plugin.getLogger().warning("Failed to create special_collections directory");
-            return resourceStream;
+            return new ByteArrayInputStream(resourceData);
         }
 
-        try (InputStream streamToCopy = resourceStream) {
-            Files.copy(streamToCopy, externalFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.write(externalFile.toPath(), resourceData);
             plugin.getLogger().info("Copied " + fileName + " from JAR to " + externalFile.getPath());
-            return new FileInputStream(externalFile);
+            return new ByteArrayInputStream(resourceData);
         } catch (IOException e) {
             plugin.getLogger().log(Level.WARNING, "Failed to copy " + fileName + " to external location", e);
-            InputStream fallbackStream = plugin.getResource(resourcePath);
-            if (fallbackStream != null) {
-                plugin.getLogger().fine("Using embedded resource for " + fileName);
-                return fallbackStream;
-            }
+            plugin.getLogger().fine("Using embedded resource for " + fileName);
+            return new ByteArrayInputStream(resourceData);
         }
-
-        return null;
     }
 
     private List<String> loadMobHeads(InputStream stream) {
