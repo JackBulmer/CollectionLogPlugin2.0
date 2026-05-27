@@ -140,7 +140,8 @@ public class HologramManager {
         }
 
         int removed = 0;
-        for (Entity entity : world.getNearbyEntities(location, radius, radius * 2, radius)) {
+        double verticalRadius = radius * 2;
+        for (Entity entity : world.getNearbyEntities(location, radius, verticalRadius, radius)) {
             if (entity instanceof ArmorStand stand) {
                 if (!stand.isVisible()
                         && !stand.hasGravity()

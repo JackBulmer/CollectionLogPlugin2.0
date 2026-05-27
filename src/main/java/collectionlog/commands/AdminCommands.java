@@ -361,16 +361,21 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         plugin.reloadConfig();
         sender.sendMessage("§a✓ Reloaded config.yml");
 
+        boolean collectionLoaderReloaded = false;
+        boolean specialCollectionLoaderReloaded = false;
+
         // Reload collections
         if (plugin.getCollectionLoader() != null) {
             plugin.getCollectionLoader().reload();
             sender.sendMessage("§a✓ Reloaded collections.json");
+            collectionLoaderReloaded = true;
         }
 
         // Reload special collections
         if (plugin.getSpecialCollectionLoader() != null) {
             plugin.getSpecialCollectionLoader().reload();
             sender.sendMessage("§a✓ Reloaded special collections (tcg, mob_heads, etc.)");
+            specialCollectionLoaderReloaded = true;
         }
 
         // Reload milestones
@@ -387,7 +392,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         // Rebuild collection matcher with current collection data
-        if (plugin.getCollectionLoader() != null && plugin.getSpecialCollectionLoader() != null) {
+        if (collectionLoaderReloaded && specialCollectionLoaderReloaded) {
             plugin.rebuildCollectionMatcher();
             sender.sendMessage("§a✓ Rebuilt collection matcher");
         }

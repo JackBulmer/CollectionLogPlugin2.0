@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
+    private static final double CLEANUP_RADIUS = 20.0D;
     private final CollectionLogPlugin plugin;
     private final HologramManager hologramManager;
 
@@ -58,10 +59,10 @@ public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
         }
 
         if ("cleanup".equals(action)) {
-            int removed = hologramManager.forceCleanupNearby(player.getLocation(), 20.0D);
+            int removed = hologramManager.forceCleanupNearby(player.getLocation(), CLEANUP_RADIUS);
             sender.sendMessage(removed > 0
                     ? "§aRemoved " + removed + " orphaned hologram armor stands."
-                    : "§cNo orphaned hologram armor stands found within 20 blocks.");
+                    : "§cNo orphaned hologram armor stands found within " + (int) CLEANUP_RADIUS + " blocks.");
             return true;
         }
 
