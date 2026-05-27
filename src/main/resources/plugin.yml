@@ -116,7 +116,7 @@ commands:
 
   logscoreboard:
     description: Create or remove collection log leaderboard scoreboards
-    usage: /logscoreboard <create|remove>
+    usage: /logscoreboard <create|remove|cleanup>
     permission: collectionlog.admin.scoreboard
 
 permissions:

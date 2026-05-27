@@ -129,6 +129,14 @@ public class CollectionLoader {
         return collections.get(id);
     }
 
+    /**
+     * Reload all collections from collections.json.
+     */
+    public void reload() {
+        collections.clear();
+        loadCollections();
+    }
+
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;

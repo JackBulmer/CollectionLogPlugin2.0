@@ -195,4 +195,12 @@ public class SpecialCollectionLoader {
     public CollectionDefinition getSpecialCollection(String id) {
         return specialCollections.get(id);
     }
+
+    /**
+     * Reload all special collections from JSON files.
+     */
+    public void reload() {
+        specialCollections.clear();
+        loadSpecialCollections();
+    }
 }

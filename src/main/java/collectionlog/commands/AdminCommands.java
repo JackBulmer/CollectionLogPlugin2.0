@@ -361,6 +361,18 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         plugin.reloadConfig();
         sender.sendMessage("§a✓ Reloaded config.yml");
 
+        // Reload collections
+        if (plugin.getCollectionLoader() != null) {
+            plugin.getCollectionLoader().reload();
+            sender.sendMessage("§a✓ Reloaded collections.json");
+        }
+
+        // Reload special collections
+        if (plugin.getSpecialCollectionLoader() != null) {
+            plugin.getSpecialCollectionLoader().reload();
+            sender.sendMessage("§a✓ Reloaded special collections (tcg, mob_heads, etc.)");
+        }
+
         // Reload milestones
         MilestoneManager milestoneManager = plugin.getMilestoneManager();
         if (milestoneManager != null) {
@@ -372,6 +384,12 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         if (plugin.getCustomRecipeManager() != null) {
             plugin.getCustomRecipeManager().loadRecipes();
             sender.sendMessage("§a✓ Reloaded custom recipes");
+        }
+
+        // Rebuild collection matcher with current collection data
+        if (plugin.getCollectionLoader() != null && plugin.getSpecialCollectionLoader() != null) {
+            plugin.rebuildCollectionMatcher();
+            sender.sendMessage("§a✓ Rebuilt collection matcher");
         }
 
         sender.sendMessage("§a§l✓ Reload complete!");
