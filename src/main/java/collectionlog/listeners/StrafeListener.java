@@ -28,8 +28,8 @@ import java.util.UUID;
  * Boosts player based on movement direction with an upward burst.
  */
 public class StrafeListener implements Listener {
-    // Treat speeds below ~0.1 blocks/tick as stationary for strafe direction fallback.
-    private static final double MIN_HORIZONTAL_MOVEMENT_SQUARED = 0.01;
+    // Treat only near-zero horizontal velocity as stationary.
+    private static final double MIN_HORIZONTAL_MOVEMENT_SQUARED = 0.0001;
 
     private final CollectionLogPlugin plugin;
     private final StrafeManager strafeManager;
@@ -189,15 +189,9 @@ public class StrafeListener implements Listener {
         Vector velocity = player.getVelocity().clone();
         velocity.setY(0); // Ignore vertical movement
 
-        // If player isn't moving horizontally, use facing direction as fallback
+        // If player isn't moving horizontally, don't strafe.
         if (velocity.lengthSquared() < MIN_HORIZONTAL_MOVEMENT_SQUARED) {
-            velocity = player.getLocation().getDirection().clone();
-            velocity.setY(0);
-        }
-
-        if (velocity.lengthSquared() < MIN_HORIZONTAL_MOVEMENT_SQUARED) {
-            // Defensive fallback to avoid normalizing a zero-length vector in edge cases.
-            velocity = new Vector(0, 0, 1);
+            return;
         }
 
         velocity.normalize();
