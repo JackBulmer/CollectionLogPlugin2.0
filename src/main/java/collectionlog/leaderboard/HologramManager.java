@@ -210,12 +210,30 @@ public class HologramManager {
     }
 
     private void removeArmorStands(LeaderboardHologram hologram) {
+        World world = Bukkit.getWorld(hologram.worldName());
+        if (world == null) {
+            hologram.armorStandIds().clear();
+            return;
+        }
+
+        Location location = hologram.location(world);
+
         for (UUID entityId : hologram.armorStandIds()) {
             Entity entity = Bukkit.getEntity(entityId);
-            if (entity != null) {
+            if (entity instanceof ArmorStand) {
                 entity.remove();
             }
         }
+
+        world.getNearbyEntities(location, 1.0D, 5.0D, 1.0D).stream()
+                .filter(entity -> entity instanceof ArmorStand)
+                .map(entity -> (ArmorStand) entity)
+                .filter(stand -> !stand.isVisible()
+                        && !stand.hasGravity()
+                        && stand.isMarker()
+                        && stand.isCustomNameVisible())
+                .forEach(Entity::remove);
+
         hologram.armorStandIds().clear();
     }
 
