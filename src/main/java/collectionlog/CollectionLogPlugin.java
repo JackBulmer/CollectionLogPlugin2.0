@@ -625,6 +625,13 @@ public class CollectionLogPlugin extends JavaPlugin {
         return collectionMatcher;
     }
 
+    /**
+     * Rebuild collection matcher using current collection data.
+     */
+    public void rebuildCollectionMatcher() {
+        collectionMatcher = new CollectionMatcher(collectionLoader, specialCollectionLoader);
+    }
+
     public MilestoneManager getMilestoneManager() {
         return milestoneManager;
     }

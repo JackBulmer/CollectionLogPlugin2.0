@@ -126,6 +126,36 @@ public class HologramManager {
                 });
     }
 
+    /**
+     * Force cleanup of orphaned hologram armor stands near a location.
+     *
+     * @param location Center location to search from
+     * @param radius search radius in blocks
+     * @return number of armor stands removed
+     */
+    public int forceCleanupNearby(Location location, double radius) {
+        World world = location.getWorld();
+        if (world == null) {
+            return 0;
+        }
+
+        int removed = 0;
+        double verticalRadius = radius * 2;
+        for (Entity entity : world.getNearbyEntities(location, radius, verticalRadius, radius)) {
+            if (entity instanceof ArmorStand stand) {
+                if (!stand.isVisible()
+                        && !stand.hasGravity()
+                        && stand.isMarker()
+                        && stand.isCustomNameVisible()) {
+                    entity.remove();
+                    removed++;
+                }
+            }
+        }
+
+        return removed;
+    }
+
     public CompletableFuture<Void> loadHologramsFromDatabase() {
         CompletableFuture<Void> future = new CompletableFuture<>();
 

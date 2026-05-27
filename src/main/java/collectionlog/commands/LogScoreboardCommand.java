@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
+    private static final double CLEANUP_RADIUS = 20.0D;
     private final CollectionLogPlugin plugin;
     private final HologramManager hologramManager;
 
@@ -35,7 +36,7 @@ public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length != 1) {
-            sender.sendMessage("§cUsage: /logscoreboard <create|remove>");
+            sender.sendMessage("§cUsage: /logscoreboard <create|remove|cleanup>");
             return true;
         }
 
@@ -57,7 +58,15 @@ public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        sender.sendMessage("§cUsage: /logscoreboard <create|remove>");
+        if ("cleanup".equals(action)) {
+            int removed = hologramManager.forceCleanupNearby(player.getLocation(), CLEANUP_RADIUS);
+            sender.sendMessage(removed > 0
+                    ? "§aRemoved " + removed + " orphaned hologram armor stands."
+                    : "§cNo orphaned hologram armor stands found within " + (int) CLEANUP_RADIUS + " blocks.");
+            return true;
+        }
+
+        sender.sendMessage("§cUsage: /logscoreboard <create|remove|cleanup>");
         return true;
     }
 
@@ -67,7 +76,7 @@ public class LogScoreboardCommand implements CommandExecutor, TabCompleter {
             return List.of();
         }
 
-        List<String> completions = new ArrayList<>(List.of("create", "remove"));
+        List<String> completions = new ArrayList<>(List.of("create", "remove", "cleanup"));
         String input = args[0].toLowerCase(Locale.ROOT);
         completions.removeIf(option -> !option.startsWith(input));
         return completions;
