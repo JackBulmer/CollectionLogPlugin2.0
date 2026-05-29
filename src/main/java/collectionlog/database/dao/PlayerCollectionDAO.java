@@ -210,6 +210,36 @@ public class PlayerCollectionDAO {
     }
 
     /**
+     * Update the total item count for a collection across all players.
+     * Called when collections are reloaded and item counts change.
+     *
+     * @param collectionId  The collection ID
+     * @param newTotalItems The new total item count
+     * @return CompletableFuture that completes when update is done
+     */
+    public CompletableFuture<Void> updateCollectionTotalItems(String collectionId, int newTotalItems) {
+        String sql = "UPDATE player_collections SET total_items = ? WHERE collection_id = ?";
+
+        return asyncTaskManager.runAsync(() -> {
+            try (Connection conn = databaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+                stmt.setInt(1, newTotalItems);
+                stmt.setString(2, collectionId);
+
+                int updated = stmt.executeUpdate();
+                if (updated > 0) {
+                    plugin.getLogger().fine("Updated total_items to " + newTotalItems + " for " + updated + " players in collection: " + collectionId);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to update collection total items: " + e.getMessage(), e);
+            }
+
+            return null;
+        });
+    }
+
+    /**
      * Mark a collection as complete
      */
     public CompletableFuture<Void> markCollectionComplete(UUID playerUUID, String collectionId) {
