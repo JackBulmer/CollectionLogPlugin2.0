@@ -29,6 +29,9 @@ import java.util.UUID;
  * Boosts player based on movement direction with an upward burst.
  */
 public class StrafeListener implements Listener {
+    private static final double MIN_HORIZONTAL_MOVEMENT = 0.001;
+    private static final long MOVEMENT_CACHE_DURATION_MS = 500;
+
     private final CollectionLogPlugin plugin;
     private final StrafeManager strafeManager;
     private final Map<UUID, Long> airborneTime = new HashMap<>();
@@ -92,7 +95,7 @@ public class StrafeListener implements Listener {
             double deltaZ = to.getZ() - from.getZ();
 
             // Only update if there's significant horizontal movement
-            if (Math.abs(deltaX) > 0.001 || Math.abs(deltaZ) > 0.001) {
+            if (Math.abs(deltaX) > MIN_HORIZONTAL_MOVEMENT || Math.abs(deltaZ) > MIN_HORIZONTAL_MOVEMENT) {
                 Vector movementDirection = new Vector(deltaX, 0, deltaZ).normalize();
                 playerMovementDirection.put(playerId, movementDirection);
                 lastMovementUpdate.put(playerId, System.currentTimeMillis());
@@ -225,9 +228,9 @@ public class StrafeListener implements Listener {
         Vector movementDirection = playerMovementDirection.get(playerId);
         Long lastUpdate = lastMovementUpdate.get(playerId);
 
-        // If we have recent movement data (within last 500ms), use it
+        // If we have recent movement data (within last MOVEMENT_CACHE_DURATION_MS), use it
         if (movementDirection != null && lastUpdate != null &&
-                (System.currentTimeMillis() - lastUpdate) < 500) {
+                (System.currentTimeMillis() - lastUpdate) < MOVEMENT_CACHE_DURATION_MS) {
             return movementDirection.clone();
         }
 
