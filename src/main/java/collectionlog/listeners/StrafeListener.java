@@ -2,6 +2,7 @@ package collectionlog.listeners;
 
 import collectionlog.CollectionLogPlugin;
 import collectionlog.managers.StrafeManager;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -28,12 +29,11 @@ import java.util.UUID;
  * Boosts player based on movement direction with an upward burst.
  */
 public class StrafeListener implements Listener {
-    // Treat only near-zero horizontal velocity as stationary.
-    private static final double MIN_HORIZONTAL_MOVEMENT_SQUARED = 0.0001;
-
     private final CollectionLogPlugin plugin;
     private final StrafeManager strafeManager;
     private final Map<UUID, Long> airborneTime = new HashMap<>();
+    private final Map<UUID, Vector> playerMovementDirection = new HashMap<>();
+    private final Map<UUID, Long> lastMovementUpdate = new HashMap<>();
 
     // Interactable blocks that prevent strafing
     private static final Set<Material> INTERACTABLE_BLOCKS = Set.of(
@@ -82,6 +82,22 @@ public class StrafeListener implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
+
+        Location from = event.getFrom();
+        Location to = event.getTo();
+
+        if (to != null) {
+            // Calculate movement direction from position delta
+            double deltaX = to.getX() - from.getX();
+            double deltaZ = to.getZ() - from.getZ();
+
+            // Only update if there's significant horizontal movement
+            if (Math.abs(deltaX) > 0.001 || Math.abs(deltaZ) > 0.001) {
+                Vector movementDirection = new Vector(deltaX, 0, deltaZ).normalize();
+                playerMovementDirection.put(playerId, movementDirection);
+                lastMovementUpdate.put(playerId, System.currentTimeMillis());
+            }
+        }
 
         // Track airborne time
         if (!player.isOnGround()) {
@@ -161,6 +177,8 @@ public class StrafeListener implements Listener {
         UUID playerId = event.getPlayer().getUniqueId();
         strafeManager.cleanupPlayer(playerId);
         airborneTime.remove(playerId);
+        playerMovementDirection.remove(playerId);
+        lastMovementUpdate.remove(playerId);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -185,24 +203,45 @@ public class StrafeListener implements Listener {
     }
 
     private void performStrafe(Player player) {
-        // Get direction player is moving
-        Vector velocity = player.getVelocity().clone();
-        velocity.setY(0); // Ignore vertical movement
+        // Get player's movement direction
+        Vector direction = getMovementDirection(player);
 
-        // If player isn't moving horizontally, don't strafe.
-        if (velocity.lengthSquared() < MIN_HORIZONTAL_MOVEMENT_SQUARED) {
-            return;
-        }
-
-        velocity.normalize();
-
-        // Boost: 1.0 horizontal velocity, 0.8 vertical velocity
-        Vector strafeVelocity = velocity.multiply(1.0);
-        strafeVelocity.setY(0.8);
+        // V1 values: 0.6 horizontal, 0.75 vertical
+        Vector strafeVelocity = direction.multiply(0.6);
+        strafeVelocity.setY(0.75);
 
         player.setVelocity(strafeVelocity);
         player.playSound(player.getLocation(), Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.0f, 1.5f);
 
         strafeManager.useStrafe(player);
+    }
+
+    /**
+     * Get movement direction based on recent player movement or facing direction.
+     * Uses V1's approach: track position delta in PlayerMoveEvent.
+     */
+    private Vector getMovementDirection(Player player) {
+        UUID playerId = player.getUniqueId();
+        Vector movementDirection = playerMovementDirection.get(playerId);
+        Long lastUpdate = lastMovementUpdate.get(playerId);
+
+        // If we have recent movement data (within last 500ms), use it
+        if (movementDirection != null && lastUpdate != null &&
+                (System.currentTimeMillis() - lastUpdate) < 500) {
+            return movementDirection.clone();
+        }
+
+        // Otherwise, use the direction the player is facing
+        Vector facingDirection = player.getLocation().getDirection().clone();
+        facingDirection.setY(0);
+
+        if (facingDirection.lengthSquared() < 0.01) {
+            // If facing nearly straight up/down, use forward direction
+            facingDirection = new Vector(0, 0, 1);
+        } else {
+            facingDirection.normalize();
+        }
+
+        return facingDirection;
     }
 }

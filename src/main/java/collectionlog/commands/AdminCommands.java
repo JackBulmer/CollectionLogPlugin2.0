@@ -395,6 +395,30 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         if (collectionLoaderReloaded && specialCollectionLoaderReloaded) {
             plugin.rebuildCollectionMatcher();
             sender.sendMessage("§a✓ Rebuilt collection matcher");
+
+            // Update database with new collection totals
+            PlayerCollectionDAO playerCollectionDAO = plugin.getPlayerCollectionDAO();
+            if (playerCollectionDAO != null) {
+                Map<String, CollectionDefinition> allCollections = new LinkedHashMap<>();
+                allCollections.putAll(plugin.getCollectionLoader().getCollections());
+                allCollections.putAll(plugin.getSpecialCollectionLoader().getSpecialCollections());
+
+                List<CompletableFuture<Void>> futures = new ArrayList<>();
+                for (Map.Entry<String, CollectionDefinition> entry : allCollections.entrySet()) {
+                    futures.add(playerCollectionDAO.updateCollectionTotalItems(entry.getKey(), entry.getValue().getTotalItems()));
+                }
+
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .thenRun(() -> plugin.getAsyncTaskManager().runSync(() ->
+                        sender.sendMessage("§a✓ Updated collection totals in database")
+                    ))
+                    .exceptionally(throwable -> {
+                        plugin.getAsyncTaskManager().runSync(() ->
+                            sender.sendMessage("§c⚠ Failed to update collection totals: " + throwable.getMessage())
+                        );
+                        return null;
+                    });
+            }
         }
 
         sender.sendMessage("§a§l✓ Reload complete!");
