@@ -31,11 +31,14 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -50,6 +53,7 @@ public class MobHeadDropListener implements Listener {
     private final NamespacedKey mythicMobHeadKey;
     private final NamespacedKey mythicMobHeadIdKey;
     private final Map<String, String> customMobHeads;
+    private Set<EntityType> guaranteedHeadDrops;
 
     public MobHeadDropListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -61,6 +65,7 @@ public class MobHeadDropListener implements Listener {
         this.mythicMobHeadIdKey = new NamespacedKey(plugin, "mythic_mob_head_id");
         this.customMobHeads = new HashMap<>();
         loadCustomMobHeads();
+        loadGuaranteedHeadDrops();
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -77,14 +82,12 @@ public class MobHeadDropListener implements Listener {
         }
 
         int spawnEggChance = plugin.getConfig().getInt("mob-drops.spawn-egg-chance", 10);
-        int mobHeadChance = plugin.getConfig().getInt("mob-drops.mob-head-chance", 7);
-
         boolean spawnEggsEnabled = plugin.getConfig().getBoolean("mob-drops.spawn-eggs-enabled", true);
         boolean mobHeadsEnabled = plugin.getConfig().getBoolean("mob-drops.mob-heads-enabled", true);
 
         Optional<String> mythicMobInternalName = isMythicMob(entity);
         if (mythicMobInternalName.isPresent()) {
-            if (mobHeadsEnabled && random.nextInt(mobHeadChance) == 0) {
+            if (mobHeadsEnabled && shouldDropHead(entity.getType())) {
                 ItemStack customMobHead = getCustomMobHead(mythicMobInternalName.get());
                 if (customMobHead != null) {
                     dropGlowingItem(entity.getWorld(), entity.getLocation(), customMobHead);
@@ -111,7 +114,7 @@ public class MobHeadDropListener implements Listener {
         }
 
         // Mob head drop (1 in X chance, Ender Dragon excluded)
-        if (mobHeadsEnabled && entity.getType() != EntityType.ENDER_DRAGON && random.nextInt(mobHeadChance) == 0) {
+        if (mobHeadsEnabled && entity.getType() != EntityType.ENDER_DRAGON && shouldDropHead(entity.getType())) {
             ItemStack mobHead = getMobHead(entity.getType());
             if (mobHead != null) {
                 dropGlowingItem(entity.getWorld(), entity.getLocation(), mobHead);
@@ -274,6 +277,34 @@ public class MobHeadDropListener implements Listener {
             }
         }
         return result.toString().trim();
+    }
+
+    public void reloadConfigValues() {
+        loadGuaranteedHeadDrops();
+    }
+
+    private void loadGuaranteedHeadDrops() {
+        guaranteedHeadDrops = new HashSet<>();
+        List<String> configuredTypes = plugin.getConfig().getStringList("mob-drops.guaranteed-head-drops");
+        for (String configuredType : configuredTypes) {
+            if (configuredType == null || configuredType.isBlank()) {
+                continue;
+            }
+            try {
+                guaranteedHeadDrops.add(EntityType.valueOf(configuredType.trim().toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("Invalid entity type in mob-drops.guaranteed-head-drops: " + configuredType);
+            }
+        }
+    }
+
+    private boolean shouldDropHead(EntityType entityType) {
+        if (guaranteedHeadDrops.contains(entityType)) {
+            return true;
+        }
+
+        int mobHeadChance = Math.max(1, plugin.getConfig().getInt("mob-drops.mob-head-chance", 7));
+        return random.nextInt(mobHeadChance) == 0;
     }
 
     // ========== MOB HEAD DATABASE IDS ==========

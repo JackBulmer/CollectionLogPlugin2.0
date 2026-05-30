@@ -2,6 +2,7 @@ package collectionlog;
 
 import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
+import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.CollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
@@ -106,6 +107,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
@@ -159,6 +162,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private LeaderboardManager leaderboardManager;
     private CollectionStatsFileManager collectionStatsFileManager;
     private HologramManager hologramManager;
+    private MobHeadDropListener mobHeadDropListener;
     private boolean mythicMobsAvailable;
 
     @Override
@@ -302,7 +306,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new ContainerListener(this), this);
             getServer().getPluginManager().registerEvents(new NaturalContainerTrackingListener(this), this);
             getServer().getPluginManager().registerEvents(new EntityDeathListener(this), this);
-            getServer().getPluginManager().registerEvents(new MobHeadDropListener(this), this);
+            mobHeadDropListener = new MobHeadDropListener(this);
+            getServer().getPluginManager().registerEvents(mobHeadDropListener, this);
             getServer().getPluginManager().registerEvents(new PlayerFishListener(this), this);
             getServer().getPluginManager().registerEvents(new CraftItemListener(this), this);
             getServer().getPluginManager().registerEvents(new InventoryClickListener(this), this);
@@ -530,6 +535,9 @@ public class CollectionLogPlugin extends JavaPlugin {
             }
             getLogger().info("✅ GUI and commands registered");
 
+            // Sync database totals with current collection JSON files
+            getServer().getScheduler().runTaskLater(this, this::syncDatabaseCollectionTotals, 20L);
+
         } catch (SQLException e) {
             getLogger().severe("❌ Failed to initialize database: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -537,6 +545,29 @@ public class CollectionLogPlugin extends JavaPlugin {
         }
 
         getLogger().info("✅ CollectionLogPlugin V2.0 enabled!");
+    }
+
+    /**
+     * Sync database total_items with current collection JSON files.
+     * Called on plugin startup to ensure database reflects any collection updates.
+     */
+    private void syncDatabaseCollectionTotals() {
+        if (playerCollectionDAO == null || collectionLoader == null || specialCollectionLoader == null) {
+            return;
+        }
+
+        getLogger().info("Syncing database collection totals with JSON files...");
+
+        Map<String, CollectionDefinition> allCollections = new HashMap<>();
+        allCollections.putAll(collectionLoader.getCollections());
+        allCollections.putAll(specialCollectionLoader.getSpecialCollections());
+
+        playerCollectionDAO.updateAllCollectionTotals(allCollections)
+                .thenRun(() -> getLogger().info("✓ Database collection totals synced successfully"))
+                .exceptionally(throwable -> {
+                    getLogger().warning("Failed to sync database collection totals: " + throwable.getMessage());
+                    return null;
+                });
     }
 
     @Override
@@ -638,6 +669,12 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CollectionGUI getCollectionGUI() {
         return collectionGUI;
+    }
+
+    public void reloadMobHeadDropConfig() {
+        if (mobHeadDropListener != null) {
+            mobHeadDropListener.reloadConfigValues();
+        }
     }
 
     public StrafeManager getStrafeManager() {

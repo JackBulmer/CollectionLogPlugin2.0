@@ -166,15 +166,20 @@ public class SpecialCollectionLoader {
 
             // Add custom heads. Supports:
             // - ENTITY_NAME -> HeadDB ID (stored as ENTITY_NAME:HeadDBID)
-            // - MYTHIC:HeadDBID -> display name (stored as MYTHIC:HeadDBID)
+            // - MYTHIC:HeadDBID -> display name (stored as DisplayName:HeadDBID)
             if (data.containsKey("custom")) {
                 Type mapType = new TypeToken<Map<String, String>>() { }.getType();
                 String customJson = gson.toJson(data.get("custom"));
                 Map<String, String> custom = gson.fromJson(customJson, mapType);
                 for (Map.Entry<String, String> entry : custom.entrySet()) {
-                    // MYTHIC signatures are already stored in final "MYTHIC:<headId>" format.
                     if (entry.getKey().startsWith("MYTHIC:")) {
-                        items.add(entry.getKey());
+                        String headId = entry.getKey().substring("MYTHIC:".length()).trim();
+                        String displayName = entry.getValue() != null ? entry.getValue().trim() : "";
+                        if (!displayName.isBlank() && !headId.isBlank()) {
+                            items.add(displayName + ":" + headId);
+                        } else if (!headId.isBlank()) {
+                            items.add(entry.getKey());
+                        }
                     } else {
                         // EntityType entries use key=entity name and value=HeadDB ID, so compose
                         // the standard "ENTITY_NAME:<headId>" signature here.

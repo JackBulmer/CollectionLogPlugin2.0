@@ -2,6 +2,7 @@ package collectionlog.utils;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -9,6 +10,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MusicInstrumentMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.MusicInstrument;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
 
 import java.util.LinkedHashSet;
@@ -42,6 +45,13 @@ public class ItemSignatureHelper {
         if (meta != null && meta.hasCustomModelData()) {
             addCustomModelDataSignatures(meta, signatures);
             return signatures;
+        }
+
+        if (type == Material.PLAYER_HEAD && meta != null) {
+            addCustomMobHeadSignatures(meta, signatures);
+            if (!signatures.isEmpty()) {
+                return signatures;
+            }
         }
 
         signatures.add(type.name());
@@ -149,6 +159,39 @@ public class ItemSignatureHelper {
                 signatures.add(displayName + ":" + customModelData);
             }
         }
+    }
+
+    private void addCustomMobHeadSignatures(ItemMeta meta, Set<String> signatures) {
+        if (!meta.hasDisplayName()) {
+            return;
+        }
+
+        String displayName = ChatColor.stripColor(meta.getDisplayName());
+        if (displayName == null || displayName.isBlank()) {
+            return;
+        }
+
+        String headId = extractCustomHeadId(meta.getPersistentDataContainer());
+        if (headId == null || headId.isBlank()) {
+            return;
+        }
+
+        String normalizedHeadId = headId.trim();
+        signatures.add(displayName.trim().replaceAll("\\s+", " ") + ":" + normalizedHeadId);
+        signatures.add("MYTHIC:" + normalizedHeadId);
+    }
+
+    private String extractCustomHeadId(PersistentDataContainer dataContainer) {
+        for (NamespacedKey key : dataContainer.getKeys()) {
+            String rawKey = key.getKey();
+            if ("mythic_mob_head_id".equals(rawKey) || "headdb_id".equals(rawKey)) {
+                String value = dataContainer.get(key, PersistentDataType.STRING);
+                if (value != null && !value.isBlank()) {
+                    return value;
+                }
+            }
+        }
+        return null;
     }
 
     private String normalizePotionType(PotionType potionType) {

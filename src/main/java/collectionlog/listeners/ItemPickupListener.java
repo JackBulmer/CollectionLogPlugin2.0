@@ -5,6 +5,7 @@ import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.utils.CollectionMatcher;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
@@ -158,11 +159,12 @@ public class ItemPickupListener implements Listener {
             return true;
         }
 
-        String signature = "MYTHIC:" + headId;
-
         // Get the CollectionDefinition object first
-        CollectionDefinition mobHeadsCollection = plugin.getCollectionLoader().getCollection("mob_heads");
+        CollectionDefinition mobHeadsCollection = plugin.getSpecialCollectionLoader() != null
+                ? plugin.getSpecialCollectionLoader().getSpecialCollection("mob_heads")
+                : null;
         if (mobHeadsCollection != null) {
+            String signature = buildMythicMobHeadSignature(meta, headId, mobHeadsCollection);
             progressTrackingManager.trackItemCollection(player, mobHeadsCollection, signature)
                     .exceptionally(throwable -> {
                         plugin.getLogger().severe("Failed to track Mythic mob head pickup: " + throwable.getMessage());
@@ -173,5 +175,22 @@ public class ItemPickupListener implements Listener {
         }
 
         return true;
+    }
+
+    private String buildMythicMobHeadSignature(ItemMeta meta, String headId, CollectionDefinition mobHeadsCollection) {
+        String fallbackSignature = "MYTHIC:" + headId;
+        if (!meta.hasDisplayName()) {
+            return fallbackSignature;
+        }
+
+        String displayName = ChatColor.stripColor(meta.getDisplayName());
+        if (displayName == null || displayName.isBlank()) {
+            return fallbackSignature;
+        }
+
+        String preferredSignature = displayName.trim().replaceAll("\\s+", " ") + ":" + headId;
+        return mobHeadsCollection.getItems().contains(preferredSignature)
+                ? preferredSignature
+                : fallbackSignature;
     }
 }

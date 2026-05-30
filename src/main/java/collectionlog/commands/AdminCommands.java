@@ -359,6 +359,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
 
         // Reload config.yml
         plugin.reloadConfig();
+        plugin.reloadMobHeadDropConfig();
         sender.sendMessage("§a✓ Reloaded config.yml");
 
         boolean collectionLoaderReloaded = false;
@@ -403,12 +404,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 allCollections.putAll(plugin.getCollectionLoader().getCollections());
                 allCollections.putAll(plugin.getSpecialCollectionLoader().getSpecialCollections());
 
-                List<CompletableFuture<Void>> futures = new ArrayList<>();
-                for (Map.Entry<String, CollectionDefinition> entry : allCollections.entrySet()) {
-                    futures.add(playerCollectionDAO.updateCollectionTotalItems(entry.getKey(), entry.getValue().getTotalItems()));
-                }
-
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                playerCollectionDAO.updateAllCollectionTotals(allCollections)
                     .thenRun(() -> plugin.getAsyncTaskManager().runSync(() ->
                         sender.sendMessage("§a✓ Updated collection totals in database")
                     ))
