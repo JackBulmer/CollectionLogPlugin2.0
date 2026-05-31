@@ -4,6 +4,7 @@ import collectionlog.anticheat.ContainerTrackingManager;
 import collectionlog.anticheat.ItemTrackingManager;
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.CollectionLoader;
+import collectionlog.collections.InsertCollectionLoader;
 import collectionlog.collections.SpecialCollectionLoader;
 import collectionlog.commands.AdminCommands;
 import collectionlog.commands.CraftCommand;
@@ -124,6 +125,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private ContainerTrackingManager containerTrackingManager;
     private CollectionLoader collectionLoader;
     private SpecialCollectionLoader specialCollectionLoader;
+    private InsertCollectionLoader insertCollectionLoader;
     private PlayerCollectionDAO playerCollectionDAO;
     private ProgressTrackingManager progressTrackingManager;
     private MilestoneManager milestoneManager;
@@ -222,6 +224,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
                 specialCollectionLoader = new SpecialCollectionLoader(this);
                 specialCollectionLoader.loadSpecialCollections();
+
+                insertCollectionLoader = new InsertCollectionLoader(this);
+                insertCollectionLoader.loadInsertCollections();
+                collectionLoader.mergeInsertItems(insertCollectionLoader.getInsertDefinitions());
             } catch (RuntimeException e) {
                 // Loaders throw runtime exceptions for malformed JSON and file IO issues.
                 getLogger().log(Level.SEVERE, "❌ Failed to load collection definitions", e);
@@ -642,6 +648,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public SpecialCollectionLoader getSpecialCollectionLoader() {
         return specialCollectionLoader;
+    }
+
+    public InsertCollectionLoader getInsertCollectionLoader() {
+        return insertCollectionLoader;
     }
 
     public PlayerCollectionDAO getPlayerCollectionDAO() {

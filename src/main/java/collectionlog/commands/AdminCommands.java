@@ -379,6 +379,17 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
             specialCollectionLoaderReloaded = true;
         }
 
+        // Reload insert collections and merge into standard collections
+        if (plugin.getInsertCollectionLoader() != null) {
+            plugin.getInsertCollectionLoader().reload();
+            sender.sendMessage("§a✓ Reloaded insert collections");
+
+            if (plugin.getCollectionLoader() != null) {
+                plugin.getCollectionLoader().mergeInsertItems(plugin.getInsertCollectionLoader().getInsertDefinitions());
+                sender.sendMessage("§a✓ Merged insert collections into standard collections");
+            }
+        }
+
         // Reload milestones
         MilestoneManager milestoneManager = plugin.getMilestoneManager();
         if (milestoneManager != null) {

@@ -137,6 +137,55 @@ public class CollectionLoader {
         loadCollections();
     }
 
+    /**
+     * Merge insert collection definitions into existing standard collections.
+     */
+    public void mergeInsertItems(Map<String, InsertCollectionDefinition> insertDefinitions) {
+        if (insertDefinitions == null || insertDefinitions.isEmpty()) {
+            return;
+        }
+
+        for (InsertCollectionDefinition definition : insertDefinitions.values()) {
+            CollectionDefinition collection = collections.get(definition.getCollectionId());
+            if (collection == null) {
+                plugin.getLogger().warning("Cannot insert items into unknown collection: " + definition.getCollectionId());
+                continue;
+            }
+
+            int mergedCount = 0;
+            for (InsertItemDefinition insertItem : definition.getItems()) {
+                String signature = insertItem.getSignature();
+
+                if (!collection.getItems().contains(signature)) {
+                    collection.getItems().add(signature);
+                    mergedCount++;
+                }
+
+                if (!insertItem.hasSubCollection()) {
+                    continue;
+                }
+
+                SubCollectionDefinition targetSubCollection = collection.getSubCollections().stream()
+                        .filter(subCollection -> subCollection.getId().equalsIgnoreCase(insertItem.getSubCollection())
+                                || subCollection.getId().equalsIgnoreCase(collection.getId() + "_" + insertItem.getSubCollection()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (targetSubCollection == null) {
+                    plugin.getLogger().warning("Sub-collection not found: " + insertItem.getSubCollection()
+                            + " in collection " + collection.getId());
+                    continue;
+                }
+
+                if (!targetSubCollection.getItems().contains(signature)) {
+                    targetSubCollection.getItems().add(signature);
+                }
+            }
+
+            plugin.getLogger().info("Merged " + mergedCount + " insert item(s) into collection: " + collection.getId());
+        }
+    }
+
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;
