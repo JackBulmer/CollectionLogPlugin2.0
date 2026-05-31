@@ -1,1 +1,3 @@
 # Add one JSON filename per line to bundle default insert files in the JAR.
+mob_drops.json
+end.json

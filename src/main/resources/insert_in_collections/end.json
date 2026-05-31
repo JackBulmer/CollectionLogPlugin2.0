@@ -1,0 +1,53 @@
+{
+  "collection_id": "end",
+  "items": [
+    {
+      "name": "Empowered Heart of Ender",
+      "customModelData": 2549
+    },
+    {
+      "name": "Empowered Void Claw",
+      "customModelData": 2550
+    },
+    {
+      "name": "Empowered Void Crystal",
+      "customModelData": 2551
+    },
+    {
+      "name": "Empowered Void Tendril",
+      "customModelData": 2552
+    },
+    {
+      "name": "End Soul",
+      "customModelData": 2553
+    },
+    {
+      "name": "Ender Carapace",
+      "customModelData": 2554
+    },
+    {
+      "name": "Heart of Ender",
+      "customModelData": 2555
+    },
+    {
+      "name": "Phantasmal Eye of Ender",
+      "customModelData": 2556
+    },
+    {
+      "name": "Third Eye of Ender",
+      "customModelData": 2557
+    },
+    {
+      "name": "Void Claw",
+      "customModelData": 2558
+    },
+    {
+      "name": "Void Fabric",
+      "customModelData": 2559
+    },
+    {
+      "name": "Void Growth",
+      "customModelData": 2560
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "collection_id": "mob drops",
+  "items": [
+    {
+      "name": "Blue Tit Feather",
+      "customModelData": 2538
+    },
+    {
+      "name": "Cardinal Feather",
+      "customModelData": 2539
+    },
+    {
+      "name": "Robin Feather",
+      "customModelData": 2540
+    },
+    {
+      "name": "Bison Fur",
+      "customModelData": 2502
+    },
+    {
+      "name": "Chameleon Eye",
+      "customModelData": 2505
+    },
+    {
+      "name": "Ivory",
+      "customModelData": 2506
+    },
+    {
+      "name": "Giraffe Pelt",
+      "customModelData": 2545
+    },
+    {
+      "name": "Grizzly Bear Pelt",
+      "customModelData": 2508
+    },
+    {
+      "name": "Hedgehog Quill",
+      "customModelData": 2527
+    },
+    {
+      "name": "Orca Fin",
+      "customModelData": 2536
+    },
+    {
+      "name": "Trash",
+      "customModelData": 2523
+    },
+    {
+      "name": "Rat Tail",
+      "customModelData": 2546
+    },
+    {
+      "name": "Reindeer Horn",
+      "customModelData": 2542
+    },
+    {
+      "name": "Shark Fin",
+      "customModelData": 2525
+    },
+    {
+      "name": "Shark Tooth",
+      "customModelData": 2524
+    },
+    {
+      "name": "Snake Skin",
+      "customModelData": 2548
+    },
+    {
+      "name": "Zebra Pelt",
+      "customModelData": 2544
+    }
+  ]
+}
