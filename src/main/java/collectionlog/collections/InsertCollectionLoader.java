@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
 
 import java.io.BufferedReader;
@@ -28,6 +29,7 @@ import java.util.logging.Level;
  */
 public class InsertCollectionLoader {
     private static final String DIRECTORY_NAME = "insert_in_collections";
+    private static final Map<String, Material> REGISTERED_MATERIALS = new LinkedHashMap<>();
 
     private final Plugin plugin;
     private final File externalDirectory;
@@ -41,6 +43,7 @@ public class InsertCollectionLoader {
 
     public void loadInsertCollections() {
         insertDefinitions.clear();
+        REGISTERED_MATERIALS.clear();
         ensureExternalDirectoryExists();
 
         File[] files = externalDirectory.listFiles((dir, name) -> name.endsWith(".json"));
@@ -171,11 +174,34 @@ public class InsertCollectionLoader {
             String subCollection = itemObject.has("sub_collection")
                     ? itemObject.get("sub_collection").getAsString()
                     : null;
+            Material material = parseMaterial(itemObject, name, sourceName);
 
-            items.add(new InsertItemDefinition(name, customModelData, subCollection));
+            InsertItemDefinition itemDefinition = new InsertItemDefinition(name, customModelData, subCollection, material);
+            items.add(itemDefinition);
+            REGISTERED_MATERIALS.put(itemDefinition.getSignature(), itemDefinition.getMaterial());
         }
 
         return new InsertCollectionDefinition(collectionId, items);
+    }
+
+    private Material parseMaterial(JsonObject itemObject, String itemName, String sourceName) {
+        if (!itemObject.has("material")) {
+            return Material.PAPER;
+        }
+
+        String materialName = itemObject.get("material").getAsString();
+        Material material = Material.matchMaterial(materialName);
+        if (material != null) {
+            return material;
+        }
+
+        plugin.getLogger().warning("Invalid material '" + materialName + "' for insert item '" + itemName
+                + "' in " + sourceName + "; defaulting to PAPER");
+        return Material.PAPER;
+    }
+
+    public static Material getRegisteredMaterial(String signature) {
+        return REGISTERED_MATERIALS.get(signature);
     }
 
     public Map<String, InsertCollectionDefinition> getInsertDefinitions() {

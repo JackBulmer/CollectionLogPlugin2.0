@@ -1,6 +1,7 @@
 package collectionlog.gui;
 
 import collectionlog.collections.CollectionDefinition;
+import collectionlog.collections.InsertCollectionLoader;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -137,6 +138,11 @@ public final class GUIHelper {
     }
 
     private static ItemStack createDisplayBaseItem(String itemSignature, String collectionId) {
+        Material registeredMaterial = InsertCollectionLoader.getRegisteredMaterial(itemSignature);
+        if (registeredMaterial != null) {
+            return createCustomModelItem(itemSignature, registeredMaterial);
+        }
+
         String normalizedCollection = normalizeKey(collectionId);
         return switch (normalizedCollection) {
             case "potions" -> createPotionItem(itemSignature);
