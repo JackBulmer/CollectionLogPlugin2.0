@@ -56,6 +56,11 @@ mob-drops:
   # Chance for mob heads to drop (1 in X kills)
   mob-head-chance: 7
 
+  # Mobs that always drop heads (100% chance)
+  guaranteed-head-drops:
+    - WARDEN
+    - ELDER_GUARDIAN
+
   # Enable/disable mob head drops
   mob-heads-enabled: true
 

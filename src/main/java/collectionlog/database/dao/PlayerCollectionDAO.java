@@ -1,5 +1,6 @@
 package collectionlog.database.dao;
 
+import collectionlog.collections.CollectionDefinition;
 import collectionlog.database.AsyncTaskManager;
 import collectionlog.database.DatabaseManager;
 import collectionlog.database.DatabaseType;
@@ -12,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -237,6 +239,32 @@ public class PlayerCollectionDAO {
 
             return null;
         });
+    }
+
+    /**
+     * Update total item counts for all provided collections across all players.
+     *
+     * @param collections Map of collection ID to collection definition
+     * @return CompletableFuture that completes when all updates are done
+     */
+    public CompletableFuture<Void> updateAllCollectionTotals(Map<String, CollectionDefinition> collections) {
+        if (collections == null || collections.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (Map.Entry<String, CollectionDefinition> entry : collections.entrySet()) {
+            if (entry.getValue() == null) {
+                continue;
+            }
+            futures.add(updateCollectionTotalItems(entry.getKey(), entry.getValue().getTotalItems()));
+        }
+
+        if (futures.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /**
