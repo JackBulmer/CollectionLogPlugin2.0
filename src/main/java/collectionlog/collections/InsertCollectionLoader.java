@@ -99,6 +99,20 @@ public class InsertCollectionLoader {
 
     private void loadEmbeddedFile(String fileName) {
         String resourcePath = DIRECTORY_NAME + "/" + fileName;
+        File externalFile = new File(externalDirectory, fileName);
+        if (externalFile.exists()) {
+            try (InputStream dataStream = new FileInputStream(externalFile)) {
+                JsonObject json = JsonParser.parseReader(new InputStreamReader(dataStream)).getAsJsonObject();
+                InsertCollectionDefinition definition = parseInsertDefinition(json, fileName);
+                if (definition != null) {
+                    insertDefinitions.put(definition.getCollectionId(), definition);
+                }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to parse insert collection file: " + fileName, e);
+            }
+            return;
+        }
+
         byte[] resourceData;
         try (InputStream resourceStream = plugin.getResource(resourcePath)) {
             if (resourceStream == null) {
@@ -111,14 +125,11 @@ public class InsertCollectionLoader {
             return;
         }
 
-        File externalFile = new File(externalDirectory, fileName);
-        if (!externalFile.exists()) {
-            try {
-                Files.write(externalFile.toPath(), resourceData);
-                plugin.getLogger().info("Copied " + fileName + " from JAR to " + externalFile.getPath());
-            } catch (IOException e) {
-                plugin.getLogger().log(Level.WARNING, "Failed to copy insert collection file: " + fileName, e);
-            }
+        try {
+            Files.write(externalFile.toPath(), resourceData);
+            plugin.getLogger().info("Copied " + fileName + " from JAR to " + externalFile.getPath());
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to copy insert collection file: " + fileName, e);
         }
 
         try (InputStream dataStream = externalFile.exists()

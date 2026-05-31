@@ -152,13 +152,14 @@ public class CollectionLoader {
                 continue;
             }
 
-            int mergedCount = 0;
+            int mergedMainCount = 0;
+            int mergedSubCollectionCount = 0;
             for (InsertItemDefinition insertItem : definition.getItems()) {
                 String signature = insertItem.getSignature();
 
                 if (!collection.getItems().contains(signature)) {
                     collection.getItems().add(signature);
-                    mergedCount++;
+                    mergedMainCount++;
                 }
 
                 if (!insertItem.hasSubCollection()) {
@@ -179,10 +180,12 @@ public class CollectionLoader {
 
                 if (!targetSubCollection.getItems().contains(signature)) {
                     targetSubCollection.getItems().add(signature);
+                    mergedSubCollectionCount++;
                 }
             }
 
-            plugin.getLogger().info("Merged " + mergedCount + " insert item(s) into collection: " + collection.getId());
+            plugin.getLogger().info("Merged " + mergedMainCount + " new main-collection item(s) and "
+                    + mergedSubCollectionCount + " sub-collection item placement(s) into: " + collection.getId());
         }
     }
 
