@@ -15,7 +15,7 @@ commands:
 
   cl:
     description: Collection Log admin commands
-    usage: /cl <collection|item|reload>
+    usage: /cl <collection|item|perk|reload|missing-items|givelava|resethealth|teleport|debugitem>
     permission: collectionlog.admin
 
   cldb:

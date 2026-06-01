@@ -3,6 +3,7 @@ package collectionlog.commands;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.SubCollectionDefinition;
+import collectionlog.debug.DebugItemListener;
 import collectionlog.database.dao.PlayerCollectionDAO;
 import collectionlog.managers.ProgressTrackingManager;
 import collectionlog.milestones.Milestone;
@@ -40,9 +41,11 @@ import java.util.logging.Level;
 
 public class AdminCommands implements CommandExecutor, TabCompleter {
     private final CollectionLogPlugin plugin;
+    private final DebugItemListener debugItemListener;
 
     public AdminCommands(CollectionLogPlugin plugin) {
         this.plugin = plugin;
+        this.debugItemListener = plugin.getDebugItemListener();
     }
 
     @Override
@@ -67,6 +70,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
                 case "givelava" -> handleGiveLava(sender, args);
                 case "resethealth" -> handleResetHealth(sender, args);
                 case "teleport" -> handleTeleportAdmin(sender, args);
+                case "debugitem" -> handleDebugItem(sender);
                 default -> {
                     sendHelp(sender);
                     yield true;
@@ -623,6 +627,24 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleDebugItem(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("§cThis command can only be used by players.");
+            return true;
+        }
+
+        boolean enabled = debugItemListener.toggleDebugMode(player.getUniqueId());
+        if (enabled) {
+            player.sendMessage("§aDebug mode ENABLED. Click any item in any inventory to see its metadata.");
+            player.sendMessage("§7Item info will be shown in chat and logged to console.");
+            player.sendMessage("§7Use §e/cl debugitem§7 again to disable.");
+        } else {
+            player.sendMessage("§cDebug mode DISABLED.");
+        }
+
+        return true;
+    }
+
     /**
      * Reset a player's health to 20 and optionally reset collections that award extra hearts.
      *
@@ -754,6 +776,8 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         sender.sendMessage("§7  - Give an infinite lava bucket to a player");
         sender.sendMessage("§e/cl resethealth <player>");
         sender.sendMessage("§7  - Reset player's max health to 20 and revoke extra heart collections");
+        sender.sendMessage("§e/cl debugitem");
+        sender.sendMessage("§7  - Toggle debug mode to inspect item signatures (click items to see metadata)");
     }
 
     @Override
@@ -763,7 +787,7 @@ public class AdminCommands implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava", "resethealth", "teleport"));
+            return filterCompletions(args[0], List.of("collection", "item", "perk", "reload", "missing-items", "givelava", "resethealth", "teleport", "debugitem"));
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("collection")) {
