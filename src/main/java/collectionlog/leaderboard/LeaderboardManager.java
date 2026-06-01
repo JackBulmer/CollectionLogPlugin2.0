@@ -28,7 +28,7 @@ public class LeaderboardManager {
     private volatile List<PlayerStats> cachedRankedPlayers = List.of();
     private volatile long cacheExpiry = 0L;
     private volatile CompletableFuture<List<PlayerStats>> inFlightRefresh;
-    private volatile boolean asyncTaskManagerWarningLogged;
+    private volatile boolean asyncUnavailableWarningLogged;
 
     public LeaderboardManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -349,13 +349,13 @@ public class LeaderboardManager {
     private AsyncTaskManager getAsyncTaskManager() {
         AsyncTaskManager asyncTaskManager = plugin.getAsyncTaskManager();
         if (asyncTaskManager != null) {
-            asyncTaskManagerWarningLogged = false;
+            asyncUnavailableWarningLogged = false;
             return asyncTaskManager;
         }
 
-        if (!asyncTaskManagerWarningLogged) {
-            plugin.getLogger().warning("LeaderboardManager: AsyncTaskManager is not initialized yet; returning default leaderboard data until startup completes.");
-            asyncTaskManagerWarningLogged = true;
+        if (!asyncUnavailableWarningLogged) {
+            plugin.getLogger().warning("LeaderboardManager: AsyncTaskManager not available during startup; returning default values. Leaderboard functionality will resume automatically once initialization completes.");
+            asyncUnavailableWarningLogged = true;
         }
 
         return null;
