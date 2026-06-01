@@ -3,51 +3,63 @@
   "items": [
     {
       "name": "Empowered Heart of Ender",
-      "customModelData": 2549
+      "customModelData": 2549,
+      "material": "PAPER"
     },
     {
       "name": "Empowered Void Claw",
-      "customModelData": 2550
+      "customModelData": 2550,
+      "material": "PAPER"
     },
     {
       "name": "Empowered Void Crystal",
-      "customModelData": 2551
+      "customModelData": 2551,
+      "material": "PAPER"
     },
     {
       "name": "Empowered Void Tendril",
-      "customModelData": 2552
+      "customModelData": 2552,
+      "material": "PAPER"
     },
     {
       "name": "End Soul",
-      "customModelData": 2553
+      "customModelData": 2553,
+      "material": "PAPER"
     },
     {
       "name": "Ender Carapace",
-      "customModelData": 2554
+      "customModelData": 2554,
+      "material": "PAPER"
     },
     {
       "name": "Heart of Ender",
-      "customModelData": 2555
+      "customModelData": 2555,
+      "material": "PAPER"
     },
     {
       "name": "Phantasmal Eye of Ender",
-      "customModelData": 2556
+      "customModelData": 2556,
+      "material": "PAPER"
     },
     {
       "name": "Third Eye of Ender",
-      "customModelData": 2557
+      "customModelData": 2557,
+      "material": "PAPER"
     },
     {
       "name": "Void Claw",
-      "customModelData": 2558
+      "customModelData": 2558,
+      "material": "PAPER"
     },
     {
       "name": "Void Fabric",
-      "customModelData": 2559
+      "customModelData": 2559,
+      "material": "PAPER"
     },
     {
       "name": "Void Growth",
-      "customModelData": 2560
+      "customModelData": 2560,
+      "material": "PAPER"
     }
   ]
 }

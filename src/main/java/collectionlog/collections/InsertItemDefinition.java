@@ -1,5 +1,7 @@
 package collectionlog.collections;
 
+import org.bukkit.Material;
+
 /**
  * Represents a custom item to insert into an existing collection.
  */
@@ -7,11 +9,13 @@ public class InsertItemDefinition {
     private final String name;
     private final int customModelData;
     private final String subCollection;
+    private final Material material;
 
-    public InsertItemDefinition(String name, int customModelData, String subCollection) {
+    public InsertItemDefinition(String name, int customModelData, String subCollection, Material material) {
         this.name = name;
         this.customModelData = customModelData;
         this.subCollection = subCollection;
+        this.material = material == null ? Material.PAPER : material;
     }
 
     public String getName() {
@@ -24,6 +28,10 @@ public class InsertItemDefinition {
 
     public String getSubCollection() {
         return subCollection;
+    }
+
+    public Material getMaterial() {
+        return material;
     }
 
     public String getSignature() {

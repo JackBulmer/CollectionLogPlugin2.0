@@ -3,71 +3,88 @@
   "items": [
     {
       "name": "Blue Tit Feather",
-      "customModelData": 2538
+      "customModelData": 2538,
+      "material": "PAPER"
     },
     {
       "name": "Cardinal Feather",
-      "customModelData": 2539
+      "customModelData": 2539,
+      "material": "PAPER"
     },
     {
       "name": "Robin Feather",
-      "customModelData": 2540
+      "customModelData": 2540,
+      "material": "PAPER"
     },
     {
       "name": "Bison Fur",
-      "customModelData": 2502
+      "customModelData": 2502,
+      "material": "PAPER"
     },
     {
       "name": "Chameleon Eye",
-      "customModelData": 2505
+      "customModelData": 2505,
+      "material": "PAPER"
     },
     {
       "name": "Ivory",
-      "customModelData": 2506
+      "customModelData": 2506,
+      "material": "PAPER"
     },
     {
       "name": "Giraffe Pelt",
-      "customModelData": 2545
+      "customModelData": 2545,
+      "material": "PAPER"
     },
     {
       "name": "Grizzly Bear Pelt",
-      "customModelData": 2508
+      "customModelData": 2508,
+      "material": "PAPER"
     },
     {
       "name": "Hedgehog Quill",
-      "customModelData": 2527
+      "customModelData": 2527,
+      "material": "PAPER"
     },
     {
       "name": "Orca Fin",
-      "customModelData": 2536
+      "customModelData": 2536,
+      "material": "PAPER"
     },
     {
       "name": "Trash",
-      "customModelData": 2523
+      "customModelData": 2523,
+      "material": "PAPER"
     },
     {
       "name": "Rat Tail",
-      "customModelData": 2546
+      "customModelData": 2546,
+      "material": "PAPER"
     },
     {
       "name": "Reindeer Horn",
-      "customModelData": 2542
+      "customModelData": 2542,
+      "material": "PAPER"
     },
     {
       "name": "Shark Fin",
-      "customModelData": 2525
+      "customModelData": 2525,
+      "material": "PAPER"
     },
     {
       "name": "Shark Tooth",
-      "customModelData": 2524
+      "customModelData": 2524,
+      "material": "PAPER"
     },
     {
       "name": "Snake Skin",
-      "customModelData": 2548
+      "customModelData": 2548,
+      "material": "PAPER"
     },
     {
       "name": "Zebra Pelt",
-      "customModelData": 2544
+      "customModelData": 2544,
+      "material": "PAPER"
     }
   ]
 }
