@@ -2,62 +2,62 @@
   "collection_id": "ancient cities",
   "items": [
     {
-      "name": "Echo Plating",
+      "name": "§bEcho Plating",
       "customModelData": 1011,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Bone",
+      "name": "§fSculk Bone",
       "customModelData": 1012,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Eye",
+      "name": "§bSculk Eye",
       "customModelData": 1013,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Flesh",
+      "name": "§3Sculk Flesh",
       "customModelData": 1000,
       "material": "ROTTEN_FLESH"
     },
     {
-      "name": "Sculk Heart",
+      "name": "§bSculk Heart",
       "customModelData": 1001,
       "material": "ROTTEN_FLESH"
     },
     {
-      "name": "Sculk Rib",
+      "name": "§fSculk Rib",
       "customModelData": 1014,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Scale",
+      "name": "§fSculk Scale",
       "customModelData": 1015,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Soul",
+      "name": "§bSculk Soul",
       "customModelData": 1016,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Spike",
+      "name": "§fSculk Spike",
       "customModelData": 1017,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Tendril",
+      "name": "§bSculk Tendril",
       "customModelData": 1018,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Throat",
+      "name": "§3Sculk Throat",
       "customModelData": 1019,
       "material": "PAPER"
     },
     {
-      "name": "Sculk Tooth",
+      "name": "§fSculk Tooth",
       "customModelData": 1020,
       "material": "PAPER"
     }
