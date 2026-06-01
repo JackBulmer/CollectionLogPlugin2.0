@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 public class LeaderboardManager {
@@ -28,7 +29,7 @@ public class LeaderboardManager {
     private volatile List<PlayerStats> cachedRankedPlayers = List.of();
     private volatile long cacheExpiry = 0L;
     private volatile CompletableFuture<List<PlayerStats>> inFlightRefresh;
-    private volatile boolean asyncUnavailableWarningLogged;
+    private final AtomicBoolean asyncUnavailableWarningLogged = new AtomicBoolean();
 
     public LeaderboardManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -349,13 +350,12 @@ public class LeaderboardManager {
     private AsyncTaskManager getAsyncTaskManager() {
         AsyncTaskManager asyncTaskManager = plugin.getAsyncTaskManager();
         if (asyncTaskManager != null) {
-            asyncUnavailableWarningLogged = false;
+            asyncUnavailableWarningLogged.set(false);
             return asyncTaskManager;
         }
 
-        if (!asyncUnavailableWarningLogged) {
+        if (asyncUnavailableWarningLogged.compareAndSet(false, true)) {
             plugin.getLogger().warning("LeaderboardManager: AsyncTaskManager not available during startup; returning default values. Leaderboard functionality will resume automatically once initialization completes.");
-            asyncUnavailableWarningLogged = true;
         }
 
         return null;
