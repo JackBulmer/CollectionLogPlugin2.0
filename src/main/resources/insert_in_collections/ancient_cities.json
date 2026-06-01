@@ -1,0 +1,65 @@
+{
+  "collection_id": "ancient cities",
+  "items": [
+    {
+      "name": "Echo Plating",
+      "customModelData": 1011,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Bone",
+      "customModelData": 1012,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Eye",
+      "customModelData": 1013,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Flesh",
+      "customModelData": 1000,
+      "material": "ROTTEN_FLESH"
+    },
+    {
+      "name": "Sculk Heart",
+      "customModelData": 1001,
+      "material": "ROTTEN_FLESH"
+    },
+    {
+      "name": "Sculk Rib",
+      "customModelData": 1014,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Scale",
+      "customModelData": 1015,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Soul",
+      "customModelData": 1016,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Spike",
+      "customModelData": 1017,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Tendril",
+      "customModelData": 1018,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Throat",
+      "customModelData": 1019,
+      "material": "PAPER"
+    },
+    {
+      "name": "Sculk Tooth",
+      "customModelData": 1020,
+      "material": "PAPER"
+    }
+  ]
+}
