@@ -23,17 +23,16 @@ public class LeaderboardManager {
 
     private final CollectionLogPlugin plugin;
     private final DatabaseManager databaseManager;
-    private final AsyncTaskManager asyncTaskManager;
     private final Object cacheLock = new Object();
 
     private volatile List<PlayerStats> cachedRankedPlayers = List.of();
     private volatile long cacheExpiry = 0L;
     private volatile CompletableFuture<List<PlayerStats>> inFlightRefresh;
+    private volatile boolean asyncTaskManagerWarningLogged;
 
     public LeaderboardManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
         this.databaseManager = plugin.getDatabaseManager();
-        this.asyncTaskManager = plugin.getAsyncTaskManager();
     }
 
     public CompletableFuture<List<PlayerStats>> getTopPlayers(int limit) {
@@ -71,6 +70,11 @@ public class LeaderboardManager {
     }
 
     public CompletableFuture<PlayerStats> getPlayerStats(UUID playerId) {
+        AsyncTaskManager asyncTaskManager = getAsyncTaskManager();
+        if (asyncTaskManager == null) {
+            return CompletableFuture.completedFuture(defaultPlayerStats(playerId));
+        }
+
         return asyncTaskManager.runAsync(() -> {
             String sql = "SELECT username, total_collected, last_updated FROM player_stats WHERE player_uuid = ?";
             try (Connection conn = databaseManager.getConnection();
@@ -90,12 +94,16 @@ public class LeaderboardManager {
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load player stats for " + playerId, e);
             }
-
-            return new PlayerStats(playerId, playerId.toString(), 0, Instant.EPOCH);
+            return defaultPlayerStats(playerId);
         });
     }
 
     public CompletableFuture<List<PlayerStats>> getAllPlayerStats() {
+        AsyncTaskManager asyncTaskManager = getAsyncTaskManager();
+        if (asyncTaskManager == null) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
         return asyncTaskManager.runAsync(() -> {
             List<PlayerStats> players = new ArrayList<>();
             String sql = "SELECT player_uuid, username, total_collected, last_updated FROM player_stats ORDER BY player_uuid ASC";
@@ -130,6 +138,11 @@ public class LeaderboardManager {
     }
 
     public CompletableFuture<PlayerStats> refreshPlayerStats(UUID playerId, String usernameHint) {
+        AsyncTaskManager asyncTaskManager = getAsyncTaskManager();
+        if (asyncTaskManager == null) {
+            return CompletableFuture.completedFuture(defaultPlayerStats(playerId));
+        }
+
         return asyncTaskManager.runAsync(() -> refreshPlayerStats(playerId, usernameHint, System.currentTimeMillis()))
                 .thenApply(stats -> {
                     invalidateCache();
@@ -138,6 +151,11 @@ public class LeaderboardManager {
     }
 
     public CompletableFuture<Void> refreshAllPlayerStats() {
+        AsyncTaskManager asyncTaskManager = getAsyncTaskManager();
+        if (asyncTaskManager == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         return asyncTaskManager.runAsync(() -> {
             long now = System.currentTimeMillis();
 
@@ -161,6 +179,11 @@ public class LeaderboardManager {
     }
 
     private CompletableFuture<List<PlayerStats>> getRankedPlayers() {
+        AsyncTaskManager asyncTaskManager = getAsyncTaskManager();
+        if (asyncTaskManager == null) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
         long now = System.currentTimeMillis();
         List<PlayerStats> currentCache = cachedRankedPlayers;
         if (now < cacheExpiry) {
@@ -317,6 +340,25 @@ public class LeaderboardManager {
 
     private String defaultUsername(String username, UUID playerId) {
         return username == null || username.isBlank() ? playerId.toString() : username;
+    }
+
+    private PlayerStats defaultPlayerStats(UUID playerId) {
+        return new PlayerStats(playerId, playerId.toString(), 0, Instant.EPOCH);
+    }
+
+    private AsyncTaskManager getAsyncTaskManager() {
+        AsyncTaskManager asyncTaskManager = plugin.getAsyncTaskManager();
+        if (asyncTaskManager != null) {
+            asyncTaskManagerWarningLogged = false;
+            return asyncTaskManager;
+        }
+
+        if (!asyncTaskManagerWarningLogged) {
+            plugin.getLogger().warning("LeaderboardManager: AsyncTaskManager is not initialized yet; returning default leaderboard data until startup completes.");
+            asyncTaskManagerWarningLogged = true;
+        }
+
+        return null;
     }
 
     private UUID parseUuid(String rawUuid) {
