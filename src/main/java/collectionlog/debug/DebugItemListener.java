@@ -3,6 +3,7 @@ package collectionlog.debug;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.utils.ItemSignatureHelper;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,6 +11,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.List;
 import java.util.Set;
@@ -21,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * When a player has debug mode enabled, clicking any item shows its metadata.
  */
 public class DebugItemListener implements Listener {
+    private static final String ARROW = " \u2192 ";
+
     private final CollectionLogPlugin plugin;
     private final ItemSignatureHelper signatureHelper;
     private final Set<UUID> debugModePlayers = ConcurrentHashMap.newKeySet();
@@ -113,6 +118,26 @@ public class DebugItemListener implements Listener {
             plugin.getLogger().info("[DEBUG] Lore: None");
         }
 
+        // PersistentDataContainer
+        player.sendMessage(divider);
+        player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "PERSISTENT DATA CONTAINER:");
+        plugin.getLogger().info("[DEBUG] PersistentDataContainer:");
+
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        Set<NamespacedKey> pdcKeys = pdc.getKeys();
+
+        if (pdcKeys.isEmpty()) {
+            player.sendMessage(ChatColor.GRAY + "  No persistent data");
+            plugin.getLogger().info("[DEBUG]   No persistent data");
+        } else {
+            for (NamespacedKey key : pdcKeys) {
+                String fullKey = key.getNamespace() + ":" + key.getKey();
+                String value = getPDCValueAsString(pdc, key);
+                player.sendMessage(ChatColor.AQUA + "  " + fullKey + ChatColor.GRAY + ARROW + ChatColor.WHITE + value);
+                plugin.getLogger().info("[DEBUG]   " + fullKey + ARROW + value);
+            }
+        }
+
         player.sendMessage(divider);
         player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "GENERATED SIGNATURES:");
         plugin.getLogger().info("[DEBUG] Generated Signatures:");
@@ -129,5 +154,68 @@ public class DebugItemListener implements Listener {
         }
 
         player.sendMessage(divider);
+    }
+
+    /**
+     * Attempt to extract a PDC value as a readable string.
+     * Tries common data types in order.
+     */
+    private String getPDCValueAsString(PersistentDataContainer pdc, NamespacedKey key) {
+        String stringValue = pdc.get(key, PersistentDataType.STRING);
+        if (stringValue != null) {
+            return "\"" + stringValue + "\"";
+        }
+
+        Integer intValue = pdc.get(key, PersistentDataType.INTEGER);
+        if (intValue != null) {
+            return String.valueOf(intValue);
+        }
+
+        Long longValue = pdc.get(key, PersistentDataType.LONG);
+        if (longValue != null) {
+            return longValue + "L";
+        }
+
+        Double doubleValue = pdc.get(key, PersistentDataType.DOUBLE);
+        if (doubleValue != null) {
+            return String.valueOf(doubleValue);
+        }
+
+        Float floatValue = pdc.get(key, PersistentDataType.FLOAT);
+        if (floatValue != null) {
+            return floatValue + "f";
+        }
+
+        Short shortValue = pdc.get(key, PersistentDataType.SHORT);
+        if (shortValue != null) {
+            return String.valueOf(shortValue);
+        }
+
+        Byte byteValue = pdc.get(key, PersistentDataType.BYTE);
+        if (byteValue != null) {
+            return String.valueOf(byteValue);
+        }
+
+        byte[] byteArray = pdc.get(key, PersistentDataType.BYTE_ARRAY);
+        if (byteArray != null) {
+            return "[byte array, length=" + byteArray.length + "]";
+        }
+
+        int[] intArray = pdc.get(key, PersistentDataType.INTEGER_ARRAY);
+        if (intArray != null) {
+            return "[int array, length=" + intArray.length + "]";
+        }
+
+        long[] longArray = pdc.get(key, PersistentDataType.LONG_ARRAY);
+        if (longArray != null) {
+            return "[long array, length=" + longArray.length + "]";
+        }
+
+        PersistentDataContainer nested = pdc.get(key, PersistentDataType.TAG_CONTAINER);
+        if (nested != null) {
+            return "[nested container, " + nested.getKeys().size() + " keys]";
+        }
+
+        return "<unknown type>";
     }
 }
