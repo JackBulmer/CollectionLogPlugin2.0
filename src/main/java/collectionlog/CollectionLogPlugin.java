@@ -46,6 +46,7 @@ import collectionlog.database.DatabaseType;
 import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.database.dao.ContainerItemDAO;
 import collectionlog.database.dao.PlayerCollectionDAO;
+import collectionlog.debug.DebugItemListener;
 import collectionlog.gui.CollectionGUI;
 import collectionlog.gui.GlowingGUI;
 import collectionlog.gui.InfiniteDyesGUI;
@@ -165,6 +166,7 @@ public class CollectionLogPlugin extends JavaPlugin {
     private CollectionStatsFileManager collectionStatsFileManager;
     private HologramManager hologramManager;
     private MobHeadDropListener mobHeadDropListener;
+    private DebugItemListener debugItemListener;
     private boolean mythicMobsAvailable;
 
     @Override
@@ -302,6 +304,8 @@ public class CollectionLogPlugin extends JavaPlugin {
             // Initialize GriefPrevention integration
             GriefPreventionUtil.initialize(this);
 
+            debugItemListener = new DebugItemListener(this);
+
             // Register listeners
             getServer().getPluginManager().registerEvents(new BlockPlaceListener(this), this);
             getServer().getPluginManager().registerEvents(new BlockBreakListener(this), this);
@@ -343,6 +347,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new OpenableShulkersListener(this), this);
             getServer().getPluginManager().registerEvents(new FastGhastRidingListener(this), this);
             getServer().getPluginManager().registerEvents(largerEnderChestListener, this);
+            getServer().getPluginManager().registerEvents(debugItemListener, this);
 
             // Schedule cleanup task for protected crops (runs every second)
             getServer().getScheduler().runTaskTimer(this, () ->
@@ -664,6 +669,10 @@ public class CollectionLogPlugin extends JavaPlugin {
 
     public CollectionMatcher getCollectionMatcher() {
         return collectionMatcher;
+    }
+
+    public DebugItemListener getDebugItemListener() {
+        return debugItemListener;
     }
 
     /**
