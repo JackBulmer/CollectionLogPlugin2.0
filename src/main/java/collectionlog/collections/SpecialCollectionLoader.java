@@ -2,6 +2,7 @@ package collectionlog.collections;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.Plugin;
@@ -26,6 +27,8 @@ import java.util.logging.Level;
  * Loads special collection definitions (items without unique Material IDs)
  */
 public class SpecialCollectionLoader {
+    private static final Map<String, Material> PER_ITEM_MATERIALS = new HashMap<>();
+
     private final Plugin plugin;
     private final Gson gson;
     private final Map<String, CollectionDefinition> specialCollections;
@@ -40,6 +43,7 @@ public class SpecialCollectionLoader {
      * Load all special collections
      */
     public void loadSpecialCollections() {
+        PER_ITEM_MATERIALS.clear();
         for (SpecialCollectionType type : SpecialCollectionType.values()) {
             loadSpecialCollection(type);
         }
@@ -62,6 +66,9 @@ public class SpecialCollectionLoader {
                 if (type == SpecialCollectionType.MOB_HEADS) {
                     // Special handling for mob_heads.json (has vanilla/custom structure)
                     items = loadMobHeads(inputStream);
+                } else if (type.isPerItemMaterial()) {
+                    // Per-item material CMD collections
+                    items = loadCustomModelDataItemsWithMaterial(inputStream);
                 } else if (type == SpecialCollectionType.JB_FISHING_PLUS || type == SpecialCollectionType.TCG) {
                     // Custom model data items (has name, rarity, customModelData)
                     items = loadCustomModelDataItems(inputStream);
@@ -218,6 +225,51 @@ public class SpecialCollectionLoader {
             plugin.getLogger().log(Level.SEVERE, "Failed to parse custom model data items", e);
             return new ArrayList<>();
         }
+    }
+
+    private List<String> loadCustomModelDataItemsWithMaterial(InputStream stream) {
+        try {
+            Type listType = new TypeToken<List<Map<String, Object>>>() { }.getType();
+            List<Map<String, Object>> data;
+            try (InputStreamReader reader = new InputStreamReader(stream)) {
+                data = gson.fromJson(reader, listType);
+            }
+
+            List<String> items = new ArrayList<>();
+            for (Map<String, Object> entry : data) {
+                String name = (String) entry.get("name");
+                Object cmdObj = entry.get("customModelData");
+                int cmd = cmdObj instanceof Number ? ((Number) cmdObj).intValue() : 0;
+                String signature = name + ":" + cmd;
+
+                String materialName = (String) entry.get("material");
+                Material material = materialName != null ? Material.matchMaterial(materialName) : null;
+                if (material == null) {
+                    if (materialName != null) {
+                        plugin.getLogger().warning("Unknown material '" + materialName + "' for item '" + signature + "'; defaulting to PAPER");
+                    }
+                    material = Material.PAPER;
+                }
+
+                PER_ITEM_MATERIALS.put(signature, material);
+                items.add(signature);
+            }
+
+            return items;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to parse per-item-material custom model data items", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get the registered per-item Material for a given item signature, or null if not registered.
+     *
+     * @param signature The item signature (e.g. "Wither Sword:1001")
+     * @return The registered Material, or null if not present
+     */
+    public static Material getRegisteredMaterial(String signature) {
+        return PER_ITEM_MATERIALS.get(signature);
     }
 
     private List<String> expandEnchantmentLevels(List<String> enchantments) {
