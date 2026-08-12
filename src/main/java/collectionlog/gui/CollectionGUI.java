@@ -850,6 +850,9 @@ public class CollectionGUI implements Listener {
             case "tcg" -> Material.PAPER;
             case "spawn eggs" -> Material.ZOMBIE_SPAWN_EGG;
             case "happy ghast" -> Material.DRIED_GHAST;
+            case "wither of lost souls" -> Material.NETHER_STAR;
+            case "ancient warden" -> Material.SCULK_CATALYST; // or ECHO_SHARD, SCULK_CATALYST, etc.
+            case "elder dragon" -> Material.DRAGON_EGG; // or DRAGON_EGG, NETHER_STAR, etc.
             default -> Material.PAPER;
         };
     }

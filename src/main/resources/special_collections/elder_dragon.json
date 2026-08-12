@@ -1,12 +1,42 @@
 [
   {
-    "name": "Dragon Scale",
-    "customModelData": 3001,
-    "material": "DRAGON_EGG"
+    "name": "Enderdragon Axe",
+    "customModelData": 5555,
+    "material": "NETHERITE_AXE"
   },
   {
-    "name": "Ender Blade",
-    "customModelData": 3002,
+    "name": "Enderdragon Pickaxe",
+    "customModelData": 5556,
+    "material": "NETHERITE_PICKAXE"
+  },
+  {
+    "name": "Enderdragon Shovel",
+    "customModelData": 5557,
+    "material": "NETHERITE_SHOVEL"
+  },
+  {
+    "name": "Enderdragon Hoe",
+    "customModelData": 5558,
+    "material": "NETHERITE_HOE"
+  },
+  {
+    "name": "Enderdragon Sword",
+    "customModelData": 5559,
     "material": "NETHERITE_SWORD"
+  },
+  {
+    "name": "Enderdragon Bow",
+    "customModelData": 5562,
+    "material": "BOW"
+  },
+  {
+    "name": "Enderdragon Fishing Rod",
+    "customModelData": 5563,
+    "material": "FISHING_ROD"
+  },
+  {
+    "name": "Enderdragon Shield",
+    "customModelData": 5564,
+    "material": "SHIELD"
   }
 ]

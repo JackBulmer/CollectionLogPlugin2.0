@@ -1,12 +1,42 @@
 [
   {
-    "name": "Warden's Heart",
-    "customModelData": 2001,
-    "material": "ECHO_SHARD"
+    "name": "Warden Bow",
+    "customModelData": 1,
+    "material": "BOW"
   },
   {
-    "name": "Sonic Axe",
-    "customModelData": 2002,
+    "name": "Warden Fishing Rod",
+    "customModelData": 1,
+    "material": "FISHING_ROD"
+  },
+  {
+    "name": "Warden Axe",
+    "customModelData": 1,
     "material": "NETHERITE_AXE"
+  },
+  {
+    "name": "Warden Hoe",
+    "customModelData": 1,
+    "material": "NETHERITE_HOE"
+  },
+  {
+    "name": "Warden Pickaxe",
+    "customModelData": 1,
+    "material": "NETHERITE_PICKAXE"
+  },
+  {
+    "name": "Warden Shovel",
+    "customModelData": 1,
+    "material": "NETHERITE_SHOVEL"
+  },
+  {
+    "name": "Warden Sword",
+    "customModelData": 1,
+    "material": "NETHERITE_SWORD"
+  },
+  {
+    "name": "Warden Shield",
+    "customModelData": 1,
+    "material": "SHIELD"
   }
 ]

@@ -1,12 +1,42 @@
 [
   {
+    "name": "Wither Axe",
+    "customModelData": 7777,
+    "material": "NETHERITE_AXE"
+  },
+  {
+    "name": "Wither Pickaxe",
+    "customModelData": 7778,
+    "material": "NETHERITE_PICKAXE"
+  },
+  {
+    "name": "Wither Shovel",
+    "customModelData": 7779,
+    "material": "NETHERITE_SHOVEL"
+  },
+  {
+    "name": "Wither Hoe",
+    "customModelData": 7780,
+    "material": "NETHERITE_HOE"
+  },
+  {
     "name": "Wither Sword",
-    "customModelData": 1001,
+    "customModelData": 7781,
     "material": "NETHERITE_SWORD"
   },
   {
-    "name": "Soul Bow",
-    "customModelData": 1002,
+    "name": "Wither Bow",
+    "customModelData": 7782,
     "material": "BOW"
+  },
+  {
+    "name": "Wither Fishing Rod",
+    "customModelData": 7783,
+    "material": "FISHING_ROD"
+  },
+  {
+    "name": "Wither Shield",
+    "customModelData": 7784,
+    "material": "SHIELD"
   }
 ]
