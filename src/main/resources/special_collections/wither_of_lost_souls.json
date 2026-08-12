@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Wither Sword",
+    "customModelData": 1001,
+    "material": "NETHERITE_SWORD"
+  },
+  {
+    "name": "Soul Bow",
+    "customModelData": 1002,
+    "material": "BOW"
+  }
+]

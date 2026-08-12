@@ -2,6 +2,7 @@ package collectionlog.gui;
 
 import collectionlog.collections.CollectionDefinition;
 import collectionlog.collections.InsertCollectionLoader;
+import collectionlog.collections.SpecialCollectionLoader;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -141,6 +142,11 @@ public final class GUIHelper {
         Material registeredMaterial = InsertCollectionLoader.getRegisteredMaterial(itemSignature);
         if (registeredMaterial != null) {
             return createCustomModelItem(itemSignature, registeredMaterial);
+        }
+
+        Material perItemMaterial = SpecialCollectionLoader.getRegisteredMaterial(itemSignature);
+        if (perItemMaterial != null) {
+            return createCustomModelItem(itemSignature, perItemMaterial);
         }
 
         String normalizedCollection = normalizeKey(collectionId);

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Warden's Heart",
+    "customModelData": 2001,
+    "material": "ECHO_SHARD"
+  },
+  {
+    "name": "Sonic Axe",
+    "customModelData": 2002,
+    "material": "NETHERITE_AXE"
+  }
+]

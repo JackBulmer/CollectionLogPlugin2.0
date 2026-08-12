@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Dragon Scale",
+    "customModelData": 3001,
+    "material": "DRAGON_EGG"
+  },
+  {
+    "name": "Ender Blade",
+    "customModelData": 3002,
+    "material": "NETHERITE_SWORD"
+  }
+]
