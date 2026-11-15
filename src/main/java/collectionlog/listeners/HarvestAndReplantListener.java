@@ -3,6 +3,7 @@ package collectionlog.listeners;
 import collectionlog.CollectionLogPlugin;
 import collectionlog.database.dao.BlockOwnershipDAO;
 import collectionlog.perks.PerkManager;
+import collectionlog.utils.FortuneCropUtil;
 import collectionlog.utils.GriefPreventionUtil;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -231,6 +232,17 @@ public class HarvestAndReplantListener implements Listener {
                 seedPool.merge(seedType, 1, Integer::sum);
                 if (crop.cropType == Material.TORCHFLOWER) {
                     otherDrops.add(new ItemStack(Material.TORCHFLOWER, 1));
+                }
+            }
+
+            // Fortune tools award bonus wheat items on top of the vanilla seed bonus
+            // already present in crop.drops above (vanilla only boosts seeds, never
+            // the wheat item itself). Roll this independently per harvested crop so
+            // it works the same as breaking a single wheat crop by hand.
+            if (crop.cropType == Material.WHEAT) {
+                int bonusWheat = FortuneCropUtil.rollFortuneBonusWheat(tool);
+                if (bonusWheat > 0) {
+                    otherDrops.add(new ItemStack(Material.WHEAT, bonusWheat));
                 }
             }
         }
