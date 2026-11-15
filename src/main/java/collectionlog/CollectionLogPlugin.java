@@ -344,6 +344,7 @@ public class CollectionLogPlugin extends JavaPlugin {
             harvestAndReplantListener = new HarvestAndReplantListener(this);
             getServer().getPluginManager().registerEvents(harvestAndReplantListener, this);
             getServer().getPluginManager().registerEvents(new DoublSnifferFlowersListener(this), this);
+            getServer().getPluginManager().registerEvents(new FortuneWheatListener(this), this);
             getServer().getPluginManager().registerEvents(new OpenableShulkersListener(this), this);
             getServer().getPluginManager().registerEvents(new FastGhastRidingListener(this), this);
             getServer().getPluginManager().registerEvents(largerEnderChestListener, this);
