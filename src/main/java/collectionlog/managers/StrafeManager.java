@@ -22,11 +22,20 @@ public class StrafeManager {
     private final Map<UUID, Long> fallDamageProtection = new HashMap<>();
 
     private static final int COOLDOWN_SECONDS = 5;
+    private static final int SHORTER_COOLDOWN_SECONDS = 2;
+    private static final String SHORTER_COOLDOWN_PERK = "shorter_strafe_cooldown";
     private static final String PROGRESS_BAR = "||||||||||";
     private static final long FALL_DAMAGE_PROTECTION_MS = 3000; // 3 seconds
 
     public StrafeManager(CollectionLogPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    /** Cooldown for this player, reduced if they have the Shorter Strafe Cooldown perk. */
+    private int getCooldownSeconds(UUID playerId) {
+        return plugin.getPerkManager().isActive(playerId, SHORTER_COOLDOWN_PERK)
+                ? SHORTER_COOLDOWN_SECONDS
+                : COOLDOWN_SECONDS;
     }
 
     public boolean canStrafe(Player player) {
@@ -38,7 +47,7 @@ public class StrafeManager {
             return true;
         }
 
-        return (currentTime - lastUsed) >= (COOLDOWN_SECONDS * 1000L);
+        return (currentTime - lastUsed) >= (getCooldownSeconds(playerId) * 1000L);
     }
 
     public void useStrafe(Player player) {
@@ -63,6 +72,9 @@ public class StrafeManager {
 
         rechargeProgress.put(playerId, 0);
 
+        // Read once so the progress bar matches the cooldown applied to this strafe
+        final int cooldownSeconds = getCooldownSeconds(playerId);
+
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -74,7 +86,7 @@ public class StrafeManager {
                 }
 
                 int progress = rechargeProgress.getOrDefault(playerId, 0);
-                int totalTicks = COOLDOWN_SECONDS * 20;
+                int totalTicks = cooldownSeconds * 20;
 
                 if (progress >= totalTicks) {
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
