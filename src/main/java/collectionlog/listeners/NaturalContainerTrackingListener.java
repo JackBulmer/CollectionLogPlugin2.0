@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.StorageMinecart;
@@ -20,14 +21,21 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Tracks items collected from naturally generated containers using Persistent Data Containers (PDC).
@@ -40,6 +48,13 @@ import org.bukkit.persistence.PersistentDataType;
  * <p>When a player takes an item from a container, both levels are checked before granting
  * collection credit. Only natural items (no item PDC) from natural containers (no container PDC)
  * are counted.</p>
+ *
+ * <p>Item tags exist only so items can be recognised while they sit in a natural container
+ * (or on the ground after the container is broken). A tagged item must never stay in a
+ * player's inventory, because the extra data stops it stacking with identical untagged
+ * items. Besides removing the tag when an item is taken out, this listener therefore sweeps
+ * stray tags from player inventories (on join, after a container closes and after a tagged
+ * item is picked up) and from player-placed containers (when they are opened).</p>
  */
 public class NaturalContainerTrackingListener implements Listener {
 
@@ -48,6 +63,9 @@ public class NaturalContainerTrackingListener implements Listener {
     private final ProgressTrackingManager progressTrackingManager;
     private final NamespacedKey containerKey;
     private final NamespacedKey itemKey;
+
+    /** Players that already have a tag sweep queued for the next tick. */
+    private final Set<UUID> pendingSweeps = ConcurrentHashMap.newKeySet();
 
     public NaturalContainerTrackingListener(CollectionLogPlugin plugin) {
         this.plugin = plugin;
@@ -228,23 +246,19 @@ public class NaturalContainerTrackingListener implements Listener {
             }
         });
 
-        // Tag the remaining cursor as well (items not yet placed keep the association)
-        ItemStack cursor = event.getCursor();
-        if (cursor != null && !cursor.getType().isAir()) {
-            markItemAsPlayerPlaced(cursor);
-        }
+        // The leftover cursor stack is deliberately NOT tagged. It is still the player's own
+        // item, and tagging it would leave a tagged stack in their inventory. If they place it
+        // into a natural container later, that click tags it then.
     }
 
     /**
-     * Tags items transferred by hoppers or droppers when either the source or destination is a
-     * player-placed container.
+     * Tags items that hoppers or droppers move from a player-placed container into a natural
+     * container, so a player taking them out of the natural container does not receive
+     * collection credit.
      *
-     * <p>This prevents two exploitation paths:</p>
-     * <ul>
-     *   <li>Natural → player-placed: item is tagged because the destination is player-placed.</li>
-     *   <li>Player-placed → natural: item is tagged because the source is player-placed, so a
-     *       player taking it from the natural container does not receive collection credit.</li>
-     * </ul>
+     * <p>Items moved into a player-placed container are never tagged. Collection credit is never
+     * awarded from player-placed containers, so a tag there has no purpose and would only stop
+     * the item stacking inside player storage and sorting systems.</p>
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryMoveItem(InventoryMoveItemEvent event) {
@@ -253,7 +267,7 @@ public class NaturalContainerTrackingListener implements Listener {
         if (!isTrackableContainerInventory(destination)) {
             return;
         }
-        if (isPlayerPlacedContainer(source) || isPlayerPlacedContainer(destination)) {
+        if (isPlayerPlacedContainer(source) && !isPlayerPlacedContainer(destination)) {
             markItemAsPlayerPlaced(event.getItem());
         }
     }
@@ -272,6 +286,84 @@ public class NaturalContainerTrackingListener implements Listener {
         }
 
         trackCollection(player, item);
+    }
+
+    // ─── Tag cleanup (keeps tagged items out of player inventories) ──────────
+
+    /**
+     * Cleans up tags left behind by earlier versions or interrupted interactions.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        sweepPlayer(event.getPlayer());
+    }
+
+    /**
+     * Placing part of a stack, shift-clicking into a full container and similar actions can
+     * leave a tagged remainder in the player's inventory, so sweep once the container closes.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)
+                || !isTrackableContainerInventory(event.getInventory())) {
+            return;
+        }
+        scheduleSweep(player);
+    }
+
+    /**
+     * Tagged items can also reach a player from the ground, e.g. when a natural container
+     * holding player-placed items is broken. The pickup handlers above still see the tag, so
+     * the sweep is deferred to the next tick, after they have run.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTaggedItemPickup(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player
+                && isItemPlayerPlaced(event.getItem().getItemStack())) {
+            scheduleSweep(player);
+        }
+    }
+
+    /**
+     * Items in a player-placed container are never tagged by this listener, and no collection
+     * credit is ever awarded from them, so any tag found there is a leftover (for example from
+     * a double chest that used to be mistaken for a natural container). Remove it.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        Inventory inventory = event.getInventory();
+        if (isTrackableContainerInventory(inventory) && isPlayerPlacedContainer(inventory)) {
+            stripTags(inventory);
+        }
+    }
+
+    private void scheduleSweep(Player player) {
+        UUID playerId = player.getUniqueId();
+        if (!pendingSweeps.add(playerId)) {
+            return;
+        }
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            pendingSweeps.remove(playerId);
+            if (player.isOnline()) {
+                sweepPlayer(player);
+            }
+        });
+    }
+
+    private void sweepPlayer(Player player) {
+        stripTags(player.getInventory());
+        stripTags(player.getEnderChest());
+    }
+
+    private void stripTags(Inventory inventory) {
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (isItemPlayerPlaced(stack)) {
+                ItemStack cleaned = stack.clone();
+                removePlayerPlacedTag(cleaned);
+                inventory.setItem(slot, cleaned);
+            }
+        }
     }
 
     // ─── Helper Methods ───────────────────────────────────────────────────────
@@ -310,6 +402,18 @@ public class NaturalContainerTrackingListener implements Listener {
         }
         InventoryHolder holder = inventory.getHolder();
 
+        // A double chest's holder is a DoubleChest wrapping two Chest halves; it is not itself
+        // a Container, so each half has to be checked. The whole chest counts as player-placed
+        // if either half is, so attaching a chest to a natural one cannot be used to bypass it.
+        if (holder instanceof DoubleChest doubleChest) {
+            return hasContainerMark(doubleChest.getLeftSide())
+                    || hasContainerMark(doubleChest.getRightSide());
+        }
+
+        return hasContainerMark(holder);
+    }
+
+    private boolean hasContainerMark(InventoryHolder holder) {
         if (holder instanceof Container container) {
             return container.getPersistentDataContainer().has(containerKey, PersistentDataType.BYTE);
         }
